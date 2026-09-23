@@ -1,0 +1,6 @@
+{
+  "name": "AMICA SOHO",
+  "description": "Luxury subterranean cocktail bar, vinyl jazz lounge & private club at 23 Frith Street, Soho, London. Featuring artisanal mixology, cicchetti, late-night vinyl soundscapes, and subterranean private hire.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
