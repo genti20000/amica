@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { PageId, BookingConfirmation, BookingFormData } from '../types';
 import { MonthlyCalendarWidget } from '../components/MonthlyCalendarWidget';
+import { AdminCalendarView } from '../components/AdminCalendarView';
 import {
   getStoredBookings,
   fetchBookingsFromDb,
@@ -58,7 +59,7 @@ interface AdminBookingsPageProps {
 
 export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate }) => {
   // Navigation Tabs
-  const [activeAdminTab, setActiveAdminTab] = useState<'bookings' | 'blocked-dates' | 'settings'>('bookings');
+  const [activeAdminTab, setActiveAdminTab] = useState<'bookings' | 'calendar' | 'blocked-dates' | 'settings'>('bookings');
 
   // Bookings state
   const [bookings, setBookings] = useState<BookingConfirmation[]>([]);
@@ -421,7 +422,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       </div>
 
       {/* Main Admin Section Tabs */}
-      <div className="max-w-7xl mx-auto flex items-center gap-2 border-b border-[#DFBE7B]/30 pb-3">
+      <div className="max-w-7xl mx-auto flex items-center gap-2 border-b border-[#DFBE7B]/30 pb-3 flex-wrap">
         <button
           onClick={() => setActiveAdminTab('bookings')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-sans font-bold uppercase tracking-wider transition-all cursor-pointer ${
@@ -431,10 +432,22 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
           }`}
         >
           <Calendar className="w-4 h-4" />
-          <span>Reservations & Run Sheet</span>
+          <span>Reservations Run Sheet</span>
           <span className="px-1.5 py-0.2 rounded-full bg-black/40 text-[10px] font-mono">
             {bookings.length}
           </span>
+        </button>
+
+        <button
+          onClick={() => setActiveAdminTab('calendar')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-sans font-bold uppercase tracking-wider transition-all cursor-pointer ${
+            activeAdminTab === 'calendar'
+              ? 'bg-gradient-to-r from-[#C5A059] to-[#DFBE7B] text-[#120205] shadow-md'
+              : 'bg-[#180307] text-[#DFBE7B]/70 hover:text-[#DFBE7B] hover:bg-[#200A0E] border border-[#DFBE7B]/20'
+          }`}
+        >
+          <Layers className="w-4 h-4 text-[#DFBE7B]" />
+          <span>Calendar Dashboard (Day/Week/Month)</span>
         </button>
 
         <button
@@ -845,7 +858,28 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       )}
 
       {/* =========================================================================
-          TAB 2: BLOCKED DATES & BUYOUTS MANAGEMENT
+          TAB 2: CALENDAR DASHBOARD (DAY / WEEK / MONTH VIEWS)
+         ========================================================================= */}
+      {activeAdminTab === 'calendar' && (
+        <div className="max-w-7xl mx-auto space-y-6">
+          <AdminCalendarView
+            bookings={bookings}
+            blockedDates={blockedDates}
+            onSelectBooking={handleSelectBooking}
+            onAddBookingForDate={(dateStr) => {
+              setNewBooking((prev) => ({ ...prev, date: dateStr }));
+              setIsAddModalOpen(true);
+            }}
+            onBlockDate={(dateStr) => {
+              setNewBlock((prev) => ({ ...prev, date: dateStr }));
+              setIsBlockModalOpen(true);
+            }}
+          />
+        </div>
+      )}
+
+      {/* =========================================================================
+          TAB 3: BLOCKED DATES & BUYOUTS MANAGEMENT
          ========================================================================= */}
       {activeAdminTab === 'blocked-dates' && (
         <div className="max-w-7xl mx-auto space-y-6">

@@ -125,7 +125,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
                   setPassword(e.target.value);
                   if (error) setError(false);
                 }}
-                placeholder="Enter password (e.g. Joni)"
+                placeholder="Enter password"
                 className={`w-full bg-[#0D0204] border ${
                   error
                     ? 'border-red-500/80 focus:border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.3)]'

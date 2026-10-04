@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={onOpenLogin}
                   className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded bg-[#1D060B] hover:bg-[#2F0B13] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
-                  title="Login with password 'Joni'"
+                  title="Staff Login"
                   aria-label="Login to Main Site"
                 >
                   <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#DFBE7B]" />
