@@ -9,7 +9,7 @@ interface HoursLocationGridProps {
 
 export const HoursLocationGrid: React.FC<HoursLocationGridProps> = ({ onNavigate, className = '' }) => {
   const hoursData = [
-    { day: 'Monday – Sunday (7 Days a Week)', hours: '17:00 – 03:00', note: '5:00 PM – 3:00 AM Every Night' },
+    { day: 'Wednesday – Saturday (Opening Hours)', hours: '17:00 – 03:00', note: '5:00 PM – 3:00 AM Wed to Sat' },
     { day: 'Golden Hour Aperitivo', hours: '17:00 – 19:00', note: 'Complimentary Cicchetti & Signature Spritzes' },
     { day: 'Evening Dinner & Vault Dining', hours: '19:00 – 23:30', note: 'Artisanal Italian Plates & Cellar Wines' },
     { day: 'Late-Night Cocktails & Vinyl DJs', hours: '23:30 – 03:00', note: 'Analog Soundscapes & Speakeasy Bar' },

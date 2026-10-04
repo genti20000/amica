@@ -30,7 +30,7 @@ VERSION:2.0
 PRODID:-//AMICA SOHO//RESTAURANT RESERVATION//EN
 BEGIN:VEVENT
 SUMMARY:Table Reservation at AMICA SOHO (${formData.guests} Pax)
-DESCRIPTION:Auto-Confirmed Restaurant Reservation for ${formData.guests} guests in ${formData.seatingArea}. Ref: ${bookingId}. Opening hours: 5:00 PM to 3:00 AM (7 Days a week).
+DESCRIPTION:Restaurant Reservation for ${formData.guests} guests. Ref: ${bookingId}. Opening hours: Wednesday to Saturday from 5:00 PM to 3:00 AM.
 LOCATION:AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR
 DTSTART:${dtStart}
 DTEND:${dtEnd}
@@ -103,15 +103,15 @@ END:VCALENDAR`;
 
             <div>
               <span className="text-[10px] text-[#DFBE7B] uppercase font-sans tracking-wider block font-semibold">
-                Party & Table
+                Party & Table Allocated
               </span>
               <div className="flex items-center gap-1.5 text-sm font-semibold text-[#FDFBF7] mt-0.5 font-sans">
                 <Users className="w-3.5 h-3.5 text-[#DFBE7B]" />
                 <span>{formData.guests} Guests (Pax)</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-[#DFBE7B] mt-0.5 font-sans truncate">
-                <Wine className="w-3.5 h-3.5 text-[#DFBE7B] shrink-0" />
-                <span className="truncate">{formData.seatingArea}</span>
+              <div className="flex items-center gap-1.5 text-xs text-[#FFEAA7] mt-0.5 font-sans font-medium">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>{confirmation.tableNumber || 'Vault Table Allocated'}</span>
               </div>
             </div>
           </div>
@@ -123,7 +123,7 @@ END:VCALENDAR`;
             </div>
             <div className="flex items-center gap-2 text-[11px] text-[#DFBE7B]/80">
               <Clock className="w-3 h-3 text-[#DFBE7B] shrink-0" />
-              <span>Opening Times: 5:00 PM to 3:00 AM · 7 Days a Week (Mon – Sun)</span>
+              <span>Opening Times: Wednesday to Saturday, 5:00 PM to 3:00 AM</span>
             </div>
             {formData.dietaryNotes && (
               <p className="text-[11px] text-[#DFBE7B] bg-[#0A0103] p-2.5 rounded border border-[#DFBE7B]/20 mt-1">

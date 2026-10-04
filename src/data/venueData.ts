@@ -7,7 +7,7 @@ export const VENUE_INFO = {
   neighbourhood: 'Soho, West End',
   nearestTubes: ['Tottenham Court Road (3 mins)', 'Leicester Square (4 mins)', 'Piccadilly Circus (6 mins)'],
   openingHours: [
-    { days: 'Monday – Sunday (7 Days a Week)', hours: '17:00 – 03:00 (5:00 PM – 3:00 AM)' },
+    { days: 'Wednesday – Saturday', hours: '17:00 – 03:00 (5:00 PM – 3:00 AM)' },
     { days: 'Golden Hour Aperitivo', hours: '17:00 – 19:00 Daily' },
     { days: 'Dinner & Cicchetti Service', hours: '17:00 – 01:00 Daily' },
     { days: 'Late-Night Cocktails & Vinyl', hours: '01:00 – 03:00 Daily' }

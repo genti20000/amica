@@ -38,12 +38,26 @@ export interface BookingFormData {
   specialOccasion: string;
 }
 
+export interface MockEmailNotification {
+  id?: number;
+  bookingId: string;
+  recipientEmail: string;
+  recipientName: string;
+  subject: string;
+  referenceNumber: string;
+  sentAt: string;
+  status: string;
+  contentHtml?: string;
+}
+
 export interface BookingConfirmation {
   bookingId: string;
   formData: BookingFormData;
   createdAt: string;
   qrCodeValue: string;
   status?: string;
+  tableNumber?: string;
+  emailNotification?: MockEmailNotification;
 }
 
 export interface PrivateHirePackage {
