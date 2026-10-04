@@ -39,7 +39,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
     email: '',
     phone: '',
     dietaryNotes: '',
-    specialOccasion: 'None / Casual Aperitivo'
+    specialOccasion: 'Casual Dining & Drinks'
   });
 
   const [blockedDates, setBlockedDates] = useState<BlockedDateItem[]>([]);
@@ -587,11 +587,11 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                 onChange={(e) => setFormData({ ...formData, specialOccasion: e.target.value })}
                 className="w-full px-3.5 py-2.5 bg-[#0D0204] border border-[#DFBE7B]/30 rounded-lg text-sm text-[#FDFBF7] focus:outline-none focus:border-[#DFBE7B] font-sans cursor-pointer"
               >
-                <option value="None / Casual Aperitivo">None / Casual Aperitivo & Drinks</option>
-                <option value="Birthday Celebration">Birthday Celebration</option>
-                <option value="Anniversary / Date Night">Anniversary / Date Night</option>
-                <option value="Group Celebration (Feasting)">Group Celebration / Party (1–20 Pax)</option>
-                <option value="Corporate / Client Entertaining">Corporate / Client Entertaining</option>
+                <option value="Casual Dining & Drinks" className="bg-[#120205] text-[#FFEAA7]">Casual Dining & Drinks</option>
+                <option value="Birthday Celebration" className="bg-[#120205] text-[#FFEAA7]">Birthday Celebration</option>
+                <option value="Anniversary / Date Night" className="bg-[#120205] text-[#FFEAA7]">Anniversary / Date Night</option>
+                <option value="Group Celebration (Feasting)" className="bg-[#120205] text-[#FFEAA7]">Group Celebration / Party (1–20 Pax)</option>
+                <option value="Corporate / Client Entertaining" className="bg-[#120205] text-[#FFEAA7]">Corporate / Client Entertaining</option>
               </select>
             </div>
           </div>

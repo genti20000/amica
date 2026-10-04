@@ -98,7 +98,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     email: '',
     phone: '',
     dietaryNotes: '',
-    specialOccasion: 'None / Casual Aperitivo'
+    specialOccasion: 'Casual Dining & Drinks'
   });
 
   // New block date form state
@@ -242,7 +242,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       email: '',
       phone: '',
       dietaryNotes: '',
-      specialOccasion: 'None / Casual Aperitivo'
+      specialOccasion: 'Casual Dining & Drinks'
     });
   };
 
@@ -1713,7 +1713,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                   onChange={(e) => setNewBooking({ ...newBooking, specialOccasion: e.target.value })}
                   className="w-full py-2 px-3 bg-[#0A0103] border border-[#DFBE7B]/40 rounded text-xs text-[#FDFBF7]"
                 >
-                  <option value="None / Casual Aperitivo">None / Casual Aperitivo</option>
+                  <option value="Casual Dining & Drinks">Casual Dining & Drinks</option>
                   <option value="Birthday Celebration">Birthday Celebration</option>
                   <option value="Anniversary / Date Night">Anniversary / Date Night</option>
                   <option value="Group Celebration (Feasting)">Group Celebration (Feasting)</option>
