@@ -4,6 +4,7 @@ import { MapPin, Phone, Mail, Instagram, Clock, ArrowRight } from 'lucide-react'
 import { VENUE_INFO } from '../data/venueData';
 import { BrandLogo } from './BrandLogo';
 import { JazzAmbientAudio } from './JazzAmbientAudio';
+import { NowPlayingTicker } from './NowPlayingTicker';
 
 interface FooterProps {
   onNavigate: (page: PageId) => void;
@@ -22,11 +23,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   };
 
   return (
-    <footer className="bg-gradient-to-b from-[#140306] via-[#0D0204] to-[#08080A] border-t border-[#4A0E17] text-[#FDFBF7] pt-12 pb-12 shadow-[inset_0_1px_0_rgba(197,160,89,0.2)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <footer className="w-full bg-gradient-to-b from-[#140306] via-[#0D0204] to-[#08080A] border-t border-[#4A0E17] text-[#FDFBF7] pt-8 sm:pt-12 pb-12 shadow-[inset_0_1px_0_rgba(197,160,89,0.2)] overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-8 sm:space-y-12">
         
-        {/* Ambient 1950s Jazz Cafe Audio Soundscape Bar */}
-        <div className="w-full">
+        {/* Vinyl Lounge 'Now Playing' Ticker & Ambient Soundscape Bar */}
+        <div className="w-full space-y-4">
+          <NowPlayingTicker />
           <JazzAmbientAudio />
         </div>
 
@@ -72,6 +74,11 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               </li>
               <li>
                 <button onClick={() => onNavigate('book')} className="text-[#DFBE7B] font-display font-bold hover:underline py-1 text-left cursor-pointer tracking-wider">Book A Table Online →</button>
+              </li>
+              <li className="pt-2 border-t border-[#4A0E17]/60">
+                <button onClick={() => onNavigate('admin-bookings')} className="text-xs text-[#DFBE7B]/60 hover:text-[#DFBE7B] transition-colors py-1 text-left cursor-pointer font-sans tracking-wide">
+                  Staff: Admin Bookings Portal →
+                </button>
               </li>
             </ul>
           </div>

@@ -5,13 +5,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { PageId, BookingConfirmation } from './types';
-import { Calendar, Sparkles } from 'lucide-react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
+import { LoginModal } from './components/LoginModal';
 import { AperitivoQuizModal } from './components/AperitivoQuizModal';
 import { BookingConfirmationModal } from './components/BookingConfirmationModal';
 
-// Pages
 import { ComingSoonPage } from './pages/ComingSoonPage';
 import { HomePage } from './pages/HomePage';
 import { DrinksFoodPage } from './pages/DrinksFoodPage';
@@ -20,155 +19,206 @@ import { PrivateHirePage } from './pages/PrivateHirePage';
 import { WhatsOnPage } from './pages/WhatsOnPage';
 import { VisitPage } from './pages/VisitPage';
 import { BookPage } from './pages/BookPage';
+import { AdminBookingsPage } from './pages/AdminBookingsPage';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<PageId>('coming-soon');
-  const [quizOpen, setQuizOpen] = useState<boolean>(false);
-  const [activeConfirmation, setActiveConfirmation] = useState<BookingConfirmation | null>(null);
-
-  // Saved pairings state in localStorage
-  const [savedPairings, setSavedPairings] = useState<string[]>(() => {
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     try {
-      const stored = localStorage.getItem('lac_saved_pairings');
-      return stored ? JSON.parse(stored) : ['lac-signature-spritz', 'focaccia-rosemary'];
+      return localStorage.getItem('amica_unlocked') === 'true';
     } catch {
-      return ['lac-signature-spritz', 'focaccia-rosemary'];
+      return false;
     }
   });
 
+  const [currentPage, setCurrentPage] = useState<PageId>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('admin') === 'true' || window.location.hash === '#admin' || window.location.hash === '#admin-bookings') {
+        if (localStorage.getItem('amica_unlocked') === 'true') {
+          return 'admin-bookings';
+        }
+      }
+      return localStorage.getItem('amica_unlocked') === 'true' ? 'home' : 'coming-soon';
+    } catch {
+      return 'coming-soon';
+    }
+  });
+
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [postLoginTarget, setPostLoginTarget] = useState<PageId>('home');
+  const [savedPairings, setSavedPairings] = useState<string[]>([]);
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
+  const [bookingConfirmation, setBookingConfirmation] = useState<BookingConfirmation | null>(null);
+
+  // Direct URL support for ?admin=true or #admin
   useEffect(() => {
     try {
-      localStorage.setItem('lac_saved_pairings', JSON.stringify(savedPairings));
-    } catch (e) {
-      console.error(e);
+      const params = new URLSearchParams(window.location.search);
+      const isDirectAdmin = params.get('admin') === 'true' || window.location.hash === '#admin' || window.location.hash === '#admin-bookings';
+      if (isDirectAdmin) {
+        if (localStorage.getItem('amica_unlocked') === 'true') {
+          setCurrentPage('admin-bookings');
+        } else {
+          setPostLoginTarget('admin-bookings');
+          setIsLoginModalOpen(true);
+        }
+      }
+    } catch {
+      // fallback
     }
-  }, [savedPairings]);
+  }, []);
 
-  const handleToggleSavedPairing = (id: string) => {
-    setSavedPairings((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
+  const handleNavigate = (page: PageId) => {
+    if (page === 'coming-soon' || page === 'book') {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
 
-  const handleBookingComplete = (confirmation: BookingConfirmation) => {
-    setActiveConfirmation(confirmation);
-  };
+    if (!isUnlocked) {
+      setPostLoginTarget(page);
+      setIsLoginModalOpen(true);
+      return;
+    }
 
-  const navigateTo = (page: PageId) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleLoginSuccess = () => {
+    setIsUnlocked(true);
+    try {
+      localStorage.setItem('amica_unlocked', 'true');
+    } catch {
+      // fallback if storage disabled
+    }
+    setIsLoginModalOpen(false);
+    const target = postLoginTarget || 'home';
+    setCurrentPage(target);
+    setPostLoginTarget('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLockSite = () => {
+    setIsUnlocked(false);
+    try {
+      localStorage.removeItem('amica_unlocked');
+    } catch {
+      // fallback
+    }
+    setCurrentPage('coming-soon');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleToggleSavedPairing = (id: string) => {
+    setSavedPairings((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  };
+
   return (
-    <div className={`min-h-screen flex flex-col ${currentPage === 'coming-soon' ? 'bg-[#000000]' : 'bg-maroon-deep'} text-[#FDFBF7] font-sans selection:bg-[#C5A059] selection:text-[#150306] overflow-x-hidden`}>
-      
-      {/* Header Bar */}
-      <Header
-        currentPage={currentPage}
-        onNavigate={navigateTo}
-        savedPairingsCount={savedPairings.length}
-      />
+    <div className="min-h-screen bg-[#000000] text-[#FDFBF7] font-sans selection:bg-[#C5A059] selection:text-[#150306] flex flex-col items-center justify-start overflow-x-hidden">
+      {/* Header Bar (hidden only if on dedicated full-screen admin bookings page) */}
+      {currentPage !== 'admin-bookings' && (
+        <Header
+          currentPage={currentPage}
+          onNavigate={handleNavigate}
+          savedPairingsCount={savedPairings.length}
+          onOpenLogin={() => {
+            setPostLoginTarget('home');
+            setIsLoginModalOpen(true);
+          }}
+          isUnlocked={isUnlocked}
+          onLockSite={handleLockSite}
+        />
+      )}
 
-      {/* Main Page Content */}
-      <main className={`flex-1 ${currentPage === 'coming-soon' ? 'bg-[#000000]' : 'pb-20 md:pb-0'}`}>
+      {/* Main Content Area */}
+      <main className="w-full flex-1 bg-[#000000]">
         {currentPage === 'coming-soon' && (
-          <ComingSoonPage onNavigate={navigateTo} />
-        )}
-
-        {currentPage === 'home' && (
-          <HomePage
-            onNavigate={navigateTo}
-            onOpenQuiz={() => setQuizOpen(true)}
+          <ComingSoonPage
+            onNavigate={handleNavigate}
+            onOpenLogin={() => {
+              setPostLoginTarget('home');
+              setIsLoginModalOpen(true);
+            }}
+            isUnlocked={isUnlocked}
+            onLockSite={handleLockSite}
           />
         )}
 
-        {currentPage === 'drinks-food' && (
+        {isUnlocked && currentPage === 'home' && (
+          <HomePage
+            onNavigate={handleNavigate}
+            onOpenQuiz={() => setIsQuizOpen(true)}
+          />
+        )}
+
+        {isUnlocked && currentPage === 'drinks-food' && (
           <DrinksFoodPage
-            onNavigate={navigateTo}
+            onNavigate={handleNavigate}
             savedPairings={savedPairings}
             onToggleSavedPairing={handleToggleSavedPairing}
-            onOpenQuiz={() => setQuizOpen(true)}
+            onOpenQuiz={() => setIsQuizOpen(true)}
           />
         )}
 
-        {currentPage === 'venue' && (
-          <VenuePage onNavigate={navigateTo} />
+        {isUnlocked && currentPage === 'venue' && (
+          <VenuePage onNavigate={handleNavigate} />
         )}
 
-        {currentPage === 'private-hire' && (
-          <PrivateHirePage onNavigate={navigateTo} />
+        {isUnlocked && currentPage === 'private-hire' && (
+          <PrivateHirePage onNavigate={handleNavigate} />
         )}
 
-        {currentPage === 'whats-on' && (
-          <WhatsOnPage onNavigate={navigateTo} />
+        {isUnlocked && currentPage === 'whats-on' && (
+          <WhatsOnPage onNavigate={handleNavigate} />
         )}
 
-        {currentPage === 'visit' && (
-          <VisitPage onNavigate={navigateTo} />
+        {isUnlocked && currentPage === 'visit' && (
+          <VisitPage onNavigate={handleNavigate} />
         )}
 
         {currentPage === 'book' && (
           <BookPage
-            onNavigate={navigateTo}
-            onBookingComplete={handleBookingComplete}
+            onNavigate={handleNavigate}
+            onBookingComplete={(confirmation) => setBookingConfirmation(confirmation)}
             savedPairingsCount={savedPairings.length}
           />
         )}
+
+        {currentPage === 'admin-bookings' && (
+          <AdminBookingsPage onNavigate={handleNavigate} />
+        )}
       </main>
 
-      {/* Footer (Hidden on Coming Soon landing page to match design screenshot exactly) */}
-      {currentPage !== 'coming-soon' && (
-        <Footer onNavigate={navigateTo} />
+      {/* Show full footer when on unlocked main site pages or booking page */}
+      {(isUnlocked || currentPage === 'book') && currentPage !== 'coming-soon' && currentPage !== 'admin-bookings' && (
+        <Footer onNavigate={handleNavigate} />
       )}
 
-      {/* Sticky Mobile Bottom CTA Bar (Hidden on Coming Soon landing page) */}
-      {currentPage !== 'coming-soon' && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-maroon-dark/95 backdrop-blur-xl border-t border-maroon-gold p-2.5 px-4 pb-[max(0.65rem,env(safe-area-inset-bottom,0px))] flex items-center justify-between gap-3 shadow-[0_-10px_30px_rgba(21,3,6,0.95)]">
-          <button
-            onClick={() => navigateTo('home')}
-            className="flex items-center gap-2 text-xs text-gold-amica min-h-[44px] cursor-pointer text-left focus:outline-none"
-          >
-            <span className="w-2 h-2 rounded-full bg-gold-amica animate-pulse shadow-[0_0_8px_#DFBE7B]"></span>
-            <div className="flex flex-col">
-              <span className="font-serif font-semibold text-[#FDFBF7] tracking-[0.2em] uppercase text-[11px] leading-tight">
-                AMICA SOHO
-              </span>
-              <span className="text-[8px] text-[#DFBE7B]/80 font-sans tracking-widest uppercase">23 Frith St, Soho</span>
-            </div>
-          </button>
+      {/* Login Modal with Password 'Joni' */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSuccess={handleLoginSuccess}
+      />
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigateTo('drinks-food')}
-              className="bg-burgundy hover:bg-maroon-awning border border-maroon-gold text-gold-amica px-3.5 py-2 min-h-[44px] text-[10.5px] tracking-wider uppercase font-sans cursor-pointer active:scale-95 transition-all flex items-center justify-center rounded"
-            >
-              Menu
-            </button>
-
-            <button
-              onClick={() => navigateTo('book')}
-              className="btn-maroon-gold font-semibold px-4 py-2 min-h-[44px] text-[10.5px] tracking-widest uppercase font-sans cursor-pointer shadow-[0_4px_15px_rgba(59,10,18,0.7)] active:scale-95 flex items-center justify-center rounded border border-[#DFBE7B]"
-            >
-              Book
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Interactive Aperitivo Finder Quiz Modal */}
+      {/* Aperitivo Interactive Recommender Quiz Modal */}
       <AperitivoQuizModal
-        isOpen={quizOpen}
-        onClose={() => setQuizOpen(false)}
-        onBookTable={() => navigateTo('book')}
+        isOpen={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
+        onBookTable={() => {
+          setIsQuizOpen(false);
+          handleNavigate('book');
+        }}
       />
 
-      {/* Digital Booking Confirmation Modal */}
+      {/* Booking Confirmation Pass Modal */}
       <BookingConfirmationModal
-        confirmation={activeConfirmation}
-        onClose={() => setActiveConfirmation(null)}
+        confirmation={bookingConfirmation}
+        onClose={() => setBookingConfirmation(null)}
       />
-
     </div>
   );
 }
-

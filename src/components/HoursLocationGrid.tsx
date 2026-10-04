@@ -9,11 +9,11 @@ interface HoursLocationGridProps {
 
 export const HoursLocationGrid: React.FC<HoursLocationGridProps> = ({ onNavigate, className = '' }) => {
   const hoursData = [
-    { day: 'Tuesday – Thursday', hours: '17:00 – 00:00', note: 'Aperitivo Hour 17:00 – 18:30' },
-    { day: 'Friday', hours: '16:30 – 01:30', note: 'Late Night Selectors & Vinyl' },
-    { day: 'Saturday', hours: '16:00 – 01:30', note: 'Aperitivo & Speakeasy Sessions' },
-    { day: 'Sunday', hours: '16:00 – 23:00', note: 'Subterranean Jazz & Amaro' },
-    { day: 'Monday', hours: 'Closed', note: 'Private Vault Hire by Request' },
+    { day: 'Monday – Sunday (7 Days a Week)', hours: '17:00 – 03:00', note: '5:00 PM – 3:00 AM Every Night' },
+    { day: 'Golden Hour Aperitivo', hours: '17:00 – 19:00', note: 'Complimentary Cicchetti & Signature Spritzes' },
+    { day: 'Evening Dinner & Vault Dining', hours: '19:00 – 23:30', note: 'Artisanal Italian Plates & Cellar Wines' },
+    { day: 'Late-Night Cocktails & Vinyl DJs', hours: '23:30 – 03:00', note: 'Analog Soundscapes & Speakeasy Bar' },
+    { day: 'Auto-Confirm Reservations', hours: '1 to 20 Guests', note: 'Instant confirmation up to 1 hr before seating' },
   ];
 
   return (

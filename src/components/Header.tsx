@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
 import { PageId } from '../types';
-import { X, Calendar, ArrowRight, Instagram, MapPin, Phone } from 'lucide-react';
+import { X, Calendar, ArrowRight, Instagram, MapPin, Phone, Lock, LogOut, Users } from 'lucide-react';
 import { VENUE_INFO } from '../data/venueData';
 
 interface HeaderProps {
   currentPage: PageId;
-  onNavigate: (page: PageId) => void;
-  savedPairingsCount: number;
+  onNavigate?: (page: PageId) => void;
+  savedPairingsCount?: number;
+  onOpenLogin?: () => void;
+  isUnlocked?: boolean;
+  onLockSite?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, savedPairingsCount }) => {
+export const Header: React.FC<HeaderProps> = ({
+  currentPage,
+  onNavigate,
+  savedPairingsCount = 0,
+  onOpenLogin,
+  isUnlocked = false,
+  onLockSite
+}) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navItems: { id: PageId; label: string; sub?: string }[] = [
@@ -21,21 +31,22 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, savedPa
     { id: 'whats-on', label: 'Music / DJs & What’s On', sub: 'Curated Vinyl Soundscapes & Tastings' },
     { id: 'visit', label: 'Opening Hours & Location', sub: '23 Frith Street & Directions' },
     { id: 'book', label: 'Book A Table', sub: 'Instant Table Reservation Pass' },
+    { id: 'admin-bookings', label: 'Admin Bookings', sub: 'Maître D’ Reservations Management & Run Sheet' },
   ];
 
   const handleNavClick = (page: PageId) => {
-    onNavigate(page);
+    if (onNavigate) {
+      onNavigate(page);
+    }
     setMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If on Coming Soon page, render the exact minimal header from the design:
-  // Left: Coupe icon + AMICA / — SOHO —, Right: HOME (with underline) | COMING SOON
-  // No Book Now button, no hamburger menu, no ticker.
-  if (currentPage === 'coming-soon') {
+  // If on Coming Soon page (or Book page while locked), render the minimal header
+  if (currentPage === 'coming-soon' || (!isUnlocked && currentPage === 'book')) {
     return (
       <header className="w-full bg-[#000000] border-b border-[#140206] select-none z-40 relative">
-        <div className="w-full max-w-[560px] mx-auto px-5 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+        <div className="w-full max-w-[560px] mx-auto px-4 sm:px-6 h-13 sm:h-16 flex items-center justify-between">
           {/* Left: AMICA / — SOHO — */}
           <div
             onClick={() => handleNavClick('coming-soon')}
@@ -53,12 +64,65 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, savedPa
             </div>
           </div>
 
-          {/* Right: 23 Frith St, Soho */}
-          <nav aria-label="Location" className="flex items-center text-right">
-            <span className="font-sans text-[10.5px] sm:text-[12px] tracking-[0.22em] sm:tracking-[0.26em] uppercase text-[#E8CCA0] font-medium">
+          {/* Right: Address & Actions */}
+          <div className="flex items-center gap-2 sm:gap-3 select-none">
+            {currentPage === 'book' ? (
+              <button
+                onClick={() => handleNavClick('coming-soon')}
+                className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
+              >
+                <span>← Coming Soon</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => handleNavClick('book')}
+                className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
+                title="Book Table (1–20 Pax Auto-Confirmed)"
+              >
+                <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#DFBE7B]" />
+                <span>Book</span>
+              </button>
+            )}
+
+            <span className="font-sans text-[10px] sm:text-[11.5px] tracking-[0.22em] sm:tracking-[0.26em] uppercase text-[#E8CCA0] font-medium leading-tight">
               23 Frith St, Soho
             </span>
-          </nav>
+
+            {isUnlocked ? (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => handleNavClick('home')}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#C5A059] hover:bg-[#DFBE7B] text-[#0A0103] font-sans font-semibold text-[8.5px] sm:text-[10px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
+                  title="Return to Main Site"
+                >
+                  <span>Main Site</span>
+                  <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                </button>
+                {onLockSite && (
+                  <button
+                    onClick={onLockSite}
+                    className="p-1 rounded text-[#DFBE7B]/60 hover:text-[#DFBE7B] transition-colors cursor-pointer"
+                    title="Lock Main Site"
+                    aria-label="Lock Main Site"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              onOpenLogin && (
+                <button
+                  onClick={onOpenLogin}
+                  className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded bg-[#1D060B] hover:bg-[#2F0B13] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
+                  title="Login with password 'Joni'"
+                  aria-label="Login to Main Site"
+                >
+                  <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#DFBE7B]" />
+                  <span>Login</span>
+                </button>
+              )
+            )}
+          </div>
         </div>
       </header>
     );
@@ -125,6 +189,32 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, savedPa
                   )}
                 </button>
               </nav>
+
+              {/* Lock Site / Exit to Coming Soon Button */}
+              {onLockSite && (
+                <button
+                  onClick={onLockSite}
+                  className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded bg-burgundy/60 hover:bg-burgundy border border-maroon-gold/50 hover:border-maroon-gold text-gold-subtle hover:text-[#FFEAA7] text-[10px] tracking-[0.18em] uppercase transition-all duration-200 cursor-pointer"
+                  title="Lock Main Site & Return to Coming Soon"
+                >
+                  <Lock className="w-3 h-3 text-[#DFBE7B]" />
+                  <span>Lock Site</span>
+                </button>
+              )}
+
+              {/* Admin Bookings Button */}
+              <button
+                onClick={() => handleNavClick('admin-bookings')}
+                className={`hidden lg:inline-flex items-center gap-1.5 px-3 py-2 rounded text-[10px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer border ${
+                  currentPage === 'admin-bookings'
+                    ? 'bg-[#C5A059] text-[#120205] border-[#FFEAA7] font-bold shadow-md'
+                    : 'bg-burgundy/50 hover:bg-burgundy border-maroon-gold/40 text-gold-subtle hover:text-[#FFEAA7]'
+                }`}
+                title="Maître d' Admin Bookings Dashboard"
+              >
+                <Users className="w-3 h-3 text-[#DFBE7B]" />
+                <span>Admin Bookings</span>
+              </button>
 
               {/* Brushed Gold 'BOOK NOW' Button */}
               <button
@@ -226,7 +316,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, savedPa
                 </div>
                 <div>
                   <p className="text-[#FDFBF7] font-serif tracking-wider uppercase text-sm">Hours</p>
-                  <p className="text-[11px] text-gold-subtle">Tue – Sun: 17:00 – Late</p>
+                  <p className="text-[11px] text-gold-subtle">Mon – Sun: 17:00 – 03:00 (7 Days)</p>
                 </div>
               </div>
               <div className="pt-2 flex items-center gap-6 text-gold-amica">
@@ -243,6 +333,21 @@ export const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate, savedPa
                   <span>Map</span>
                 </a>
               </div>
+
+              {onLockSite && (
+                <div className="pt-3 border-t border-maroon/60">
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onLockSite();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded bg-[#1A0509] hover:bg-[#2A080F] border border-maroon-gold text-[#DFBE7B] hover:text-[#FFEAA7] text-xs font-sans tracking-[0.2em] uppercase transition-colors cursor-pointer"
+                  >
+                    <Lock className="w-3.5 h-3.5 text-[#DFBE7B]" />
+                    <span>Lock Main Site (Return to Coming Soon)</span>
+                  </button>
+                </div>
+              )}
             </div>
 
           </div>

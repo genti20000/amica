@@ -7,11 +7,10 @@ export const VENUE_INFO = {
   neighbourhood: 'Soho, West End',
   nearestTubes: ['Tottenham Court Road (3 mins)', 'Leicester Square (4 mins)', 'Piccadilly Circus (6 mins)'],
   openingHours: [
-    { days: 'Tuesday – Thursday', hours: '17:00 – 00:00' },
-    { days: 'Friday', hours: '16:30 – 01:30' },
-    { days: 'Saturday', hours: '16:00 – 01:30' },
-    { days: 'Sunday', hours: '16:00 – 23:00' },
-    { days: 'Monday', hours: 'Closed for Private Vault Hire' }
+    { days: 'Monday – Sunday (7 Days a Week)', hours: '17:00 – 03:00 (5:00 PM – 3:00 AM)' },
+    { days: 'Golden Hour Aperitivo', hours: '17:00 – 19:00 Daily' },
+    { days: 'Dinner & Cicchetti Service', hours: '17:00 – 01:00 Daily' },
+    { days: 'Late-Night Cocktails & Vinyl', hours: '01:00 – 03:00 Daily' }
   ],
   contactEmail: 'reservations@amicasoho.com',
   phone: '+44 20 7437 2323',

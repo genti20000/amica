@@ -14,7 +14,7 @@ export const VisitPage: React.FC<VisitPageProps> = ({ onNavigate }) => {
   const faqs = [
     {
       q: 'Do I need a reservation, or do you take walk-ins?',
-      a: 'We warmly welcome both walk-ins and reservations! During our Golden Hour (16:30 – 18:30) and on weekend evenings, reservations are strongly recommended to guarantee seating in our vault alcoves or crimson cocktail bar.'
+      a: 'We warmly welcome both walk-ins and reservations! We are open 7 days a week from 5:00 PM to 3:00 AM (17:00 – 03:00). Online reservations for 1 to 20 guests are auto-confirmed instantly up to 1 hour before seating time. Walk-ins are always welcomed at our cocktail bar counter.'
     },
     {
       q: 'What is the dress code at AMICA SOHO?',

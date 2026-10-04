@@ -549,9 +549,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
 
           {/* Center: "Make a Reservation —" + BOOK NOW */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 text-center w-full sm:w-auto">
-            <h3 className="font-serif text-2xl sm:text-3xl text-[#FDFBF7] font-light drop-shadow-sm">
-              Make a Reservation <span className="text-gold-amica mx-2 font-normal">—</span>
-            </h3>
+            <div>
+              <h3 className="font-serif text-2xl sm:text-3xl text-[#FDFBF7] font-light drop-shadow-sm">
+                Make a Reservation <span className="text-gold-amica mx-2 font-normal">—</span>
+              </h3>
+              <p className="text-[10px] text-gold-amica/80 tracking-wider uppercase font-sans mt-0.5">
+                1 to 20 Pax · Auto-Confirmed · 5pm – 3am (7 Days a Week)
+              </p>
+            </div>
 
             <button
               onClick={() => onNavigate('book')}

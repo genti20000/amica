@@ -1,4 +1,4 @@
-export type PageId = 'coming-soon' | 'home' | 'drinks-food' | 'venue' | 'private-hire' | 'whats-on' | 'visit' | 'book';
+export type PageId = 'coming-soon' | 'home' | 'drinks-food' | 'venue' | 'private-hire' | 'whats-on' | 'visit' | 'book' | 'admin-bookings';
 
 export interface MenuItem {
   id: string;
@@ -30,7 +30,7 @@ export interface BookingFormData {
   date: string;
   timeSlot: string;
   guests: number;
-  seatingArea: 'Vault Booth' | 'High Bar' | 'Lounge Banquette' | 'No Preference';
+  seatingArea: string;
   name: string;
   email: string;
   phone: string;
@@ -43,6 +43,7 @@ export interface BookingConfirmation {
   formData: BookingFormData;
   createdAt: string;
   qrCodeValue: string;
+  status?: string;
 }
 
 export interface PrivateHirePackage {
