@@ -4,7 +4,7 @@ export interface MenuItem {
   id: string;
   name: string;
   italianName?: string;
-  category: 'aperitivi' | 'vermouth' | 'wines' | 'small-plates' | 'charcuterie' | 'digestivi';
+  category: 'cocktails' | 'spritz' | 'zero' | 'aperitivi' | 'vermouth' | 'wines' | 'small-plates' | 'charcuterie' | 'digestivi';
   price: string;
   description: string;
   tastingNotes?: string;

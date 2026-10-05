@@ -23,12 +23,13 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
 
   const categories = [
     { id: 'all', label: 'All Offerings' },
-    { id: 'aperitivi', label: 'Aperitivi & Cocktails' },
-    { id: 'vermouth', label: 'Vermouth & Bitters' },
-    { id: 'wines', label: 'Wines by Glass & Bottle' },
-    { id: 'small-plates', label: 'Small Plates & Cicchetti' },
+    { id: 'cocktails', label: 'Amica Cocktails' },
+    { id: 'spritz', label: 'Amica’s Spritz' },
+    { id: 'zero', label: 'Amica’s Zero (Non-Alcoholic)' },
+    { id: 'small-plates', label: 'Cicchetti & Small Plates' },
     { id: 'charcuterie', label: 'Charcuterie & Cheese' },
-    { id: 'digestivi', label: 'Digestivi & Cellar Afters' },
+    { id: 'wines', label: 'Wines by Glass & Bottle' },
+    { id: 'digestivi', label: 'Digestivi & Afters' },
   ];
 
   const tagsList = ['All Tags', 'Signature', 'Low-ABV', 'GF', 'VG', 'V', 'Sommelier Pick'];

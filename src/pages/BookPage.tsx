@@ -71,18 +71,8 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
     });
   }, [formData.date]);
 
-  // Day of week check for Wednesday (3) to Saturday (6) opening schedule
-  const selectedDayOfWeek = useMemo(() => {
-    if (!formData.date) return -1;
-    const dateObj = new Date(formData.date + 'T00:00:00');
-    return dateObj.getDay(); // 0 = Sun, 1 = Mon, 2 = Tue, 3 = Wed, 4 = Thu, 5 = Fri, 6 = Sat
-  }, [formData.date]);
-
-  const isClosedDay = useMemo(() => {
-    // Open Wednesday (3), Thursday (4), Friday (5), Saturday (6)
-    // Closed Sunday (0), Monday (1), Tuesday (2)
-    return selectedDayOfWeek === 0 || selectedDayOfWeek === 1 || selectedDayOfWeek === 2;
-  }, [selectedDayOfWeek]);
+  // AMICA SOHO is open 7 days a week (Monday to Sunday, 17:00 – 03:00)
+  const isClosedDay = false;
 
   // Check if selected date is blocked in database
   const selectedDateBlock = useMemo(() => {
@@ -391,15 +381,13 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                 {pickerDays.map((cell, idx) => {
                   const isSelected = cell.dateStr === formData.date;
                   const isPast = cell.dateStr < todayStr;
-                  const dow = cell.dayOfWeek;
-                  const isClosedSchedule = dow === 0 || dow === 1 || dow === 2; // Closed Sun, Mon, Tue
                   const isBlocked = blockedDates.some((b) => b.blocked_date === cell.dateStr);
 
                   return (
                     <button
                       key={idx}
                       type="button"
-                      disabled={isPast}
+                      disabled={isPast || isBlocked}
                       onClick={() => {
                         setFormData({ ...formData, date: cell.dateStr });
                         setErrorMessage(null);
@@ -411,9 +399,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                           : isPast
                           ? 'bg-[#0A0103]/40 border-zinc-800 text-zinc-600 cursor-not-allowed opacity-30'
                           : isBlocked
-                          ? 'bg-[#2D0911] border-red-500/60 text-red-300'
-                          : isClosedSchedule
-                          ? 'bg-[#0D0204]/80 border-[#DFBE7B]/15 text-[#DFBE7B]/40 hover:border-[#DFBE7B]/40'
+                          ? 'bg-[#2D0911] border-red-500/60 text-red-300 opacity-60 cursor-not-allowed'
                           : 'bg-[#180307] border-[#DFBE7B]/30 hover:border-[#DFBE7B] text-[#FDFBF7] hover:bg-[#200A0E]'
                       }`}
                     >

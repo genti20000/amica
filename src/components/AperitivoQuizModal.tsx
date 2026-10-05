@@ -27,27 +27,27 @@ export const AperitivoQuizModal: React.FC<QuizModalProps> = ({ isOpen, onClose, 
   const getRecommendation = () => {
     if (flavor === 'bitter-sweet') {
       return {
-        drink: MENU_ITEMS.find((i) => i.id === 'oxblood-negroni') || MENU_ITEMS[1],
-        food: MENU_ITEMS.find((i) => i.id === 'lac-gran-tagliere') || MENU_ITEMS[12],
-        reasoning: 'The rich oak-cask aged Negroni beautifully cuts through the savoury fats of 24-month prosciutto and Gorgonzola.'
+        drink: MENU_ITEMS.find((i) => i.id === 'dirty-diana') || MENU_ITEMS[3],
+        food: MENU_ITEMS.find((i) => i.id === 'lac-gran-tagliere') || MENU_ITEMS[18],
+        reasoning: 'The smoky, bitter perfection of Dirty Diana (Mezcal, Martini Rosso, Campari) cuts through the rich charcuterie of The AMICA SOHO Grand Board.'
       };
     } else if (flavor === 'citrus-refreshing') {
       return {
-        drink: MENU_ITEMS.find((i) => i.id === 'lac-signature-spritz') || MENU_ITEMS[0],
-        food: MENU_ITEMS.find((i) => i.id === 'focaccia-rosemary') || MENU_ITEMS[9],
-        reasoning: 'The effervescent Select Aperitivo and Castelvetrano olives pair effortlessly with warm olive oil focaccia.'
+        drink: MENU_ITEMS.find((i) => i.id === 'sophie-in-soho') || MENU_ITEMS[4],
+        food: MENU_ITEMS.find((i) => i.id === 'focaccia-rosemary') || MENU_ITEMS[17],
+        reasoning: 'The cool cucumber & Hendrick’s crispness of Sophie in Soho pairs effortlessly with warm rosemary focaccia.'
       };
     } else if (flavor === 'rich-herbal') {
       return {
-        drink: MENU_ITEMS.find((i) => i.id === 'cocchi-torino') || MENU_ITEMS[4],
-        food: MENU_ITEMS.find((i) => i.id === 'formaggi-selection') || MENU_ITEMS[13],
-        reasoning: 'Chilled Cocchi Storico Vermouth elevates the sharp bite of 36-month Parmigiano and black truffle honey.'
+        drink: MENU_ITEMS.find((i) => i.id === 'olivia-old-fashioned') || MENU_ITEMS[7],
+        food: MENU_ITEMS.find((i) => i.id === 'formaggi-selection') || MENU_ITEMS[19],
+        reasoning: 'Woodford Reserve Old Fashioned with orange bitters elevates our artisanal Italian cheese board and black truffle honey.'
       };
     } else {
       return {
-        drink: MENU_ITEMS.find((i) => i.id === 'frith-street-americano') || MENU_ITEMS[2],
-        food: MENU_ITEMS.find((i) => i.id === 'castelvetrano-olives') || MENU_ITEMS[10],
-        reasoning: 'Low-ABV grapefruit crispness makes for an effortless post-work palate refresher at 23 Frith Street.'
+        drink: MENU_ITEMS.find((i) => i.id === 'aperol-olivia') || MENU_ITEMS[12],
+        food: MENU_ITEMS.find((i) => i.id === 'castelvetrano-olives') || MENU_ITEMS[18],
+        reasoning: 'The iconic Aperol Olivia Spritz paired with warm Sicilian Castelvetrano olives is the quintessential Soho aperitivo.'
       };
     }
   };

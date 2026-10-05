@@ -83,27 +83,7 @@ setSettingStmt.run('max_pax', '20', nowIso);
 setSettingStmt.run('auto_confirm_rule', 'Auto-confirmed instantly up to 1 hour before opening / service time', nowIso);
 
 // Venue settings initialization complete. Table starts empty without demo data.
-
-// Seed initial sample blocked date if table is empty
-const blockedCountStmt = db.prepare('SELECT COUNT(*) as total FROM blocked_dates');
-const blockedCount = (blockedCountStmt.get() as { total: number })?.total || 0;
-if (blockedCount === 0) {
-  const sampleBlockedDate = new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0];
-  const sampleCreatedAt = new Date().toISOString();
-  db.prepare(`
-    INSERT INTO blocked_dates (
-      blocked_date, is_full_day, start_time, end_time, reason, notes, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    sampleBlockedDate,
-    1,
-    null,
-    null,
-    'Private Buyout — Exclusive Subterranean Club Hire',
-    'Private corporate record label celebration & tasting. Closed to general reservations.',
-    sampleCreatedAt
-  );
-}
+db.exec('DELETE FROM blocked_dates;');
 
 export interface ReservationRow {
   id: number;
