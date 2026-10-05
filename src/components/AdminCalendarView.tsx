@@ -323,7 +323,7 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
                           </div>
 
                           <div className="flex items-center justify-between text-[10px] text-[#DFBE7B]/80">
-                            <span>Table: {b.tableNumber || 'Vault Table'}</span>
+                            <span className="truncate max-w-[130px]">{b.formData.specialOccasion || 'Casual Dining'}</span>
                             <span className="text-emerald-400 font-semibold">{b.status || 'Confirmed'}</span>
                           </div>
 

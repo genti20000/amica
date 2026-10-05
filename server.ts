@@ -17,6 +17,11 @@ import {
   updateVenueSettingsBatch,
   db
 } from './server/db.js';
+import {
+  sendReservationEmail,
+  generateConfirmationEmailHtml,
+  generateConfirmationEmailText
+} from './server/emailService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -132,7 +137,7 @@ async function startServer() {
   // Create new reservation (auto-confirm 1 to 20 pax)
   app.post('/api/bookings', (req, res) => {
     try {
-      const { formData, actor } = req.body;
+      const { formData, actor, bookingId } = req.body;
       if (!formData || !formData.name || !formData.email || !formData.phone) {
         return res.status(400).json({ success: false, error: 'Missing required guest contact information' });
       }
@@ -154,24 +159,25 @@ async function startServer() {
       const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
 
       const created = createReservation({
+        booking_id: bookingId || formData.bookingId,
         guest_name: formData.name,
         email: formData.email,
         phone: formData.phone,
         guests: guests,
         reservation_date: formData.date,
         time_slot: formData.timeSlot,
-        seating_area: formData.seatingArea || 'Arched Wine Vault Booth',
-        special_occasion: formData.specialOccasion,
-        dietary_notes: formData.dietaryNotes,
+        seating_area: formData.seatingArea || 'Vault Dining',
+        special_occasion: formData.specialOccasion || 'Casual Dining & Drinks',
+        dietary_notes: formData.dietaryNotes || '',
         ip_address: clientIp,
         actor: actor || 'GUEST_WEB_BOOKING'
       });
 
+      // Prepare confirmation object (clean without room/table allocation)
       const confirmation = {
         bookingId: created.booking_id,
         createdAt: created.created_at,
         status: created.status,
-        tableNumber: created.table_number,
         qrCodeValue: created.qr_code_value,
         formData: {
           name: created.guest_name,
@@ -182,11 +188,47 @@ async function startServer() {
           timeSlot: created.time_slot,
           seatingArea: created.seating_area,
           dietaryNotes: created.dietary_notes || '',
-          specialOccasion: created.special_occasion || ''
+          specialOccasion: created.special_occasion || 'Casual Dining & Drinks'
         }
       };
 
+      // Trigger email dispatch asynchronously
+      sendReservationEmail(created).catch((err) => {
+        console.error('Initial reservation email dispatch error:', err);
+      });
+
       res.status(201).json({ success: true, booking: confirmation });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
+  // Send confirmation email endpoint (for manual resend or client trigger)
+  app.post('/api/bookings/:id/send-email', async (req, res) => {
+    try {
+      const { reservation } = getReservationById(req.params.id);
+      if (!reservation) {
+        return res.status(404).json({ success: false, error: 'Reservation not found' });
+      }
+
+      const result = await sendReservationEmail(reservation);
+      res.json({ success: true, ...result });
+    } catch (e: any) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
+  // Get confirmation email preview
+  app.get('/api/bookings/:id/email-preview', (req, res) => {
+    try {
+      const { reservation } = getReservationById(req.params.id);
+      if (!reservation) {
+        return res.status(404).json({ success: false, error: 'Reservation not found' });
+      }
+
+      const html = generateConfirmationEmailHtml(reservation);
+      const text = generateConfirmationEmailText(reservation);
+      res.json({ success: true, html, text, bookingId: reservation.booking_id, email: reservation.email });
     } catch (e: any) {
       res.status(500).json({ success: false, error: e.message });
     }
@@ -244,8 +286,6 @@ async function startServer() {
         'Guest Name',
         'Email',
         'Phone',
-        'Seating Area',
-        'Table Assigned',
         'Status',
         'Occasion',
         'Dietary Requirements',
@@ -262,8 +302,6 @@ async function startServer() {
           `"${r.guest_name.replace(/"/g, '""')}"`,
           `"${r.email}"`,
           `"${r.phone}"`,
-          `"${r.seating_area.replace(/"/g, '""')}"`,
-          `"${r.table_number || ''}"`,
           `"${r.status}"`,
           `"${(r.special_occasion || '').replace(/"/g, '""')}"`,
           `"${(r.dietary_notes || '').replace(/"/g, '""')}"`,

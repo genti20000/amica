@@ -192,9 +192,6 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
     }
 
     const bookingId = 'AMICA-' + Math.floor(100000 + Math.random() * 900000);
-    let tableNumber = 'Vault Booth 02';
-    if (formData.guests >= 13) tableNumber = 'Grand Vault Suite';
-    else if (formData.guests >= 7) tableNumber = 'Feasting Table 01';
 
     const confirmation: BookingConfirmation = {
       bookingId,
@@ -204,13 +201,15 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
       },
       createdAt: new Date().toISOString(),
       qrCodeValue: `AMICA-SOHO-${bookingId}-${formData.date}-${formData.guests}PAX`,
-      status: 'Confirmed',
-      tableNumber
+      status: 'Confirmed'
     };
 
     // Save to database
-    saveBooking(confirmation);
-    onBookingComplete(confirmation);
+    saveBooking(confirmation).then((saved) => {
+      onBookingComplete(saved || confirmation);
+    }).catch(() => {
+      onBookingComplete(confirmation);
+    });
   };
 
   return (

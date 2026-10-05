@@ -183,6 +183,7 @@ export function getReservationById(bookingId: string): {
 }
 
 export function createReservation(data: {
+  booking_id?: string;
   guest_name: string;
   email: string;
   phone: string;
@@ -196,23 +197,12 @@ export function createReservation(data: {
   actor?: string;
 }): ReservationRow {
   const guests = Math.max(1, Math.min(20, Number(data.guests) || 1));
-  const booking_id = 'AMICA-' + Math.floor(100000 + Math.random() * 900000);
+  const booking_id = data.booking_id || ('AMICA-' + Math.floor(100000 + Math.random() * 900000));
   const now = new Date().toISOString();
   const qr_code = `AMICA-SOHO-${booking_id}-${data.reservation_date}-${guests}PAX`;
 
-  // Auto assign table based on guests & area
-  let table_number = 'Vault Table';
-  if (data.seating_area.includes('Bar') || data.seating_area.includes('Counter')) {
-    table_number = `Counter Bar 0${Math.floor(1 + Math.random() * 8)}`;
-  } else if (data.seating_area.includes('Banquette')) {
-    table_number = `Velvet Banquette 0${Math.floor(1 + Math.random() * 4)}`;
-  } else if (guests >= 13) {
-    table_number = 'Grand Vault Suite';
-  } else if (guests >= 7) {
-    table_number = `Feasting Table ${Math.floor(1 + Math.random() * 2)}`;
-  } else {
-    table_number = `Booth 0${Math.floor(1 + Math.random() * 6)}`;
-  }
+  // No specific room or table allocation
+  const table_number = null;
 
   const stmt = db.prepare(`
     INSERT INTO reservations (
@@ -236,10 +226,10 @@ export function createReservation(data: {
     guests,
     data.reservation_date,
     data.time_slot,
-    data.seating_area,
-    data.special_occasion || 'None',
-    data.dietary_notes || 'None',
-    'Auto-Confirmed',
+    data.seating_area || 'Vault Dining',
+    data.special_occasion || 'Casual Dining & Drinks',
+    data.dietary_notes || '',
+    'Confirmed',
     table_number,
     qr_code,
     data.ip_address || null,
@@ -252,12 +242,12 @@ export function createReservation(data: {
     VALUES (?, ?, ?, ?, ?)
   `);
 
-  const actor = data.actor || 'AUTO_CONFIRM_ENGINE';
+  const actor = data.actor || 'RESERVATION_ENGINE';
   auditStmt.run(
     booking_id,
-    'AUTO_CONFIRMED',
+    'RESERVATION_CONFIRMED',
     actor,
-    `Auto-confirmed instant table reservation for ${guests} guests on ${data.reservation_date} (${data.time_slot}) in ${data.seating_area}. Allocated Table: ${table_number}. One-hour notice rule verified.`,
+    `Confirmed table reservation for ${guests} guests on ${data.reservation_date} at ${data.time_slot}.`,
     now
   );
 

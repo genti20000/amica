@@ -24,7 +24,7 @@ export const fetchBookingsFromDb = async (): Promise<BookingConfirmation[]> => {
     const res = await fetch('/api/bookings');
     if (res.ok) {
       const json = await res.json();
-      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+      if (json.success && Array.isArray(json.data)) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(json.data));
         return json.data;
       }
@@ -35,24 +35,61 @@ export const fetchBookingsFromDb = async (): Promise<BookingConfirmation[]> => {
   return getStoredBookings();
 };
 
-export const saveBooking = async (booking: BookingConfirmation): Promise<void> => {
+export const saveBooking = async (booking: BookingConfirmation): Promise<BookingConfirmation> => {
   try {
     const current = getStoredBookings();
     const updated = [booking, ...current.filter((b) => b.bookingId !== booking.bookingId)];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
     // Persist to proper SQLite database
-    await fetch('/api/bookings', {
+    const res = await fetch('/api/bookings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        bookingId: booking.bookingId,
         formData: booking.formData,
         actor: 'GUEST_WEB_BOOKING'
       })
     });
+
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.booking) {
+        const synced = [json.booking, ...current.filter((b) => b.bookingId !== booking.bookingId)];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(synced));
+        return json.booking;
+      }
+    }
   } catch (e) {
     console.error('Failed to save booking to database', e);
   }
+  return booking;
+};
+
+export const sendBookingConfirmationEmail = async (bookingId: string) => {
+  try {
+    const res = await fetch(`/api/bookings/${bookingId}/send-email`, {
+      method: 'POST'
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.error('Failed to send booking confirmation email', e);
+  }
+  return { success: false, error: 'Network error communicating with email service' };
+};
+
+export const fetchBookingEmailPreview = async (bookingId: string) => {
+  try {
+    const res = await fetch(`/api/bookings/${bookingId}/email-preview`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.error('Failed to fetch booking email preview', e);
+  }
+  return null;
 };
 
 export const updateBookingStatus = async (

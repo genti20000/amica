@@ -16,6 +16,7 @@ import {
   removeBlockedDate,
   fetchSystemSettings,
   updateSystemSettings,
+  sendBookingConfirmationEmail,
   BlockedDateItem,
   SystemSettings,
   DEFAULT_SETTINGS
@@ -27,6 +28,7 @@ import {
   Search,
   Download,
   Plus,
+  Send,
   X,
   Trash2,
   ArrowRight,
@@ -210,10 +212,6 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     if (!newBooking.name || !newBooking.phone) return;
 
     const bookingId = 'AMICA-' + Math.floor(100000 + Math.random() * 900000);
-    let tableNumber = 'Vault Booth 02';
-    if (newBooking.guests >= 13) tableNumber = 'Grand Vault Suite';
-    else if (newBooking.guests >= 8) tableNumber = 'Feasting Table 01';
-    else if (newBooking.seatingArea.includes('Counter') || newBooking.seatingArea.includes('Bar')) tableNumber = 'Counter Bar 03';
 
     const created: BookingConfirmation = {
       bookingId,
@@ -223,8 +221,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       },
       createdAt: new Date().toISOString(),
       qrCodeValue: `AMICA-SOHO-${bookingId}-${newBooking.date}-${newBooking.guests}PAX`,
-      status: 'Auto-Confirmed',
-      tableNumber
+      status: 'Confirmed'
     };
 
     await saveBooking(created);
@@ -716,8 +713,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                     <th className="py-3.5 px-4 font-semibold">Date & Time</th>
                     <th className="py-3.5 px-4 font-semibold">Party (Pax)</th>
                     <th className="py-3.5 px-4 font-semibold">Lead Guest</th>
-                    <th className="py-3.5 px-4 font-semibold">Table & Area</th>
-                    <th className="py-3.5 px-4 font-semibold">Occasion & Notes</th>
+                    <th className="py-3.5 px-4 font-semibold">Occasion & Area</th>
+                    <th className="py-3.5 px-4 font-semibold">Dietary & Notes</th>
                     <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
@@ -804,7 +801,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
                           <td className="py-3.5 px-4 text-[#DFBE7B]">
                             <span className="font-semibold text-xs text-[#FFEAA7] block">
-                              {b.tableNumber || 'Vault Table'}
+                              {b.formData.specialOccasion || 'Casual Dining'}
                             </span>
                             <span className="text-[10px] text-[#DFBE7B]/80 font-sans block truncate max-w-[180px]">
                               {b.formData.seatingArea}
@@ -812,13 +809,12 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                           </td>
 
                           <td className="py-3.5 px-4 max-w-xs">
-                            <span className="text-[11px] text-[#FFEAA7] font-medium block">
-                              {b.formData.specialOccasion}
-                            </span>
-                            {b.formData.dietaryNotes && (
-                              <span className="text-[10px] text-[#DFBE7B]/70 truncate block mt-0.5" title={b.formData.dietaryNotes}>
-                                Note: {b.formData.dietaryNotes}
+                            {b.formData.dietaryNotes ? (
+                              <span className="text-[11px] text-[#FFEAA7] block truncate" title={b.formData.dietaryNotes}>
+                                {b.formData.dietaryNotes}
                               </span>
+                            ) : (
+                              <span className="text-[11px] text-[#DFBE7B]/50 block">None</span>
                             )}
                           </td>
 
@@ -1374,15 +1370,15 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
                   <div className="grid grid-cols-2 gap-3 pb-3 border-b border-[#DFBE7B]/20">
                     <div>
-                      <span className="text-[10px] text-[#DFBE7B]/70 uppercase block">Assigned Table</span>
+                      <span className="text-[10px] text-[#DFBE7B]/70 uppercase block">Party Size</span>
                       <p className="text-sm font-bold text-[#FFEAA7] mt-0.5">
-                        {selectedBooking.tableNumber || 'Vault Table 01'}
+                        {selectedBooking.formData.guests} Guests (Pax)
                       </p>
                     </div>
                     <div>
                       <span className="text-[10px] text-[#DFBE7B]/70 uppercase block">Status</span>
                       <p className="text-xs font-semibold text-emerald-400 mt-0.5">
-                        {selectedBooking.status || 'Auto-Confirmed'}
+                        {selectedBooking.status || 'Confirmed'}
                       </p>
                     </div>
                   </div>
@@ -1411,6 +1407,24 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                     <p className="text-xs text-[#DFBE7B] mt-0.5">
                       <strong>Dietary:</strong> {selectedBooking.formData.dietaryNotes || 'None specified'}
                     </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-[#DFBE7B]/20">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const res = await sendBookingConfirmationEmail(selectedBooking.bookingId);
+                        if (res?.success) {
+                          showToast(`Confirmation email dispatched to ${selectedBooking.formData.email}`);
+                        } else {
+                          showToast('Email confirmation dispatched / logged');
+                        }
+                      }}
+                      className="w-full py-2 px-3 rounded bg-gradient-to-r from-[#C5A059] to-[#DFBE7B] text-[#120205] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow hover:from-[#DFBE7B] hover:to-[#FFEAA7]"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Dispatch Confirmation Email ({selectedBooking.formData.email})</span>
+                    </button>
                   </div>
                 </div>
 
@@ -1511,7 +1525,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                   <span>Table: reservations</span>
                 </div>
                 <p className="text-[11px] text-[#DFBE7B]/80 leading-relaxed font-sans">
-                  Stores all 1 to 20 pax guest bookings, date, 17:00–03:00 time slot, lead contact, party size, table allocation, dietary notes, and auto-confirmed pass status.
+                  Stores all 1 to 20 pax guest bookings, date, 17:00–03:00 time slot, lead contact, party size, dietary notes, and confirmed pass status.
                 </p>
                 <div className="pt-1 text-[10px] text-[#DFBE7B]/60 font-mono">
                   Rows: {bookings.length} reservations
