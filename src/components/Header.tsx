@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <span>← Coming Soon</span>
               </button>
-            ) : (
+            ) : isUnlocked ? (
               <button
                 onClick={() => handleNavClick('book')}
                 className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
@@ -82,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#DFBE7B]" />
                 <span>Book</span>
               </button>
-            )}
+            ) : null}
 
             <span className="font-sans text-[10px] sm:text-[11.5px] tracking-[0.22em] sm:tracking-[0.26em] uppercase text-[#E8CCA0] font-medium leading-tight">
               23 Frith St, Soho

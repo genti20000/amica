@@ -22,23 +22,29 @@ import { BookPage } from './pages/BookPage';
 import { AdminBookingsPage } from './pages/AdminBookingsPage';
 
 export default function App() {
+  // Lock the site: always default to locked (false)
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('amica_unlocked') === 'true';
+      // Clear any legacy permanent unlock
+      localStorage.removeItem('amica_unlocked');
+      return sessionStorage.getItem('amica_unlocked') === 'true';
     } catch {
       return false;
     }
   });
 
+  // Always default to coming-soon when locked
   const [currentPage, setCurrentPage] = useState<PageId>(() => {
     try {
+      const isSessionUnlocked = sessionStorage.getItem('amica_unlocked') === 'true';
+      if (!isSessionUnlocked) {
+        return 'coming-soon';
+      }
       const params = new URLSearchParams(window.location.search);
       if (params.get('admin') === 'true' || window.location.hash === '#admin' || window.location.hash === '#admin-bookings') {
-        if (localStorage.getItem('amica_unlocked') === 'true') {
-          return 'admin-bookings';
-        }
+        return 'admin-bookings';
       }
-      return localStorage.getItem('amica_unlocked') === 'true' ? 'home' : 'coming-soon';
+      return 'home';
     } catch {
       return 'coming-soon';
     }
@@ -53,10 +59,14 @@ export default function App() {
   // Direct URL support for ?admin=true or #admin
   useEffect(() => {
     try {
+      // Clear any cached localStorage unlock so the site stays locked
+      localStorage.removeItem('amica_unlocked');
+
       const params = new URLSearchParams(window.location.search);
       const isDirectAdmin = params.get('admin') === 'true' || window.location.hash === '#admin' || window.location.hash === '#admin-bookings';
       if (isDirectAdmin) {
-        if (localStorage.getItem('amica_unlocked') === 'true') {
+        if (sessionStorage.getItem('amica_unlocked') === 'true') {
+          setIsUnlocked(true);
           setCurrentPage('admin-bookings');
         } else {
           setPostLoginTarget('admin-bookings');
@@ -69,7 +79,7 @@ export default function App() {
   }, []);
 
   const handleNavigate = (page: PageId) => {
-    if (page === 'coming-soon' || page === 'book') {
+    if (page === 'coming-soon') {
       setCurrentPage(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -88,7 +98,7 @@ export default function App() {
   const handleLoginSuccess = () => {
     setIsUnlocked(true);
     try {
-      localStorage.setItem('amica_unlocked', 'true');
+      sessionStorage.setItem('amica_unlocked', 'true');
     } catch {
       // fallback if storage disabled
     }
@@ -103,6 +113,7 @@ export default function App() {
     setIsUnlocked(false);
     try {
       localStorage.removeItem('amica_unlocked');
+      sessionStorage.removeItem('amica_unlocked');
     } catch {
       // fallback
     }

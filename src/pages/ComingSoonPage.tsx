@@ -69,8 +69,8 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
               </div>
             </div>
 
-            {/* Instant Auto-Confirm Table Reservation CTA */}
-            {onNavigate && (
+            {/* Table Reservation CTA (Available for testing when unlocked by staff) */}
+            {isUnlocked && onNavigate && (
               <div className="mt-3.5">
                 <button
                   onClick={() => onNavigate('book')}
