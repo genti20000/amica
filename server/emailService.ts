@@ -1,10 +1,9 @@
 import nodemailer from 'nodemailer';
-import { Resend } from 'resend';
 import { db, ReservationRow } from './db.js';
 
 export interface EmailDispatchResult {
   success: boolean;
-  mode: 'resend' | 'sendgrid' | 'smtp' | 'simulated';
+  mode: 'sendgrid' | 'smtp' | 'simulated';
   provider: string;
   bookingId: string;
   recipient: string;
@@ -171,14 +170,14 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#039;');
 }
 
-// Dispatches confirmation email using Resend, SendGrid, or SMTP, with simulated fallback
+// Dispatches confirmation email using SendGrid or SMTP, with simulated fallback
 export async function sendReservationEmail(reservation: ReservationRow): Promise<EmailDispatchResult> {
   const subject = `AMICA SOHO · Table Reservation Confirmed (${reservation.booking_id})`;
   const previewHtml = generateConfirmationEmailHtml(reservation);
   const textBody = generateConfirmationEmailText(reservation);
   const dispatchedAt = new Date().toISOString();
 
-  // Explicit sender address requested: reservations@amicasoho.com
+  // Sender address requested: reservations@amicasoho.com
   const fromEmail = process.env.FROM_EMAIL || 'AMICA SOHO <reservations@amicasoho.com>';
 
   // Create mailto fallback URL
@@ -186,47 +185,19 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
   const mailtoBody = encodeURIComponent(textBody);
   const mailtoUrl = `mailto:${encodeURIComponent(reservation.email)}?subject=${mailtoSubject}&body=${mailtoBody}`;
 
-  const resendApiKey = process.env.RESEND_API_KEY;
   const sendgridApiKey = process.env.SENDGRID_API_KEY;
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
 
-  let mode: 'resend' | 'sendgrid' | 'smtp' | 'simulated' = 'simulated';
+  let mode: 'sendgrid' | 'smtp' | 'simulated' = 'simulated';
   let provider = 'Simulated Dispatch Engine';
   let message = '';
   let externalId: string | undefined;
 
-  // 1. External Service Priority: RESEND
-  if (resendApiKey) {
-    try {
-      const resend = new Resend(resendApiKey);
-      const { data, error } = await resend.emails.send({
-        from: fromEmail,
-        to: reservation.email,
-        subject,
-        html: previewHtml,
-        text: textBody
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      mode = 'resend';
-      provider = 'Resend (api.resend.com)';
-      externalId = data?.id;
-      message = `Confirmation email sent via Resend from reservations@amicasoho.com to ${reservation.email} (ID: ${data?.id})`;
-    } catch (err: any) {
-      console.warn('Resend dispatch failed, falling back to simulated dispatch:', err.message);
-      mode = 'simulated';
-      provider = 'Resend (Simulated Fallback)';
-      message = `Resend encountered an issue (${err.message}). Confirmation logged for ${reservation.email}.`;
-    }
-  }
-  // 2. External Service Priority: SENDGRID
-  else if (sendgridApiKey) {
+  // 1. External Service: SENDGRID
+  if (sendgridApiKey) {
     try {
       const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
         method: 'POST',
@@ -260,7 +231,7 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
       message = `SendGrid encountered an issue (${err.message}). Confirmation logged for ${reservation.email}.`;
     }
   }
-  // 3. Fallback: SMTP / Nodemailer
+  // 2. Fallback: SMTP / Nodemailer
   else if (smtpHost && smtpUser && smtpPass) {
     try {
       const transporter = nodemailer.createTransport({
@@ -292,11 +263,11 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
       message = `SMTP encountered an issue (${err.message}). Confirmation logged for ${reservation.email}.`;
     }
   }
-  // 4. Default in development: Instant Simulated Dispatch with Database Audit & Mailto
+  // 3. Default in development: Instant Simulated Dispatch with Database Audit & Mailto
   else {
     mode = 'simulated';
     provider = 'Internal Email Dispatch Engine';
-    message = `Confirmation email prepared from reservations@amicasoho.com to ${reservation.email}. Branded HTML preview and mailto link ready. Configure RESEND_API_KEY or SENDGRID_API_KEY in .env for live cloud delivery.`;
+    message = `Confirmation email prepared from reservations@amicasoho.com to ${reservation.email}. Branded HTML preview and mailto link ready. Configure SENDGRID_API_KEY in .env for live cloud delivery.`;
   }
 
   // Record dispatch log in database

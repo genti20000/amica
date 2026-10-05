@@ -263,7 +263,7 @@ END:VCALENDAR`;
             <div className="bg-[#100205] border border-[#DFBE7B]/20 rounded p-2 text-[11px] font-sans space-y-1">
               <div className="flex items-center justify-between text-[#DFBE7B]/80">
                 <span>From: <strong className="text-[#FFEAA7]">reservations@amicasoho.com</strong></span>
-                <span>Service: <span className="text-emerald-400 font-mono text-[10px]">Resend / SendGrid</span></span>
+                <span>Service: <span className="text-emerald-400 font-mono text-[10px]">SendGrid / Cloud Mail</span></span>
               </div>
               <div className="text-[#DFBE7B]/70 truncate">
                 Recipient: <strong className="text-[#FDFBF7]">{formData.email}</strong>
@@ -282,7 +282,7 @@ END:VCALENDAR`;
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-sans">
-              {/* Send / Resend Email Button */}
+              {/* Send / Dispatch Email Button */}
               <button
                 type="button"
                 onClick={handleSendEmail}
@@ -290,7 +290,7 @@ END:VCALENDAR`;
                 className="py-2 px-3 rounded bg-gradient-to-r from-[#C5A059] to-[#DFBE7B] hover:from-[#DFBE7B] hover:to-[#FFEAA7] text-[#120205] font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow disabled:opacity-50"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>{emailStatus === 'sending' ? 'Sending...' : emailStatus === 'sent' ? 'Resend Email' : 'Send Email'}</span>
+                <span>{emailStatus === 'sending' ? 'Sending...' : emailStatus === 'sent' ? 'Send Again' : 'Send Email'}</span>
               </button>
 
               {/* View HTML Preview */}
