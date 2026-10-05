@@ -20,7 +20,8 @@ import {
 import {
   sendReservationEmail,
   generateConfirmationEmailHtml,
-  generateConfirmationEmailText
+  generateConfirmationEmailText,
+  checkEmailServiceStatus
 } from './server/emailService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -50,6 +51,11 @@ async function startServer() {
       database: 'connected',
       timestamp: new Date().toISOString()
     });
+  });
+
+  // Email service status
+  app.get('/api/email/status', (req, res) => {
+    res.json(checkEmailServiceStatus());
   });
 
   // Database metadata & status

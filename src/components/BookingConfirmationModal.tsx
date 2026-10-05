@@ -8,15 +8,10 @@ import {
   Download,
   Users,
   Zap,
-  Mail,
-  Send,
-  Eye,
-  ExternalLink,
   Copy,
   Check
 } from 'lucide-react';
 import { BookingConfirmation } from '../types';
-import { sendBookingConfirmationEmail, fetchBookingEmailPreview } from '../data/bookingStorage';
 
 interface BookingConfirmationModalProps {
   confirmation: BookingConfirmation | null;
@@ -24,10 +19,6 @@ interface BookingConfirmationModalProps {
 }
 
 export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> = ({ confirmation, onClose }) => {
-  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
-  const [emailFeedback, setEmailFeedback] = useState<string | null>(null);
-  const [showEmailPreview, setShowEmailPreview] = useState(false);
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [copiedText, setCopiedText] = useState(false);
 
   if (!confirmation) return null;
@@ -51,7 +42,7 @@ VERSION:2.0
 PRODID:-//AMICA SOHO//RESTAURANT RESERVATION//EN
 BEGIN:VEVENT
 SUMMARY:Table Reservation at AMICA SOHO (${formData.guests} Pax)
-DESCRIPTION:Table Reservation for ${formData.guests} guests. Ref: ${bookingId}. Opening hours: Wednesday to Saturday from 5:00 PM to 3:00 AM.
+DESCRIPTION:Table Reservation for ${formData.guests} guests. Ref: ${bookingId}. Opening hours: Monday to Sunday from 5:00 PM to 3:00 AM.
 LOCATION:AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR
 DTSTART:${dtStart}
 DTEND:${dtEnd}
@@ -69,53 +60,6 @@ END:VCALENDAR`;
     document.body.removeChild(link);
   };
 
-  const handleSendEmail = async () => {
-    setEmailStatus('sending');
-    setEmailFeedback(null);
-    try {
-      const res = await sendBookingConfirmationEmail(bookingId);
-      if (res && res.success) {
-        setEmailStatus('sent');
-        setEmailFeedback(
-          res.mode === 'smtp'
-            ? `Confirmation email dispatched directly to ${formData.email}.`
-            : `Confirmation email logged and generated for ${formData.email}.`
-        );
-      } else {
-        setEmailStatus('error');
-        setEmailFeedback(res?.error || 'Unable to dispatch email. You can use the mailto link below.');
-      }
-    } catch {
-      setEmailStatus('error');
-      setEmailFeedback('Unable to reach email server. Please use manual email.');
-    }
-  };
-
-  const handleOpenEmailPreview = async () => {
-    setShowEmailPreview(true);
-    if (!previewHtml) {
-      const data = await fetchBookingEmailPreview(bookingId);
-      if (data && data.html) {
-        setPreviewHtml(data.html);
-      }
-    }
-  };
-
-  const mailtoSubject = encodeURIComponent(`AMICA SOHO · Table Reservation Confirmed (${bookingId})`);
-  const mailtoBody = encodeURIComponent(
-    `Dear ${formData.name},\n\n` +
-    `Your table reservation at AMICA SOHO is confirmed:\n\n` +
-    `• Reference: ${bookingId}\n` +
-    `• Date: ${formData.date}\n` +
-    `• Time: ${formData.timeSlot}\n` +
-    `• Party Size: ${formData.guests} ${formData.guests === 1 ? 'Guest' : 'Guests'}\n` +
-    `• Occasion: ${formData.specialOccasion || 'Casual Dining & Drinks'}\n\n` +
-    `AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR\n` +
-    `Wednesday to Saturday · 5:00 PM – 3:00 AM\n\n` +
-    `Warm regards,\nAMICA SOHO Team`
-  );
-  const mailtoUrl = `mailto:${encodeURIComponent(formData.email)}?subject=${mailtoSubject}&body=${mailtoBody}`;
-
   const handleCopyDetails = () => {
     const text =
       `AMICA SOHO · Table Reservation Confirmed\n` +
@@ -126,277 +70,147 @@ END:VCALENDAR`;
       `Party Size: ${formData.guests} Guests\n` +
       `Occasion: ${formData.specialOccasion || 'Casual Dining & Drinks'}\n` +
       `Venue: 23 Frith Street, Soho, London W1D 4RR\n` +
-      `Hours: Wed–Sat, 5:00 PM – 3:00 AM`;
+      `Hours: Mon–Sun, 5:00 PM – 3:00 AM`;
     navigator.clipboard.writeText(text);
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 2500);
   };
 
   return (
-    <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
-        <div className="relative w-full max-w-lg bg-gradient-to-b from-[#180307] via-[#120205] to-[#0A0103] border-2 border-[#DFBE7B] rounded-xl p-5 sm:p-7 text-[#FDFBF7] shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto">
-          
-          {/* Top Metallic Border Decor */}
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#DFBE7B] via-[#C5A059] to-[#DFBE7B]" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+      <div className="relative w-full max-w-lg bg-gradient-to-b from-[#180307] via-[#120205] to-[#0A0103] border-2 border-[#DFBE7B] rounded-xl p-5 sm:p-7 text-[#FDFBF7] shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto">
+        
+        {/* Top Metallic Border Decor */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#DFBE7B] via-[#C5A059] to-[#DFBE7B]" />
 
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-[#FDFBF7]/60 hover:text-[#DFBE7B] p-1 transition-colors cursor-pointer"
-            aria-label="Close confirmation pass"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-[#FDFBF7]/60 hover:text-[#DFBE7B] p-1 transition-colors cursor-pointer"
+          aria-label="Close confirmation pass"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
-          {/* Header Icon */}
-          <div className="text-center space-y-2 mb-5">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-b from-[#200A0E] to-[#120205] border border-emerald-400 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)] mb-1">
-              <CheckCircle className="w-6 h-6" />
-            </div>
-
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-[10px] uppercase font-sans font-bold tracking-widest">
-              <Zap className="w-3 h-3 text-emerald-400" />
-              <span>RESERVATION CONFIRMED · REF #{bookingId}</span>
-            </div>
-
-            <h2 className="font-['Cinzel',serif] text-2xl sm:text-3xl text-[#FDFBF7] tracking-wider font-light">
-              Table Reserved at <span className="text-[#E8CCA0]">AMICA SOHO</span>
-            </h2>
-            <p className="text-xs text-[#DFBE7B]/80 font-sans">
-              Thank you, {formData.name}. Your table for <strong>{formData.guests} {formData.guests === 1 ? 'guest' : 'guests'}</strong> is confirmed.
-            </p>
+        {/* Header Icon */}
+        <div className="text-center space-y-2 mb-5">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-b from-[#200A0E] to-[#120205] border border-emerald-400 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)] mb-1">
+            <CheckCircle className="w-6 h-6" />
           </div>
 
-          {/* Pass Details Card (No room or table allocation) */}
-          <div className="bg-[#140306] border border-[#DFBE7B]/30 rounded-lg p-4 sm:p-5 space-y-3.5 mb-5 shadow-inner">
-            
-            <div className="grid grid-cols-2 gap-4 pb-3 border-b border-[#DFBE7B]/20">
-              <div>
-                <span className="text-[10px] text-[#DFBE7B] uppercase font-sans tracking-wider block font-semibold">
-                  Date & Time
-                </span>
-                <div className="flex items-center gap-1.5 text-sm font-semibold text-[#FDFBF7] mt-0.5 font-sans">
-                  <Calendar className="w-3.5 h-3.5 text-[#DFBE7B]" />
-                  <span>{formData.date}</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-[#DFBE7B] mt-0.5 font-sans">
-                  <Clock className="w-3.5 h-3.5 text-[#DFBE7B]" />
-                  <span>{formData.timeSlot}</span>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-[10px] text-[#DFBE7B] uppercase font-sans tracking-wider block font-semibold">
-                  Party Size
-                </span>
-                <div className="flex items-center gap-1.5 text-sm font-semibold text-[#FDFBF7] mt-0.5 font-sans">
-                  <Users className="w-3.5 h-3.5 text-[#DFBE7B]" />
-                  <span>{formData.guests} {formData.guests === 1 ? 'Guest' : 'Guests'}</span>
-                </div>
-                <span className="text-[11px] text-[#DFBE7B]/80 block font-sans mt-0.5 truncate">
-                  {formData.specialOccasion || 'Casual Dining & Drinks'}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-1.5 text-xs text-[#FDFBF7]/80 font-sans">
-              <div className="flex items-start gap-2">
-                <MapPin className="w-3.5 h-3.5 text-[#DFBE7B] shrink-0 mt-0.5" />
-                <span>AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR</span>
-              </div>
-              <div className="flex items-center gap-2 text-[11px] text-[#DFBE7B]/80">
-                <Clock className="w-3 h-3 text-[#DFBE7B] shrink-0" />
-                <span>Wednesday to Saturday, 5:00 PM to 3:00 AM (17:00 – 03:00)</span>
-              </div>
-              {formData.dietaryNotes && (
-                <p className="text-[11px] text-[#DFBE7B] bg-[#0A0103] p-2 rounded border border-[#DFBE7B]/20 mt-1">
-                  <strong className="text-[#FFEAA7]">Dietary / Notes:</strong> {formData.dietaryNotes}
-                </p>
-              )}
-            </div>
-
-            {/* Reference Bar */}
-            <div className="pt-2 flex items-center justify-between bg-[#0A0103] p-2.5 rounded-lg border border-[#DFBE7B]/25">
-              <div className="text-left space-y-0.5">
-                <span className="text-[9px] font-sans text-emerald-400 uppercase tracking-wider block font-bold">
-                  ✓ Confirmed Reservation
-                </span>
-                <span className="font-mono text-xs text-[#FDFBF7] font-bold block">{bookingId}</span>
-              </div>
-              
-              <button
-                type="button"
-                onClick={handleCopyDetails}
-                className="px-2.5 py-1 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/30 text-[#DFBE7B] text-[11px] flex items-center gap-1.5 cursor-pointer transition-colors"
-                title="Copy reservation details to clipboard"
-              >
-                {copiedText ? (
-                  <>
-                    <Check className="w-3 h-3 text-emerald-400" />
-                    <span className="text-emerald-400">Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    <span>Copy</span>
-                  </>
-                )}
-              </button>
-            </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-[10px] uppercase font-sans font-bold tracking-widest">
+            <Zap className="w-3 h-3 text-emerald-400" />
+            <span>RESERVATION CONFIRMED · REF #{bookingId}</span>
           </div>
 
-          {/* Email Confirmation Dispatch & Status Box */}
-          <div className="bg-[#180307] border border-[#DFBE7B]/30 rounded-lg p-3.5 mb-5 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-[#DFBE7B]" />
-                <span className="text-xs font-sans font-bold uppercase tracking-wider text-[#DFBE7B]">
-                  Email Confirmation
-                </span>
-              </div>
-              <span className="text-[10px] text-emerald-400 font-sans font-semibold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40">
-                Dispatched Automatically
-              </span>
-            </div>
-
-            <div className="bg-[#100205] border border-[#DFBE7B]/20 rounded p-2 text-[11px] font-sans space-y-1">
-              <div className="flex items-center justify-between text-[#DFBE7B]/80">
-                <span>From: <strong className="text-[#FFEAA7]">reservations@amicasoho.com</strong></span>
-                <span>Service: <span className="text-emerald-400 font-mono text-[10px]">SendGrid / Cloud Mail</span></span>
-              </div>
-              <div className="text-[#DFBE7B]/70 truncate">
-                Recipient: <strong className="text-[#FDFBF7]">{formData.email}</strong>
-              </div>
-            </div>
-
-            {emailFeedback && (
-              <div className={`p-2 rounded text-xs font-sans flex items-center gap-2 ${
-                emailStatus === 'sent'
-                  ? 'bg-emerald-950/80 border border-emerald-500/50 text-emerald-200'
-                  : 'bg-amber-950/80 border border-amber-500/50 text-amber-200'
-              }`}>
-                <CheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
-                <span>{emailFeedback}</span>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-sans">
-              {/* Send / Dispatch Email Button */}
-              <button
-                type="button"
-                onClick={handleSendEmail}
-                disabled={emailStatus === 'sending'}
-                className="py-2 px-3 rounded bg-gradient-to-r from-[#C5A059] to-[#DFBE7B] hover:from-[#DFBE7B] hover:to-[#FFEAA7] text-[#120205] font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow disabled:opacity-50"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>{emailStatus === 'sending' ? 'Sending...' : emailStatus === 'sent' ? 'Send Again' : 'Send Email'}</span>
-              </button>
-
-              {/* View HTML Preview */}
-              <button
-                type="button"
-                onClick={handleOpenEmailPreview}
-                className="py-2 px-3 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] text-[#DFBE7B] font-semibold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>Preview Email</span>
-              </button>
-
-              {/* Open in Email Client (mailto) */}
-              <a
-                href={mailtoUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="py-2 px-3 rounded bg-[#0A0103] hover:bg-[#1a0509] border border-[#DFBE7B]/30 hover:border-[#DFBE7B] text-[#FFEAA7] font-semibold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Open Mail App</span>
-              </a>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-2.5">
-            <button
-              onClick={downloadCalendarFile}
-              className="flex-1 py-2.5 px-4 rounded-lg bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] text-[#DFBE7B] text-xs font-sans font-bold tracking-wider uppercase flex items-center justify-center gap-2 transition-all cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Add To Calendar (.ics)</span>
-            </button>
-
-            <button
-              onClick={onClose}
-              className="py-2.5 px-6 rounded-lg bg-gradient-to-r from-[#C5A059] to-[#DFBE7B] hover:from-[#DFBE7B] hover:to-[#FFEAA7] text-[#120205] text-xs font-sans font-bold tracking-wider uppercase flex items-center justify-center transition-all cursor-pointer shadow-md"
-            >
-              <span>Done</span>
-            </button>
-          </div>
-
-          <p className="text-[10px] text-center text-[#DFBE7B]/60 mt-3 font-sans">
-            Free cancellation up to 2 hours prior. Tables held for 15 minutes past reservation time.
+          <h2 className="font-['Cinzel',serif] text-2xl sm:text-3xl text-[#FDFBF7] tracking-wider font-light">
+            Table Reserved at <span className="text-[#E8CCA0]">AMICA SOHO</span>
+          </h2>
+          <p className="text-xs text-[#DFBE7B]/80 font-sans">
+            Thank you, {formData.name}. Your table for <strong>{formData.guests} {formData.guests === 1 ? 'guest' : 'guests'}</strong> is confirmed.
           </p>
         </div>
-      </div>
 
-      {/* HTML Email Preview Modal */}
-      {showEmailPreview && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-5 bg-black/90 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-2xl bg-[#0B0B0C] border-2 border-[#DFBE7B] rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-            <div className="p-3.5 bg-[#180307] border-b border-[#DFBE7B]/30 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-[#DFBE7B]" />
-                <span className="font-['Cinzel',serif] text-sm text-[#FFEAA7] font-semibold">
-                  Confirmation Email Preview · {formData.email}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowEmailPreview(false)}
-                className="p-1 rounded-full text-[#DFBE7B]/70 hover:text-[#DFBE7B] hover:bg-[#200A0E] cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-4 overflow-y-auto flex-1 bg-[#0A0103]">
-              {previewHtml ? (
-                <div
-                  className="bg-transparent"
-                  dangerouslySetInnerHTML={{ __html: previewHtml }}
-                />
-              ) : (
-                <div className="p-8 text-center text-sm text-[#DFBE7B] font-sans">
-                  Generating email preview...
-                </div>
-              )}
-            </div>
-
-            <div className="p-3 bg-[#180307] border-t border-[#DFBE7B]/30 flex items-center justify-between text-xs font-sans">
-              <span className="text-[#DFBE7B]/70 text-[11px]">
-                Branded AMICA SOHO Confirmation Template
+        {/* Pass Details Card */}
+        <div className="bg-[#140306] border border-[#DFBE7B]/30 rounded-lg p-4 sm:p-5 space-y-3.5 mb-5 shadow-inner">
+          
+          <div className="grid grid-cols-2 gap-4 pb-3 border-b border-[#DFBE7B]/20">
+            <div>
+              <span className="text-[10px] text-[#DFBE7B] uppercase font-sans tracking-wider block font-semibold">
+                Date & Time
               </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleSendEmail}
-                  className="px-3 py-1.5 rounded bg-gradient-to-r from-[#C5A059] to-[#DFBE7B] text-[#120205] font-bold text-xs uppercase tracking-wider cursor-pointer"
-                >
-                  Dispatch Email Now
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowEmailPreview(false)}
-                  className="px-3 py-1.5 rounded bg-[#200A0E] border border-[#DFBE7B]/40 text-[#DFBE7B] text-xs uppercase tracking-wider cursor-pointer"
-                >
-                  Close
-                </button>
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-[#FDFBF7] mt-0.5 font-sans">
+                <Calendar className="w-3.5 h-3.5 text-[#DFBE7B]" />
+                <span>{formData.date}</span>
               </div>
+              <div className="flex items-center gap-1.5 text-xs text-[#DFBE7B] mt-0.5 font-sans">
+                <Clock className="w-3.5 h-3.5 text-[#DFBE7B]" />
+                <span>{formData.timeSlot}</span>
+              </div>
+            </div>
+
+            <div>
+              <span className="text-[10px] text-[#DFBE7B] uppercase font-sans tracking-wider block font-semibold">
+                Party Size
+              </span>
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-[#FDFBF7] mt-0.5 font-sans">
+                <Users className="w-3.5 h-3.5 text-[#DFBE7B]" />
+                <span>{formData.guests} {formData.guests === 1 ? 'Guest' : 'Guests'}</span>
+              </div>
+              <span className="text-[11px] text-[#DFBE7B]/80 block font-sans mt-0.5 truncate">
+                {formData.specialOccasion || 'Casual Dining & Drinks'}
+              </span>
             </div>
           </div>
+
+          <div className="space-y-1.5 text-xs text-[#FDFBF7]/80 font-sans">
+            <div className="flex items-start gap-2">
+              <MapPin className="w-3.5 h-3.5 text-[#DFBE7B] shrink-0 mt-0.5" />
+              <span>AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR</span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-[#DFBE7B]/80">
+              <Clock className="w-3 h-3 text-[#DFBE7B] shrink-0" />
+              <span>Monday to Sunday, 5:00 PM to 3:00 AM (17:00 – 03:00)</span>
+            </div>
+            {formData.dietaryNotes && (
+              <p className="text-[11px] text-[#DFBE7B] bg-[#0A0103] p-2 rounded border border-[#DFBE7B]/20 mt-1">
+                <strong className="text-[#FFEAA7]">Dietary / Notes:</strong> {formData.dietaryNotes}
+              </p>
+            )}
+          </div>
+
+          {/* Reference Bar */}
+          <div className="pt-2 flex items-center justify-between bg-[#0A0103] p-2.5 rounded-lg border border-[#DFBE7B]/25">
+            <div className="text-left space-y-0.5">
+              <span className="text-[9px] font-sans text-emerald-400 uppercase tracking-wider block font-bold">
+                ✓ Confirmed Reservation
+              </span>
+              <span className="font-mono text-xs text-[#FDFBF7] font-bold block">{bookingId}</span>
+            </div>
+            
+            <button
+              type="button"
+              onClick={handleCopyDetails}
+              className="px-2.5 py-1 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/30 text-[#DFBE7B] text-[11px] flex items-center gap-1.5 cursor-pointer transition-colors"
+              title="Copy reservation details to clipboard"
+            >
+              {copiedText ? (
+                <>
+                  <Check className="w-3 h-3 text-emerald-400" />
+                  <span className="text-emerald-400">Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
-      )}
-    </>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          <button
+            onClick={downloadCalendarFile}
+            className="flex-1 py-2.5 px-4 rounded-lg bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] text-[#DFBE7B] text-xs font-sans font-bold tracking-wider uppercase flex items-center justify-center gap-2 transition-all cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Add To Calendar (.ics)</span>
+          </button>
+
+          <button
+            onClick={onClose}
+            className="py-2.5 px-6 rounded-lg bg-gradient-to-r from-[#C5A059] to-[#DFBE7B] hover:from-[#DFBE7B] hover:to-[#FFEAA7] text-[#120205] text-xs font-sans font-bold tracking-wider uppercase flex items-center justify-center transition-all cursor-pointer shadow-md font-sans"
+          >
+            <span>Done</span>
+          </button>
+        </div>
+
+        <p className="text-[10px] text-center text-[#DFBE7B]/60 mt-3 font-sans">
+          Free cancellation up to 2 hours prior. Tables held for 15 minutes past reservation time.
+        </p>
+      </div>
+    </div>
   );
 };

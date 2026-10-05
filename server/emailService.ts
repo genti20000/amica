@@ -345,3 +345,50 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
     externalId
   };
 }
+
+export function checkEmailServiceStatus() {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const sendgridApiKey = process.env.SENDGRID_API_KEY;
+  const smtpHost = process.env.SMTP_HOST;
+  const fromEmail = process.env.FROM_EMAIL || 'AMICA SOHO <reservations@amica.london>';
+
+  if (resendApiKey) {
+    const masked = resendApiKey.length > 8 ? `${resendApiKey.substring(0, 5)}...${resendApiKey.substring(resendApiKey.length - 4)}` : '***';
+    return {
+      ready: true,
+      provider: 'Resend',
+      fromEmail,
+      apiKeyConfigured: true,
+      apiKeyMasked: masked,
+      status: 'Resend API Key is active and ready to dispatch live emails to guests!'
+    };
+  }
+
+  if (sendgridApiKey) {
+    return {
+      ready: true,
+      provider: 'SendGrid',
+      fromEmail,
+      apiKeyConfigured: true,
+      status: 'SendGrid API Key is configured.'
+    };
+  }
+
+  if (smtpHost) {
+    return {
+      ready: true,
+      provider: 'SMTP',
+      fromEmail,
+      apiKeyConfigured: true,
+      status: 'SMTP is configured.'
+    };
+  }
+
+  return {
+    ready: false,
+    provider: 'Simulated (Fallback)',
+    fromEmail,
+    apiKeyConfigured: false,
+    status: 'RESEND_API_KEY environment variable is missing. Set RESEND_API_KEY="re_..." in your environment or secrets to send live emails.'
+  };
+}
