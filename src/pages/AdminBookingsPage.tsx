@@ -119,12 +119,9 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   };
 
   const loadData = async () => {
-    setBookings(getStoredBookings());
     try {
       const data = await fetchBookingsFromDb();
-      if (data && data.length > 0) {
-        setBookings(data);
-      }
+      setBookings(Array.isArray(data) ? data : []);
       const stats = await fetchDatabaseStatus();
       setDbStats(stats);
 
@@ -134,7 +131,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       const sSettings = await fetchSystemSettings();
       setSystemSettings(sSettings);
     } catch {
-      // ignore
+      setBookings(getStoredBookings());
     }
   };
 
