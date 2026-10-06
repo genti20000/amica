@@ -1,0 +1,80 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidReservation(data) {
+      return data.keys().hasAll(['booking_id', 'guest_name', 'email', 'phone', 'guests', 'reservation_date', 'time_slot', 'status', 'created_at']) &&
+             data.keys().hasOnly(['booking_id', 'guest_name', 'email', 'phone', 'guests', 'reservation_date', 'time_slot', 'seating_area', 'special_occasion', 'dietary_notes', 'status', 'table_number', 'qr_code_value', 'created_at', 'updated_at']) &&
+             data.booking_id is string && data.booking_id.size() <= 64 &&
+             data.guest_name is string && data.guest_name.size() > 0 && data.guest_name.size() <= 100 &&
+             data.email is string && data.email.size() <= 128 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.guests is number && data.guests >= 1 && data.guests <= 20 &&
+             data.reservation_date is string && data.reservation_date.size() <= 30 &&
+             data.time_slot is string && data.time_slot.size() <= 60 &&
+             data.status is string && data.status in ['Confirmed', 'Auto-Confirmed', 'Seated', 'Cancelled', 'Completed'];
+    }
+
+    function isValidBlockedDate(data) {
+      return data.keys().hasAll(['blocked_date', 'reason', 'created_at']) &&
+             data.keys().hasOnly(['blocked_date', 'is_full_day', 'start_time', 'end_time', 'reason', 'notes', 'created_at']) &&
+             data.blocked_date is string && data.blocked_date.size() <= 20 &&
+             data.reason is string && data.reason.size() <= 200;
+    }
+
+    function isValidVenueSetting(data) {
+      return data.keys().hasAll(['key', 'value']) &&
+             data.keys().hasOnly(['key', 'value', 'updated_at']) &&
+             data.key is string && data.key.size() <= 100 &&
+             data.value is string && data.value.size() <= 1000;
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Test connection doc
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // Reservations
+    match /reservations/{reservationId} {
+      allow read: if true;
+      allow create: if isValidId(reservationId) && isValidReservation(incoming());
+      allow update: if isValidId(reservationId) && isValidReservation(incoming()) && (isSignedIn() || incoming().status == existing().status);
+      allow delete: if isSignedIn();
+    }
+
+    // Blocked Dates
+    match /blocked_dates/{blockedDateId} {
+      allow read: if true;
+      allow create, update, delete: if isValidId(blockedDateId) && isValidBlockedDate(incoming());
+    }
+
+    // Venue Settings
+    match /venue_settings/{settingKey} {
+      allow read: if true;
+      allow create, update, delete: if isValidId(settingKey) && isValidVenueSetting(incoming());
+    }
+  }
+}

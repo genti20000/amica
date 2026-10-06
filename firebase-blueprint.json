@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "Reservation": {
+      "title": "Reservation",
+      "description": "Subterranean dining or drinks reservation at AMICA SOHO",
+      "type": "object",
+      "properties": {
+        "booking_id": { "type": "string", "description": "Unique booking reference code" },
+        "guest_name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string", "maxLength": 30 },
+        "guests": { "type": "number" },
+        "reservation_date": { "type": "string" },
+        "time_slot": { "type": "string" },
+        "seating_area": { "type": "string" },
+        "special_occasion": { "type": "string" },
+        "dietary_notes": { "type": "string" },
+        "status": { "type": "string", "enum": ["Confirmed", "Auto-Confirmed", "Seated", "Cancelled", "Completed"] },
+        "table_number": { "type": "string" },
+        "qr_code_value": { "type": "string" },
+        "created_at": { "type": "string" },
+        "updated_at": { "type": "string" }
+      },
+      "required": ["booking_id", "guest_name", "email", "phone", "guests", "reservation_date", "time_slot", "status", "created_at"]
+    },
+    "BlockedDate": {
+      "title": "BlockedDate",
+      "description": "Blackout date or private buyout closure window",
+      "type": "object",
+      "properties": {
+        "blocked_date": { "type": "string" },
+        "is_full_day": { "type": "boolean" },
+        "start_time": { "type": "string" },
+        "end_time": { "type": "string" },
+        "reason": { "type": "string" },
+        "notes": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["blocked_date", "reason", "created_at"]
+    },
+    "VenueSetting": {
+      "title": "VenueSetting",
+      "description": "Operational settings and opening parameters",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "type": "string" },
+        "updated_at": { "type": "string" }
+      },
+      "required": ["key", "value"]
+    }
+  },
+  "firestore": {
+    "/reservations/{reservationId}": {
+      "schema": "Reservation",
+      "description": "All table and drinks reservations"
+    },
+    "/blocked_dates/{blockedDateId}": {
+      "schema": "BlockedDate",
+      "description": "Blackout windows and venue buyouts"
+    },
+    "/venue_settings/{settingKey}": {
+      "schema": "VenueSetting",
+      "description": "System configuration settings"
+    }
+  }
+}
