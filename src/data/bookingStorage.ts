@@ -232,7 +232,7 @@ export const fetchBlockedDates = async (): Promise<BlockedDateItem[]> => {
       }
     }
   } catch {
-    // fallback to cache
+    // fallback to cache if offline
   }
 
   try {
@@ -242,21 +242,8 @@ export const fetchBlockedDates = async (): Promise<BlockedDateItem[]> => {
     // ignore
   }
 
-  const sampleDate = new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0];
-  const initial = [
-    {
-      id: 1,
-      blocked_date: sampleDate,
-      is_full_day: 1,
-      start_time: null,
-      end_time: null,
-      reason: 'Private Buyout — Exclusive Subterranean Club Hire',
-      notes: 'Private corporate record label celebration & tasting. Closed to general reservations.',
-      created_at: new Date().toISOString()
-    }
-  ];
-  localStorage.setItem(BLOCKED_DATES_KEY, JSON.stringify(initial));
-  return initial;
+  localStorage.setItem(BLOCKED_DATES_KEY, JSON.stringify([]));
+  return [];
 };
 
 export const addBlockedDate = async (data: {
