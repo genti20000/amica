@@ -115,7 +115,7 @@ export function generateConfirmationEmailHtml(reservation: ReservationRow): stri
 
     <div class="footer">
       <strong>AMICA SOHO</strong> · 23 Frith Street, Soho, London W1D 4RR<br>
-      Reservations: <a href="mailto:reservations@amica.london">reservations@amica.london</a><br>
+      Reservations: <a href="mailto:reservations@amicasoho.com">reservations@amicasoho.com</a><br>
       Open Wednesday through Saturday (5:00 PM – 3:00 AM)
     </div>
   </div>
@@ -151,7 +151,7 @@ Hours:        Wednesday to Saturday, 5:00 PM – 3:00 AM
 IMPORTANT INFORMATION:
 - Your table is held for 15 minutes past your booked time.
 - No deposit required. Free cancellations up to 2 hours prior.
-- Contact: reservations@amica.london
+- Contact: reservations@amicasoho.com
 
 We look forward to welcoming you to Soho.
 
@@ -177,8 +177,8 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
   const textBody = generateConfirmationEmailText(reservation);
   const dispatchedAt = new Date().toISOString();
 
-  // Sender address requested: reservations@amica.london
-  const fromEmail = process.env.FROM_EMAIL || 'AMICA SOHO <reservations@amica.london>';
+  // Sender address: reservations@amicasoho.com
+  const fromEmail = process.env.FROM_EMAIL || 'AMICA SOHO <reservations@amicasoho.com>';
 
   // Create mailto fallback URL
   const mailtoSubject = encodeURIComponent(subject);
@@ -200,14 +200,15 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
   // 1. Primary External Service: RESEND
   if (resendApiKey) {
     try {
-      const resendRes = await fetch('https://api.resend.com/emails', {
+      let activeSender = fromEmail;
+      let resendRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${resendApiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: fromEmail,
+          from: activeSender,
           to: [reservation.email],
           subject,
           html: previewHtml,
@@ -215,20 +216,42 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
         })
       });
 
-      const resendData = await resendRes.json();
+      let resendData = await resendRes.json();
+
+      // If custom domain is not yet verified on Resend, retry with onboarding@resend.dev
+      if (!resendRes.ok && typeof resendData.message === 'string' && resendData.message.includes('not verified')) {
+        console.warn('amicasoho.com domain not verified on Resend. Trying fallback to onboarding@resend.dev...');
+        activeSender = 'AMICA SOHO <onboarding@resend.dev>';
+        resendRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: activeSender,
+            to: [reservation.email],
+            subject,
+            html: previewHtml,
+            text: textBody
+          })
+        });
+        resendData = await resendRes.json();
+      }
+
       if (!resendRes.ok) {
-        throw new Error(`Resend API ${resendRes.status}: ${resendData.message || JSON.stringify(resendData)}`);
+        throw new Error(resendData.message || JSON.stringify(resendData));
       }
 
       mode = 'resend';
       provider = 'Resend (api.resend.com)';
       externalId = resendData.id;
-      message = `Confirmation email sent via Resend from ${fromEmail} to ${reservation.email}`;
+      message = `Confirmation email sent via Resend from ${activeSender} to ${reservation.email}`;
     } catch (err: any) {
-      console.warn('Resend dispatch error, falling back to simulated dispatch:', err.message);
+      console.warn('Resend dispatch error:', err.message);
       mode = 'simulated';
-      provider = 'Resend (Fallback)';
-      message = `Resend error: ${err.message}. Confirmation logged for ${reservation.email}.`;
+      provider = 'Resend (Domain Unverified)';
+      message = `Resend restriction: ${err.message}`;
     }
   }
   // 2. Secondary External Service: SENDGRID
@@ -242,7 +265,7 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
         },
         body: JSON.stringify({
           personalizations: [{ to: [{ email: reservation.email }] }],
-          from: { email: 'reservations@amica.london', name: 'AMICA SOHO' },
+          from: { email: 'reservations@amicasoho.com', name: 'AMICA SOHO' },
           subject,
           content: [
             { type: 'text/plain', value: textBody },
@@ -258,7 +281,7 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
 
       mode = 'sendgrid';
       provider = 'SendGrid (api.sendgrid.com)';
-      message = `Confirmation email sent via SendGrid from reservations@amica.london to ${reservation.email}`;
+      message = `Confirmation email sent via SendGrid from reservations@amicasoho.com to ${reservation.email}`;
     } catch (err: any) {
       console.warn('SendGrid dispatch failed, falling back to simulated dispatch:', err.message);
       mode = 'simulated';
@@ -290,7 +313,7 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
       mode = 'smtp';
       provider = 'SMTP Service';
       externalId = info.messageId;
-      message = `Confirmation email sent via SMTP from reservations@amica.london to ${reservation.email}`;
+      message = `Confirmation email sent via SMTP from reservations@amicasoho.com to ${reservation.email}`;
     } catch (err: any) {
       console.warn('SMTP dispatch failed, falling back to simulated dispatch:', err.message);
       mode = 'simulated';
@@ -302,7 +325,7 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
   else {
     mode = 'simulated';
     provider = 'Internal Email Dispatch Engine';
-    message = `Confirmation email prepared from reservations@amica.london to ${reservation.email}. Configure RESEND_API_KEY in environment variables for live delivery.`;
+    message = `Confirmation email prepared from reservations@amicasoho.com to ${reservation.email}. Configure RESEND_API_KEY in environment variables for live delivery.`;
   }
 
   // Record dispatch log in database
@@ -315,7 +338,7 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
       'EMAIL_CONFIRMATION_DISPATCHED',
       mode.toUpperCase() + '_SERVICE',
       JSON.stringify({
-        sender: 'reservations@amica.london',
+        sender: 'reservations@amicasoho.com',
         recipient: reservation.email,
         mode,
         provider,
@@ -335,7 +358,7 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
     provider,
     bookingId: reservation.booking_id,
     recipient: reservation.email,
-    sender: 'reservations@amica.london',
+    sender: 'reservations@amicasoho.com',
     subject,
     previewHtml,
     textBody,
@@ -350,7 +373,7 @@ export function checkEmailServiceStatus() {
   const resendApiKey = process.env.RESEND_API_KEY;
   const sendgridApiKey = process.env.SENDGRID_API_KEY;
   const smtpHost = process.env.SMTP_HOST;
-  const fromEmail = process.env.FROM_EMAIL || 'AMICA SOHO <reservations@amica.london>';
+  const fromEmail = process.env.FROM_EMAIL || 'AMICA SOHO <reservations@amicasoho.com>';
 
   if (resendApiKey) {
     const masked = resendApiKey.length > 8 ? `${resendApiKey.substring(0, 5)}...${resendApiKey.substring(resendApiKey.length - 4)}` : '***';
