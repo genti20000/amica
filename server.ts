@@ -365,9 +365,9 @@ async function startServer() {
   // Remove / unblock a date
   app.delete('/api/system/blocked-dates/:id', (req, res) => {
     try {
-      const id = Number(req.params.id);
+      const idParam = req.params.id;
       const { actor } = req.body || {};
-      const success = removeBlockedDate(id, actor || 'MAÎTRE_D_ADMIN');
+      const success = removeBlockedDate(idParam, actor || 'MAÎTRE_D_ADMIN');
       if (!success) {
         return res.status(404).json({ success: false, error: 'Blocked date record not found' });
       }

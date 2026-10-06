@@ -82,8 +82,7 @@ setSettingStmt.run('min_pax', '1', nowIso);
 setSettingStmt.run('max_pax', '20', nowIso);
 setSettingStmt.run('auto_confirm_rule', 'Auto-confirmed instantly up to 1 hour before opening / service time', nowIso);
 
-// Venue settings initialization complete. Table starts empty without demo data.
-db.exec('DELETE FROM blocked_dates;');
+// Venue settings initialization complete.
 
 export interface ReservationRow {
   id: number;
@@ -385,23 +384,35 @@ export function addBlockedDate(data: {
   return db.prepare('SELECT * FROM blocked_dates WHERE blocked_date = ? ORDER BY id DESC LIMIT 1').get(data.blocked_date) as unknown as BlockedDateRow;
 }
 
-export function removeBlockedDate(id: number, actor = 'MAÎTRE_D_ADMIN'): boolean {
-  const current = db.prepare('SELECT * FROM blocked_dates WHERE id = ?').get(id) as unknown as BlockedDateRow | undefined;
-  if (!current) return false;
+export function removeBlockedDate(idOrDate: number | string, actor = 'MAÎTRE_D_ADMIN'): boolean {
+  let rows: BlockedDateRow[] = [];
+  const strVal = String(idOrDate).trim();
+
+  if (/^\d+$/.test(strVal)) {
+    const numericId = Number(strVal);
+    const row = db.prepare('SELECT * FROM blocked_dates WHERE id = ?').get(numericId) as unknown as BlockedDateRow | undefined;
+    if (row) rows.push(row);
+  } else {
+    rows = db.prepare('SELECT * FROM blocked_dates WHERE blocked_date = ?').all(strVal) as unknown as BlockedDateRow[];
+  }
+
+  if (!rows || rows.length === 0) return false;
 
   const now = new Date().toISOString();
-  db.prepare('DELETE FROM blocked_dates WHERE id = ?').run(id);
+  for (const current of rows) {
+    db.prepare('DELETE FROM blocked_dates WHERE id = ?').run(current.id);
 
-  db.prepare(`
-    INSERT INTO booking_audit_logs (booking_id, action, actor, details, created_at)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(
-    'SYSTEM_SETTINGS',
-    'BLOCKED_DATE_REMOVED',
-    actor,
-    `Unblocked date ${current.blocked_date} (Reason was: ${current.reason}). Date is now open for bookings.`,
-    now
-  );
+    db.prepare(`
+      INSERT INTO booking_audit_logs (booking_id, action, actor, details, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      'SYSTEM_SETTINGS',
+      'BLOCKED_DATE_REMOVED',
+      actor,
+      `Unblocked date ${current.blocked_date} (Reason was: ${current.reason}). Date is now open for bookings.`,
+      now
+    );
+  }
 
   return true;
 }

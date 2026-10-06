@@ -284,16 +284,18 @@ export const addBlockedDate = async (data: {
   return updated;
 };
 
-export const removeBlockedDate = async (id: number): Promise<BlockedDateItem[]> => {
+export const removeBlockedDate = async (idOrDate: number | string): Promise<BlockedDateItem[]> => {
   try {
-    await fetch(`/api/system/blocked-dates/${id}`, { method: 'DELETE' });
-    return await fetchBlockedDates();
+    const res = await fetch(`/api/system/blocked-dates/${idOrDate}`, { method: 'DELETE' });
+    if (res.ok) {
+      return await fetchBlockedDates();
+    }
   } catch (e) {
     console.error('Failed to remove blocked date via API', e);
   }
 
   const current = await fetchBlockedDates();
-  const updated = current.filter((item) => item.id !== id);
+  const updated = current.filter((item) => item.id !== Number(idOrDate) && item.blocked_date !== String(idOrDate));
   localStorage.setItem(BLOCKED_DATES_KEY, JSON.stringify(updated));
   return updated;
 };
