@@ -108,7 +108,7 @@ export function generateConfirmationEmailHtml(reservation: ReservationRow): stri
       <div class="policy-box">
         <strong>Important Information For Your Visit:</strong><br>
         • <strong>Arrival Window:</strong> Tables are held for 15 minutes past your booked time.<br>
-        • <strong>Opening Hours:</strong> Monday to Sunday from 5:00 PM to 3:00 AM (17:00 – 03:00).<br>
+        • <strong>Opening Hours:</strong> Wednesday to Saturday from 5:00 PM to 3:00 AM (17:00 – 03:00).<br>
         • <strong>No Deposit Required:</strong> Enjoy full complimentary booking. If your plans change, cancellations are free up to 2 hours prior.
       </div>
     </div>
@@ -116,7 +116,7 @@ export function generateConfirmationEmailHtml(reservation: ReservationRow): stri
     <div class="footer">
       <strong>AMICA SOHO</strong> · 23 Frith Street, Soho, London W1D 4RR<br>
       Reservations: <a href="mailto:reservations@amica.london">reservations@amica.london</a><br>
-      Open Monday through Sunday (5:00 PM – 3:00 AM)
+      Open Wednesday through Saturday (5:00 PM – 3:00 AM)
     </div>
   </div>
 </body>
@@ -146,7 +146,7 @@ Time:         ${reservation.time_slot}
 Party Size:   ${reservation.guests} ${reservation.guests === 1 ? 'Guest' : 'Guests'}
 Occasion:     ${reservation.special_occasion || 'Casual Dining & Drinks'}
 ${reservation.dietary_notes ? `Notes:        ${reservation.dietary_notes}\n` : ''}Venue:        AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR
-Hours:        Monday to Sunday, 5:00 PM – 3:00 AM
+Hours:        Wednesday to Saturday, 5:00 PM – 3:00 AM
 
 IMPORTANT INFORMATION:
 - Your table is held for 15 minutes past your booked time.

@@ -217,7 +217,7 @@ export const DEFAULT_SETTINGS: SystemSettings = {
   cutoff_hours: '1',
   opening_time: '17:00',
   closing_time: '03:00',
-  days_open: 'Monday – Sunday (7 Days a Week)',
+  days_open: 'Wednesday – Saturday (4 Days a Week)',
   announcement: 'Subterranean table reservations auto-confirmed instantly up to 1 hour before opening'
 };
 

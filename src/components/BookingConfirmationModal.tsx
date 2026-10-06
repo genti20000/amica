@@ -42,7 +42,7 @@ VERSION:2.0
 PRODID:-//AMICA SOHO//RESTAURANT RESERVATION//EN
 BEGIN:VEVENT
 SUMMARY:Table Reservation at AMICA SOHO (${formData.guests} Pax)
-DESCRIPTION:Table Reservation for ${formData.guests} guests. Ref: ${bookingId}. Opening hours: Monday to Sunday from 5:00 PM to 3:00 AM.
+DESCRIPTION:Table Reservation for ${formData.guests} guests. Ref: ${bookingId}. Opening hours: Wednesday to Saturday from 5:00 PM to 3:00 AM.
 LOCATION:AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR
 DTSTART:${dtStart}
 DTEND:${dtEnd}
@@ -70,7 +70,7 @@ END:VCALENDAR`;
       `Party Size: ${formData.guests} Guests\n` +
       `Occasion: ${formData.specialOccasion || 'Casual Dining & Drinks'}\n` +
       `Venue: 23 Frith Street, Soho, London W1D 4RR\n` +
-      `Hours: Mon–Sun, 5:00 PM – 3:00 AM`;
+      `Hours: Wed–Sat, 5:00 PM – 3:00 AM`;
     navigator.clipboard.writeText(text);
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 2500);
@@ -150,7 +150,7 @@ END:VCALENDAR`;
             </div>
             <div className="flex items-center gap-2 text-[11px] text-[#DFBE7B]/80">
               <Clock className="w-3 h-3 text-[#DFBE7B] shrink-0" />
-              <span>Monday to Sunday, 5:00 PM to 3:00 AM (17:00 – 03:00)</span>
+              <span>Wednesday to Saturday, 5:00 PM to 3:00 AM (17:00 – 03:00)</span>
             </div>
             {formData.dietaryNotes && (
               <p className="text-[11px] text-[#DFBE7B] bg-[#0A0103] p-2 rounded border border-[#DFBE7B]/20 mt-1">

@@ -33,15 +33,19 @@ export default function App() {
     }
   });
 
-  // Always default to coming-soon when locked
+  // Default page: check for direct booking link (?book=true or #book), otherwise coming-soon
   const [currentPage, setCurrentPage] = useState<PageId>(() => {
     try {
+      const params = new URLSearchParams(window.location.search);
+      const hash = window.location.hash;
+      if (params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve') {
+        return 'book';
+      }
       const isSessionUnlocked = sessionStorage.getItem('amica_unlocked') === 'true';
       if (!isSessionUnlocked) {
         return 'coming-soon';
       }
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('admin') === 'true' || window.location.hash === '#admin' || window.location.hash === '#admin-bookings') {
+      if (params.get('admin') === 'true' || hash === '#admin' || hash === '#admin-bookings') {
         return 'admin-bookings';
       }
       return 'home';
@@ -56,14 +60,22 @@ export default function App() {
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [bookingConfirmation, setBookingConfirmation] = useState<BookingConfirmation | null>(null);
 
-  // Direct URL support for ?admin=true or #admin
+  // Direct URL support for ?book=true, #book, ?admin=true, or #admin
   useEffect(() => {
     try {
-      // Clear any cached localStorage unlock so the site stays locked
+      // Clear any cached localStorage unlock so the rest of the site stays locked
       localStorage.removeItem('amica_unlocked');
 
       const params = new URLSearchParams(window.location.search);
-      const isDirectAdmin = params.get('admin') === 'true' || window.location.hash === '#admin' || window.location.hash === '#admin-bookings';
+      const hash = window.location.hash;
+
+      const isDirectBook = params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve';
+      if (isDirectBook) {
+        setCurrentPage('book');
+        return;
+      }
+
+      const isDirectAdmin = params.get('admin') === 'true' || hash === '#admin' || hash === '#admin-bookings';
       if (isDirectAdmin) {
         if (sessionStorage.getItem('amica_unlocked') === 'true') {
           setIsUnlocked(true);
@@ -79,7 +91,7 @@ export default function App() {
   }, []);
 
   const handleNavigate = (page: PageId) => {
-    if (page === 'coming-soon') {
+    if (page === 'coming-soon' || page === 'book') {
       setCurrentPage(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;

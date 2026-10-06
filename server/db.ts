@@ -77,7 +77,7 @@ const setSettingStmt = db.prepare(`
 const nowIso = new Date().toISOString();
 setSettingStmt.run('venue_name', 'AMICA SOHO', nowIso);
 setSettingStmt.run('address', '23 Frith Street, Soho, London W1D 4RR', nowIso);
-setSettingStmt.run('opening_hours', '17:00 - 03:00 (5:00 PM - 3:00 AM) 7 Days a Week', nowIso);
+setSettingStmt.run('opening_hours', '17:00 - 03:00 (5:00 PM - 3:00 AM) Wednesday to Saturday', nowIso);
 setSettingStmt.run('min_pax', '1', nowIso);
 setSettingStmt.run('max_pax', '20', nowIso);
 setSettingStmt.run('auto_confirm_rule', 'Auto-confirmed instantly up to 1 hour before opening / service time', nowIso);
@@ -301,7 +301,7 @@ export function getDatabaseMetadata() {
     seated,
     totalGuests: totalGuests || 0,
     totalBlockedDates,
-    openingHours: '17:00 – 03:00 (7 Days a Week)',
+    openingHours: '17:00 – 03:00 (Wednesday to Saturday)',
     autoConfirmPolicy: '1 to 20 pax auto confirmed up to 1 hour before service'
   };
 }

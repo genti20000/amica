@@ -392,13 +392,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
 
               <div className="space-y-2 text-xs font-sans">
                 {[
-                  { day: 'Monday', hours: '17:00 – 01:00' },
-                  { day: 'Tuesday', hours: '17:00 – 01:00' },
-                  { day: 'Wednesday', hours: '17:00 – 01:00' },
-                  { day: 'Thursday', hours: '17:00 – 02:00' },
-                  { day: 'Friday', hours: '17:00 – 02:00' },
-                  { day: 'Saturday', hours: '17:00 – 02:00' },
-                  { day: 'Sunday', hours: '17:00 – 01:00' },
+                  { day: 'Wednesday', hours: '17:00 – 03:00' },
+                  { day: 'Thursday', hours: '17:00 – 03:00' },
+                  { day: 'Friday', hours: '17:00 – 03:00' },
+                  { day: 'Saturday', hours: '17:00 – 03:00' },
+                  { day: 'Sun – Tue', hours: 'Closed' },
                 ].map((slot) => (
                   <div key={slot.day} className="flex items-center justify-between text-[#E5DFD7]">
                     <span className="font-light">{slot.day}</span>

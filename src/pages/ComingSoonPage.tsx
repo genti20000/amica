@@ -69,12 +69,13 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
               </div>
             </div>
 
-            {/* Table Reservation CTA (Available for testing when unlocked by staff) */}
-            {isUnlocked && onNavigate && (
+            {/* Direct Table Reservation CTA */}
+            {onNavigate && (
               <div className="mt-3.5">
                 <button
                   onClick={() => onNavigate('book')}
                   className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded bg-gradient-to-r from-[#2A080F] via-[#3D0C15] to-[#2A080F] hover:from-[#3D0C15] hover:to-[#55101E] border border-[#DFBE7B]/60 hover:border-[#FFEAA7] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.2em] uppercase transition-all duration-200 cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.7)] active:scale-95"
+                  title="Reserve Table Online"
                 >
                   <Calendar className="w-3 h-3 text-[#DFBE7B]" />
                   <span>Reserve Table</span>

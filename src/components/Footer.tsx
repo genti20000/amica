@@ -107,8 +107,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   <Clock className="w-3.5 h-3.5 text-[#9D7E54]" />
                   <span>Aperitivo Golden Hour</span>
                 </div>
-                <p className="text-[11px] text-[#FDFBF7]">Tuesday – Saturday: 16:30 – 18:30</p>
-                <p className="text-[10px] text-[#E8D5C4]/70">Late Lounge Open Tue–Thu until 23:30 / Fri–Sat until Late</p>
+                <p className="text-[11px] text-[#FDFBF7]">Wednesday – Saturday: 17:00 – 03:00</p>
+                <p className="text-[10px] text-[#E8D5C4]/70">Late Lounge Open Wed–Sat until 03:00 (5:00 PM – 3:00 AM)</p>
               </div>
             </div>
           </div>
