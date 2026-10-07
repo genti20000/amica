@@ -68,9 +68,9 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_audit_booking_id ON booking_audit_logs(booking_id);
 `);
 
-// Insert default venue settings
+// Insert default venue settings only if they do not already exist (preserves custom admin settings across deployments)
 const setSettingStmt = db.prepare(`
-  INSERT OR REPLACE INTO venue_settings (key, value, updated_at)
+  INSERT OR IGNORE INTO venue_settings (key, value, updated_at)
   VALUES (?, ?, ?)
 `);
 

@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Local SQLite Database (preserves production bookings & settings across GitHub pushes)
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
