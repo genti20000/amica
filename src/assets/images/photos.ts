@@ -1,11 +1,11 @@
 // AMICA SOHO — 10 Signature Photographic Assets
 import amicaEntranceDome from './amica_entrance_dome_1789585318196.jpg';
 import amicaFacadeNight from './amica_facade_night_1789585172921.jpg';
-import amicaCrimsonBar from './amica_crimson_bar_1789585190312.jpg';
+import amicaCrimsonBar from './regenerated_image_1791335300586.png';
 import amicaVaultBooth from './amica_vault_booth_1789585211456.jpg';
 import amicaArchBooth from './amica_arch_booth_1789585228527.jpg';
 import amicaOxbloodLounge from './amica_oxblood_lounge_1789585263002.jpg';
-import amicaNeonLounge from './amica_neon_lounge_1789585244827.jpg';
+import amicaNeonLounge from './regenerated_image_1791335296225.png';
 import amicaBarDisplay from './amica_bar_display_1789585281172.jpg';
 import amicaMirrorSconces from './amica_mirror_sconce_1789585298658.jpg';
 import amicaPowderRoom from './amica_powder_room_1789585137502.jpg';

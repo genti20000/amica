@@ -157,7 +157,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Right: HOME | COMING SOON + BOOK NOW + 3-line Hamburger Menu */}
             <div className="flex items-center gap-3 sm:gap-6">
               
-              {/* HOME | COMING SOON Navigation (Faithfully matching user screenshot) */}
+              {/* HOME | COCKTAILS | ABOUT Navigation */}
               <nav className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-sans tracking-[0.2em] sm:tracking-[0.26em] uppercase">
                 <button
                   onClick={() => handleNavClick('home')}
@@ -176,15 +176,15 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="text-[#DFBE7B]/40 select-none">|</span>
 
                 <button
-                  onClick={() => handleNavClick('coming-soon')}
+                  onClick={() => handleNavClick('drinks-food')}
                   className={`relative py-1 cursor-pointer transition-colors min-h-[44px] flex items-center ${
-                    currentPage === 'coming-soon'
+                    currentPage === 'drinks-food'
                       ? 'text-[#FDFBF7] font-semibold'
                       : 'text-gold-amica/70 hover:text-gold-amica font-normal'
                   }`}
                 >
-                  <span>COMING SOON</span>
-                  {currentPage === 'coming-soon' && (
+                  <span>COCKTAILS & MENU</span>
+                  {currentPage === 'drinks-food' && (
                     <span className="absolute bottom-1 left-0 right-0 h-[1.5px] bg-[#DFBE7B] shadow-[0_0_8px_#DFBE7B]" />
                   )}
                 </button>
@@ -194,7 +194,7 @@ export const Header: React.FC<HeaderProps> = ({
               {onLockSite && (
                 <button
                   onClick={onLockSite}
-                  className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded bg-burgundy/60 hover:bg-burgundy border border-maroon-gold/50 hover:border-maroon-gold text-gold-subtle hover:text-[#FFEAA7] text-[10px] tracking-[0.18em] uppercase transition-all duration-200 cursor-pointer"
+                  className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] text-[10px] tracking-[0.18em] uppercase transition-all duration-200 cursor-pointer shadow-sm"
                   title="Lock Main Site & Return to Coming Soon"
                 >
                   <Lock className="w-3 h-3 text-[#DFBE7B]" />
@@ -224,10 +224,10 @@ export const Header: React.FC<HeaderProps> = ({
                 BOOK NOW
               </button>
 
-              {/* Minimal 3-Line Hamburger Trigger with min 44x44px touch target */}
+              {/* Minimal 3-Line Hamburger Trigger reserved strictly for mobile & tablet (< 1024px) */}
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="w-11 h-11 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center gap-1.5 p-2 rounded bg-burgundy border border-maroon-gold text-gold-amica hover:text-[#FFEAA7] hover:bg-maroon-awning hover:border-gold-amica transition-colors focus:outline-none cursor-pointer shadow-sm active:scale-95"
+                className="lg:hidden w-11 h-11 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center gap-1.5 p-2 rounded bg-burgundy border border-maroon-gold text-gold-amica hover:text-[#FFEAA7] hover:bg-maroon-awning hover:border-gold-amica transition-colors focus:outline-none cursor-pointer shadow-sm active:scale-95"
                 aria-label="Toggle navigation menu"
               >
                 <span className={`block w-5 h-[1.5px] bg-current transition-all duration-300 ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />

@@ -123,18 +123,18 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
               GOOD DRINKS &nbsp;/&nbsp; LATE NIGHTS &nbsp;/&nbsp; SOHO SPIRIT
             </p>
 
-            {/* Action Buttons: Brushed Gold + Velvet Maroon with Gold Border */}
+            {/* Action Buttons: Primary Brushed Gold 'EXPLORE THE VENUE' + High-Contrast 'VIEW MENU' */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4 w-full sm:w-auto">
               <button
-                onClick={() => onNavigate('book')}
+                onClick={() => onNavigate('venue')}
                 className="bg-[#C5A059] hover:bg-[#DFBE7B] text-[#08080A] font-sans font-semibold text-xs tracking-[0.22em] uppercase min-h-[44px] py-3.5 px-8 transition-all duration-200 cursor-pointer shadow-[0_4px_22px_rgba(0,0,0,0.7)] active:scale-95 border border-[#FFEAA7]/50 text-center flex items-center justify-center rounded-sm"
               >
-                BOOK NOW
+                EXPLORE THE VENUE
               </button>
 
               <button
                 onClick={() => onNavigate('drinks-food')}
-                className="btn-maroon-gold min-h-[44px] py-3.5 px-8 text-xs text-center flex items-center justify-center cursor-pointer active:scale-95 rounded-sm backdrop-blur-sm bg-maroon-dark/60 hover:bg-maroon-dark"
+                className="bg-[#180307]/85 hover:bg-[#28060D] text-[#FFEAA7] border border-[#DFBE7B] font-sans font-semibold text-xs tracking-[0.22em] uppercase min-h-[44px] py-3.5 px-8 transition-all duration-200 cursor-pointer shadow-lg backdrop-blur-md active:scale-95 rounded-sm text-center flex items-center justify-center"
               >
                 VIEW MENU
               </button>

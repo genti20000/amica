@@ -32,7 +32,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <JazzAmbientAudio />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+        {/* Subtle Top Divider Line */}
+        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#DFBE7B]/30 to-transparent my-2" />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12 pt-2">
           
           {/* Brand & Identity */}
           <div className="space-y-4">
