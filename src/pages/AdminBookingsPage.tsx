@@ -148,7 +148,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     } finally {
       setIsRefreshing(false);
     }
-  
+
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
@@ -176,7 +176,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     } finally {
       setIsLoadingAudit(false);
     }
-  
+
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
@@ -190,7 +190,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       setAuditLogs(logs);
     }
     showToast(`Reservation #${bookingId} status recorded as ${newStatus}`);
-  
+
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
@@ -202,7 +202,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       if (selectedBooking?.bookingId === bookingId) setSelectedBooking(null);
       showToast(`Reservation #${bookingId} cancelled and archived in database`);
     }
-  
+
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
@@ -215,7 +215,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       setDbStats(stats);
       showToast('Database reset to default seed schedule');
     }
-  
+
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
@@ -241,7 +241,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     await loadData();
     setIsAddModalOpen(false);
     showToast(`Reservation #${bookingId} recorded and auto-confirmed in Supabase PostgreSQL!`);
-    
+
     // Reset form
     setNewBooking({
       date: todayStr,
@@ -254,7 +254,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       dietaryNotes: '',
       specialOccasion: 'Casual Dining & Drinks'
     });
-  
+
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
@@ -279,7 +279,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     } catch {
       showToast('Failed to block date');
     }
-  
+
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
@@ -295,7 +295,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
         showToast('Failed to unblock date');
       }
     }
-  
+
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
@@ -313,7 +313,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     } finally {
       setIsSavingSettings(false);
     }
-  
+
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
@@ -371,7 +371,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
   return (
     <div className="min-h-screen bg-[#000000] text-[#FDFBF7] font-sans py-8 px-4 sm:px-6 lg:px-10 space-y-7">
-      
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#1A0509] border border-[#DFBE7B] text-[#FFEAA7] px-4 py-2.5 rounded-lg shadow-2xl flex items-center gap-2 text-xs font-sans tracking-wide animate-fadeIn">
@@ -630,7 +630,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
           {/* Filter & Search Bar */}
           <div className="max-w-7xl mx-auto bg-[#140306] border border-[#DFBE7B]/25 rounded-xl p-4 space-y-3.5 shadow-md">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-              
+
               {/* Search Input */}
               <div className="md:col-span-4 relative">
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#DFBE7B]/60" />

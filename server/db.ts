@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
+import { supabaseCa } from './supabaseCa.js';
 import { serviceInstant } from '../src/lib/serviceTime.js';
 export class BookingValidationError extends Error { name = 'BookingValidationError'; }
 
@@ -7,7 +8,7 @@ export class BookingValidationError extends Error { name = 'BookingValidationErr
 const connectionString = process.env.POSTGRES_URL;
 const dbUrl = connectionString ? new URL(connectionString) : null;
 if (dbUrl) { dbUrl.searchParams.delete('sslmode'); dbUrl.searchParams.delete('pgbouncer'); }
-export const db = new pg.Pool({ connectionString: dbUrl?.toString(), ssl: { rejectUnauthorized: true }, max: 2, idleTimeoutMillis: 10000, connectionTimeoutMillis: 10000 });
+export const db = new pg.Pool({ connectionString: dbUrl?.toString(), ssl: { ca: supabaseCa, rejectUnauthorized: true }, max: 2, idleTimeoutMillis: 10000, connectionTimeoutMillis: 10000 });
 export async function transaction<T>(run: (client: pg.PoolClient) => Promise<T>): Promise<T> {
   if (!connectionString) throw new Error('Supabase database is not configured.');
   const client = await db.connect();

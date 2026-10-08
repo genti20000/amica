@@ -49,7 +49,7 @@ DESCRIPTION:Table Reservation for ${formData.guests} guests. Ref: ${bookingId}. 
 LOCATION:AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR
 DTSTART;TZID=Europe/London:${dtStart}
 DTEND;TZID=Europe/London:${dtEnd}
-STATUS:CONFIRMED
+STATUS:${isConfirmed ? 'CONFIRMED' : 'TENTATIVE'}
 END:VEVENT
 END:VCALENDAR`;
 
@@ -66,7 +66,7 @@ END:VCALENDAR`;
 
   const handleCopyDetails = () => {
     const text =
-      `AMICA SOHO · Table Reservation Confirmed\n` +
+      `AMICA SOHO · ${isConfirmed ? 'Table Reservation Confirmed' : 'Reservation Request Saved'}\n` +
       `Reference: ${bookingId}\n` +
       `Name: ${formData.name}\n` +
       `Date: ${formData.date}\n` +
