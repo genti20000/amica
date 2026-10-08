@@ -44,6 +44,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
   const [blockedDates, setBlockedDates] = useState<BlockedDateItem[]>([]);
   const [, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Custom Pop-Up Date Picker State
@@ -175,6 +176,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setErrorMessage(null);
 
     if (!formData.name || !formData.email || !formData.phone) return;
@@ -189,7 +191,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
       return;
     }
 
-    const bookingId = 'AMICA-' + Math.floor(100000 + Math.random() * 900000);
+    const bookingId = 'AMICA-' + crypto.randomUUID();
 
     const confirmation: BookingConfirmation = {
       bookingId,
@@ -202,12 +204,13 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
       status: 'Confirmed'
     };
 
-    // Save to database
+    setIsSubmitting(true);
+    // Show confirmation only after the server has saved the reservation.
     saveBooking(confirmation).then((saved) => {
-      onBookingComplete(saved || confirmation);
-    }).catch(() => {
-      onBookingComplete(confirmation);
-    });
+      onBookingComplete(saved);
+    }).catch((error) => {
+      setErrorMessage(error instanceof Error ? error.message : 'Reservation could not be saved. Please try again.');
+    }).finally(() => setIsSubmitting(false));
   };
 
   return (
@@ -652,7 +655,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
           <button
             type="submit"
-            disabled={isClosedDay || isSelectedDateBlocked}
+            disabled={isSubmitting || isClosedDay || isSelectedDateBlocked}
             className={`w-full py-3.5 px-6 rounded-lg font-sans font-bold text-xs sm:text-sm tracking-[0.24em] uppercase transition-all duration-200 flex items-center justify-center gap-2.5 ${
               isClosedDay || isSelectedDateBlocked
                 ? 'bg-zinc-800 text-zinc-500 border border-zinc-700 cursor-not-allowed'

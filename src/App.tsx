@@ -77,13 +77,8 @@ export default function App() {
 
       const isDirectAdmin = params.get('admin') === 'true' || hash === '#admin' || hash === '#admin-bookings';
       if (isDirectAdmin) {
-        if (sessionStorage.getItem('amica_unlocked') === 'true') {
-          setIsUnlocked(true);
-          setCurrentPage('admin-bookings');
-        } else {
-          setPostLoginTarget('admin-bookings');
-          setIsLoginModalOpen(true);
-        }
+        setPostLoginTarget('admin-bookings');
+        setIsLoginModalOpen(true);
       }
     } catch {
       // fallback
@@ -97,7 +92,7 @@ export default function App() {
       return;
     }
 
-    if (!isUnlocked) {
+    if (!isUnlocked || page === 'admin-bookings') {
       setPostLoginTarget(page);
       setIsLoginModalOpen(true);
       return;
@@ -222,6 +217,7 @@ export default function App() {
 
       {/* Login Modal with Password 'Joni' */}
       <LoginModal
+        admin={postLoginTarget === 'admin-bookings'}
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onSuccess={handleLoginSuccess}

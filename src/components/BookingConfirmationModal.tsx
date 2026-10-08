@@ -30,22 +30,24 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
     const timeMatch = formData.timeSlot.match(/(\d{2}):(\d{2})/);
     const startHour = timeMatch ? timeMatch[1] : '19';
     const startMin = timeMatch ? timeMatch[2] : '00';
-    const endHourNum = (parseInt(startHour, 10) + 2) % 24;
-    const endHour = String(endHourNum).padStart(2, '0');
-
-    const cleanDate = formData.date.replace(/-/g, '');
-    const dtStart = `${cleanDate}T${startHour}${startMin}00`;
-    const dtEnd = `${cleanDate}T${endHour}${startMin}00`;
+    const serviceDay = new Date(formData.date+'T12:00:00Z');
+    if (Number(startHour)<5) serviceDay.setUTCDate(serviceDay.getUTCDate()+1);
+    const cleanDate=serviceDay.toISOString().slice(0,10).replace(/-/g,'');
+    const dtStart=`${cleanDate}T${startHour}${startMin}00`;
+    const end=new Date(serviceDay); if(Number(startHour)+2>=24)end.setUTCDate(end.getUTCDate()+1);
+    const dtEnd=`${end.toISOString().slice(0,10).replace(/-/g,'')}T${String((Number(startHour)+2)%24).padStart(2,'0')}${startMin}00`;
 
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//AMICA SOHO//RESTAURANT RESERVATION//EN
 BEGIN:VEVENT
+UID:${bookingId}@amicasoho.com
+DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}
 SUMMARY:Table Reservation at AMICA SOHO (${formData.guests} Pax)
 DESCRIPTION:Table Reservation for ${formData.guests} guests. Ref: ${bookingId}. Opening hours: Wednesday to Saturday from 5:00 PM to 3:00 AM.
 LOCATION:AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR
-DTSTART:${dtStart}
-DTEND:${dtEnd}
+DTSTART;TZID=Europe/London:${dtStart}
+DTEND;TZID=Europe/London:${dtEnd}
 STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR`;
@@ -58,6 +60,7 @@ END:VCALENDAR`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleCopyDetails = () => {
