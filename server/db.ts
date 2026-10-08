@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { supabaseCa } from './supabaseCa.js';
 import { serviceInstant } from '../src/lib/serviceTime.js';
+import { fitsBookingCapacity, occupyingStatuses } from '../src/lib/bookingCapacity.js';
 export class BookingValidationError extends Error { name = 'BookingValidationError'; }
 
 // Vercel Marketplace provides the Supabase transaction-pooler URL server-side.
@@ -73,6 +74,12 @@ export async function getReservationById(bookingId: string): Promise<{ reservati
   const [booking, audit] = await Promise.all([db.query('SELECT * FROM reservations WHERE booking_id=$1',[bookingId]), db.query('SELECT * FROM booking_audit_logs WHERE booking_id=$1 ORDER BY id DESC',[bookingId])]);
   return {reservation: booking.rows[0] || null, auditLogs: audit.rows};
 }
+async function assertCapacity(client: pg.PoolClient, candidate: Pick<ReservationRow, 'guests' | 'reservation_date' | 'time_slot'>, excludeId = '') {
+  const rows = await client.query(`SELECT guests, reservation_date, time_slot FROM reservations
+    WHERE reservation_date BETWEEN (($1::date - 1)::text) AND (($1::date + 1)::text)
+    AND status = ANY($2::text[]) AND booking_id <> $3`, [candidate.reservation_date, occupyingStatuses, excludeId]);
+  if (!fitsBookingCapacity(candidate, rows.rows)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
+}
 export async function createReservation(data: { booking_id?: string; guest_name: string; email: string; phone: string; guests: number; reservation_date: string; time_slot: string; seating_area: string; special_occasion?: string; dietary_notes?: string; ip_address?: string; actor?: string }): Promise<ReservationRow> {
   return transaction(async client => {
     // Serialize booking creation with blackout changes to avoid a check/write race.
@@ -83,6 +90,7 @@ export async function createReservation(data: { booking_id?: string; guest_name:
     const cutoff=Number(settings.cutoff_hours ?? 1);
     if (serviceInstant(data.reservation_date,data.time_slot)<Date.now()+(Number.isFinite(cutoff)&&cutoff>=0?cutoff:1)*3600000) throw new BookingValidationError('Please choose a later reservation time. The booking cutoff has passed.');
     if(data.guests < Number(settings.min_pax||1) || data.guests > Number(settings.max_pax||20)) throw new BookingValidationError('Please choose a supported party size.');
+    await assertCapacity(client, data);
     const status=settings.auto_confirm==='false'?'Pending':'Confirmed';
     const id = data.booking_id || 'AMICA-'+randomUUID(); const now=new Date().toISOString();
     const result = await client.query(`INSERT INTO reservations (booking_id, guest_name, email, phone, guests, reservation_date, time_slot, seating_area, special_occasion, dietary_notes, status, qr_code_value, ip_address, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$14,$11,$12,$13,$13) RETURNING *`,[id,data.guest_name.trim(),data.email.trim(),data.phone.trim(),data.guests,data.reservation_date,data.time_slot,data.seating_area,data.special_occasion||'',data.dietary_notes||'',`AMICA-SOHO-${id}`,data.ip_address||null,now,status]);
@@ -92,7 +100,15 @@ export async function createReservation(data: { booking_id?: string; guest_name:
 }
 export async function updateReservationStatus(id: string, status: string, actor='ADMIN_PORTAL', notes=''): Promise<ReservationRow | null> {
   if (!['Confirmed','Auto-Confirmed','Pending','Seated','Completed','Cancelled','No-Show'].includes(status)) throw new Error('Invalid reservation status.');
-  return transaction(async client => { const result=await client.query('UPDATE reservations SET status=$1, updated_at=$2 WHERE booking_id=$3 RETURNING *',[status,new Date().toISOString(),id]); if(!result.rows[0]) return null; await logAudit(id,'STATUS_CHANGED',actor,`${status}. ${notes}`,client); return result.rows[0]; });
+  return transaction(async client => {
+    await client.query('SELECT pg_advisory_xact_lock(230017)');
+    const current = (await client.query('SELECT * FROM reservations WHERE booking_id=$1', [id])).rows[0];
+    if (!current) return null;
+    if (occupyingStatuses.includes(status)) await assertCapacity(client, current, id);
+    const result = await client.query('UPDATE reservations SET status=$1, updated_at=$2 WHERE booking_id=$3 RETURNING *', [status,new Date().toISOString(),id]);
+    await logAudit(id,'STATUS_CHANGED',actor,`${status}. ${notes}`,client);
+    return result.rows[0];
+  });
 }
 export async function deleteReservation(id: string, actor='ADMIN_PORTAL', reason='Admin cancellation') {
   return transaction(async client => { const result=await client.query("UPDATE reservations SET status='Cancelled', updated_at=$2 WHERE booking_id=$1 RETURNING *",[id,new Date().toISOString()]); if(!result.rows.length)return false; await logAudit(id,'CANCELLED_AND_ARCHIVED',actor,reason,client); return true; });

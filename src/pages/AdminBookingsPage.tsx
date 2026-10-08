@@ -515,7 +515,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
               </span>
             </div>
             <p className="text-[11px] text-[#DFBE7B]/80 font-sans mt-0.5">
-              Storage File: <span className="font-mono text-[#FFEAA7]">data/amica.sqlite</span> · Tables: <span className="font-mono text-[#FFEAA7]">reservations</span>, <span className="font-mono text-[#FFEAA7]">blocked_dates</span>, <span className="font-mono text-[#FFEAA7]">venue_settings</span> & <span className="font-mono text-[#FFEAA7]">booking_audit_logs</span>.
+              Storage: <span className="font-mono text-[#FFEAA7]">Supabase PostgreSQL</span> · Tables: <span className="font-mono text-[#FFEAA7]">reservations</span>, <span className="font-mono text-[#FFEAA7]">blocked_dates</span>, <span className="font-mono text-[#FFEAA7]">venue_settings</span> & <span className="font-mono text-[#FFEAA7]">booking_audit_logs</span>.
             </p>
           </div>
         </div>
@@ -1059,6 +1059,10 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                 </div>
               </div>
 
+              <div className="bg-[#140306] border border-[#DFBE7B]/30 rounded-lg p-4 space-y-2">
+                <span className="font-semibold text-[#FFEAA7] uppercase tracking-wider text-[11px] block">Booking Capacity</span>
+                <p className="text-[#DFBE7B]/70 text-[11px] leading-relaxed">80 guests maximum · 18 tables · 2-hour reservations. Pending reservations also hold capacity. Larger parties reserve enough four-seat tables until the exact four/six-seat mix is configured.</p>
+              </div>
               {/* Cutoff Hours Notice */}
               <div className="bg-[#140306] border border-[#DFBE7B]/30 rounded-lg p-4 space-y-2">
                 <span className="font-semibold text-[#FFEAA7] uppercase tracking-wider text-[11px] block">

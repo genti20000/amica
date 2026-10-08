@@ -8,4 +8,4 @@ Required server environment: POSTGRES_URL (Marketplace manages this), ADMIN_PASS
 
 Validation: npm ci, npm run lint, npm run build. Vercel runtime health checks must return a connected Supabase database before accepting the deployment.
 
-Existing automatic confirmation behavior remains; table inventory, seating duration, capacity controls, and spam prevention should be established before opening public bookings at scale. Original amica project and amicasoho.com have not been changed.
+Reservations hold capacity for two hours, with hard limits of 80 guests and 18 tables. Until the exact 4/6-seat table mix is supplied, each party reserves ceil(guests/4) tables conservatively. Pending, Confirmed, Auto-Confirmed and Seated reservations hold capacity; Cancelled, No-Show and Completed release it. Atomic advisory locking serializes new bookings and status changes. Last online arrival is 01:00 so two hours fit before 03:00 closing. Configure physical table assignment and abuse prevention before opening public bookings at scale. Original amica project and amicasoho.com have not been changed.

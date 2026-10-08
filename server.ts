@@ -200,7 +200,7 @@ async function configureServer() {
       }
       const date = new Date(formData.date + 'T12:00:00Z');
       const todayLondon = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
-      if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== formData.date || formData.date < todayLondon || ![3,4,5,6].includes(date.getUTCDay()) || !['17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30','23:00','23:30','00:00','00:30','01:00','01:30','02:00'].includes(formData.timeSlot)) {
+      if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== formData.date || formData.date < todayLondon || ![3,4,5,6].includes(date.getUTCDay()) || !['17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30','23:00','23:30','00:00','00:30','01:00'].includes(formData.timeSlot)) {
         return res.status(400).json({ success: false, error: 'Please select an available Wednesday to Saturday service date and time.' });
       }
 
@@ -312,7 +312,7 @@ async function configureServer() {
         }
       });
     } catch (e: any) {
-      res.status(500).json({ success: false, error: 'The request could not be saved. Please try again or contact the venue.' });
+      res.status(e instanceof BookingValidationError ? 400 : 500).json({ success: false, error: e instanceof BookingValidationError ? e.message : 'The request could not be saved. Please try again or contact the venue.' });
     }
   });
 

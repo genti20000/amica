@@ -108,7 +108,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
   const allTimeSlots = [
     '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30',
     '21:00', '21:30', '22:00', '22:30', '23:00', '23:30', '00:00', '00:30',
-    '01:00', '01:30', '02:00'
+    '01:00'
   ];
 
   // Calendar Grid Calculation for Pop-up Picker
@@ -684,7 +684,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
           <div className="flex items-center justify-center gap-1 text-[10px] text-[#DFBE7B]/70 font-sans text-center">
             <ShieldCheck className="w-3.5 h-3.5 text-[#DFBE7B]" />
-            <span>No deposit required for reservations</span>
+            <span>Tables reserved for 2 hours · No deposit required</span>
           </div>
         </div>
 
