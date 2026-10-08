@@ -122,34 +122,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               The Amica Soho Dispatch
             </h4>
             <p className="text-xs text-[#DFBE7B]/80 mb-4 leading-relaxed font-sans">
-              Subscribe for invitations to secret vault tastings, seasonal releases, and early access to late-night vinyl bookings.
+              Get in touch for invitations, seasonal releases, and late-night bookings.
             </p>
-            {emailSubmitted ? (
-              <div className="p-3 bg-[#1C1C22] border border-[#9D7E54]/40 text-[#DFBE7B] text-xs rounded text-center font-display">
-                Grazie! You’ve been added to the guest register.
-              </div>
-            ) : (
-              <form onSubmit={handleNewsletter} className="space-y-2">
-                <div className="relative">
-                  <input
-                    type="email"
-                    required
-                    placeholder="Enter your email..."
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#141418] border border-[#9D7E54]/40 rounded text-xs text-[#FDFBF7] placeholder-[#FDFBF7]/40 focus:outline-none focus:border-[#DFBE7B]"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-1 top-1 bottom-1 px-3 text-xs rounded flex items-center justify-center cursor-pointer bg-gradient-to-r from-[#DFBE7B] to-[#9D7E54] text-[#08080A] font-bold hover:brightness-110"
-                    aria-label="Subscribe"
-                  >
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <span className="block text-[10px] text-[#FDFBF7]/40">We respect your inbox. Unsubscribe anytime.</span>
-              </form>
-            )}
+            <a href="mailto:reservations@amicasoho.com?subject=AMICA%20SOHO%20updates" className="block p-3 border border-[#9D7E54]/40 text-[#DFBE7B] text-xs rounded text-center">Contact us for invitations and updates</a>
           </div>
         </div>
 

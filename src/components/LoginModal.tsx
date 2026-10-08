@@ -3,11 +3,12 @@ import { X, Lock, KeyRound, Eye, EyeOff, Sparkles, AlertCircle, ArrowRight } fro
 
 interface LoginModalProps {
   isOpen: boolean;
+  admin?: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess, admin = false }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(false);
@@ -31,10 +32,22 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = password.trim();
 
+    if (admin) {
+      try {
+        const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Admin sign-in failed.');
+        onSuccess();
+      } catch (error) {
+        setError(true);
+        setErrorMessage(error instanceof Error ? error.message : 'Admin sign-in failed.');
+      }
+      return;
+    }
     // Password is "Joni" (accepting "Joni" or case-insensitive "joni" for great UX on mobile)
     if (trimmed.toLowerCase() === 'joni') {
       setIsSuccess(true);

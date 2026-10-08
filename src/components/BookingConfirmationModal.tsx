@@ -24,29 +24,32 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
   if (!confirmation) return null;
 
   const { bookingId, formData } = confirmation;
+  const isConfirmed = confirmation.status !== 'Pending';
 
   // Generate standard ICS content for Add to Calendar
   const downloadCalendarFile = () => {
     const timeMatch = formData.timeSlot.match(/(\d{2}):(\d{2})/);
     const startHour = timeMatch ? timeMatch[1] : '19';
     const startMin = timeMatch ? timeMatch[2] : '00';
-    const endHourNum = (parseInt(startHour, 10) + 2) % 24;
-    const endHour = String(endHourNum).padStart(2, '0');
-
-    const cleanDate = formData.date.replace(/-/g, '');
-    const dtStart = `${cleanDate}T${startHour}${startMin}00`;
-    const dtEnd = `${cleanDate}T${endHour}${startMin}00`;
+    const serviceDay = new Date(formData.date+'T12:00:00Z');
+    if (Number(startHour)<5) serviceDay.setUTCDate(serviceDay.getUTCDate()+1);
+    const cleanDate=serviceDay.toISOString().slice(0,10).replace(/-/g,'');
+    const dtStart=`${cleanDate}T${startHour}${startMin}00`;
+    const end=new Date(serviceDay); if(Number(startHour)+2>=24)end.setUTCDate(end.getUTCDate()+1);
+    const dtEnd=`${end.toISOString().slice(0,10).replace(/-/g,'')}T${String((Number(startHour)+2)%24).padStart(2,'0')}${startMin}00`;
 
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//AMICA SOHO//RESTAURANT RESERVATION//EN
 BEGIN:VEVENT
+UID:${bookingId}@amicasoho.com
+DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}
 SUMMARY:Table Reservation at AMICA SOHO (${formData.guests} Pax)
 DESCRIPTION:Table Reservation for ${formData.guests} guests. Ref: ${bookingId}. Opening hours: Wednesday to Saturday from 5:00 PM to 3:00 AM.
 LOCATION:AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR
-DTSTART:${dtStart}
-DTEND:${dtEnd}
-STATUS:CONFIRMED
+DTSTART;TZID=Europe/London:${dtStart}
+DTEND;TZID=Europe/London:${dtEnd}
+STATUS:${isConfirmed ? 'CONFIRMED' : 'TENTATIVE'}
 END:VEVENT
 END:VCALENDAR`;
 
@@ -58,11 +61,12 @@ END:VCALENDAR`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleCopyDetails = () => {
     const text =
-      `AMICA SOHO · Table Reservation Confirmed\n` +
+      `AMICA SOHO · ${isConfirmed ? 'Table Reservation Confirmed' : 'Reservation Request Saved'}\n` +
       `Reference: ${bookingId}\n` +
       `Name: ${formData.name}\n` +
       `Date: ${formData.date}\n` +
@@ -100,14 +104,14 @@ END:VCALENDAR`;
 
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-[10px] uppercase font-sans font-bold tracking-widest">
             <Zap className="w-3 h-3 text-emerald-400" />
-            <span>RESERVATION CONFIRMED · REF #{bookingId}</span>
+            <span>{isConfirmed ? 'RESERVATION CONFIRMED' : 'RESERVATION REQUEST SAVED'} · REF #{bookingId}</span>
           </div>
 
           <h2 className="font-['Cinzel',serif] text-2xl sm:text-3xl text-[#FDFBF7] tracking-wider font-light">
-            Table Reserved at <span className="text-[#E8CCA0]">AMICA SOHO</span>
+            {isConfirmed ? 'Table Reserved at' : 'Reservation Requested at'} <span className="text-[#E8CCA0]">AMICA SOHO</span>
           </h2>
           <p className="text-xs text-[#DFBE7B]/80 font-sans">
-            Thank you, {formData.name}. Your table for <strong>{formData.guests} {formData.guests === 1 ? 'guest' : 'guests'}</strong> is confirmed.
+            Thank you, {formData.name}. Your table for <strong>{formData.guests} {formData.guests === 1 ? 'guest' : 'guests'}</strong> {isConfirmed ? 'is confirmed.' : 'is awaiting confirmation by the venue.'}
           </p>
         </div>
 
@@ -163,7 +167,7 @@ END:VCALENDAR`;
           <div className="pt-2 flex items-center justify-between bg-[#0A0103] p-2.5 rounded-lg border border-[#DFBE7B]/25">
             <div className="text-left space-y-0.5">
               <span className="text-[9px] font-sans text-emerald-400 uppercase tracking-wider block font-bold">
-                ✓ Confirmed Reservation
+                {isConfirmed ? '✓ Confirmed Reservation' : 'Pending Venue Confirmation'}
               </span>
               <span className="font-mono text-xs text-[#FDFBF7] font-bold block">{bookingId}</span>
             </div>
