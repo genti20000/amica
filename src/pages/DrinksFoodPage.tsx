@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { PageId, MenuItem } from '../types';
 import { MENU_ITEMS } from '../data/menuData.ts';
-import { Wine, Search, Heart, Sparkles, Filter, Check, Calendar, Info, Share2 } from 'lucide-react';
+import { FOOD_PHOTOS } from '../data/foodPhotos';
+import { Wine, Search, Heart, Sparkles, Check, Calendar, Info, Share2 } from 'lucide-react';
 
 interface DrinksFoodPageProps {
   onNavigate: (page: PageId) => void;
@@ -18,7 +19,6 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
 }) => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [tagFilter, setTagFilter] = useState<string>('all');
   const [showSavedOnly, setShowSavedOnly] = useState<boolean>(false);
 
   const categories = [
@@ -27,12 +27,12 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
     { id: 'spritz', label: 'Amica’s Spritz' },
     { id: 'zero', label: 'Amica’s Zero (Non-Alcoholic)' },
     { id: 'small-plates', label: 'Cicchetti & Small Plates' },
-    { id: 'charcuterie', label: 'Charcuterie & Cheese' },
-    { id: 'wines', label: 'Wines by Glass & Bottle' },
-    { id: 'digestivi', label: 'Digestivi & Afters' },
+    { id: 'complimentary', label: 'Complimentary' },
+    { id: 'desserts', label: 'Desserts' },
+    { id: 'wines', label: 'Wine List' },
+
   ];
 
-  const tagsList = ['All Tags', 'Signature', 'Low-ABV', 'GF', 'VG', 'V', 'Sommelier Pick'];
 
   // Filter logic
   const filteredItems = MENU_ITEMS.filter((item) => {
@@ -41,13 +41,6 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
 
     // Category filter
     if (activeCategory !== 'all' && item.category !== activeCategory) return false;
-
-    // Tag filter
-    if (tagFilter !== 'all' && tagFilter !== 'All Tags') {
-      if (!item.tags?.some((t) => t.toLowerCase() === tagFilter.toLowerCase())) {
-        return false;
-      }
-    }
 
     // Search query filter
     if (searchQuery.trim()) {
@@ -64,19 +57,25 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-      
+
       {/* Header Title */}
       <div className="text-center space-y-4 max-w-3xl mx-auto">
         <span className="text-[#DFBE7B] text-xs font-display uppercase tracking-widest block">
           CURATED MENU · AMICA SOHO LONDON
         </span>
         <h1 className="font-display text-4xl sm:text-6xl font-bold text-[#FDFBF7] tracking-wide">
-          Drinks, Cocktails & Cicchetti
+          Food, Cocktails & Wine
         </h1>
         <p className="text-xs sm:text-sm text-[#DFBE7B]/80 leading-relaxed font-sans">
-          Explore our Italian botanical aperitivi, cask-rested house Negronis, artisanal vermouths, and Venetian cicchetti. Select your favorites to build a personal pairing list for your visit to 23 Frith Street.
+          Signature cocktails, spritzes, small plates and desserts at 23 Frith Street. Browse the menus, explore our wine list and save favourites for your visit.
         </p>
 
+        <div className="flex flex-wrap justify-center gap-3 pt-2">
+          {[['Cocktail Menu (PDF)', '/menus/amica-drinks-menu.pdf'], ['Wine List (PDF)', '/menus/amica-wine-list.pdf'], ['Food Menu', '/menus/amica-food-menu.jpg'], ['Dessert Menu', '/menus/amica-dessert-menu.jpg']].map(([label, href]) => (
+            <a key={href} href={href} target="_blank" rel="noopener noreferrer" className="btn-brass-outline px-4 py-2 rounded text-xs uppercase tracking-wider">{label}</a>
+          ))}
+        </div>
+        <p className="text-xs text-[#DFBE7B]/80">Small plates: 3 for £10 · 25ml available on request. Please ask our team for wine and dessert prices and allergen information.</p>
         {/* Quiz Banner */}
         <div className="pt-2">
           <button
@@ -91,7 +90,7 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
 
       {/* Control Bar: Categories + Search + Saved Toggle */}
       <div className="bg-[#121215] border border-[#C5A059]/30 rounded-xl p-4 sm:p-6 space-y-4 shadow-xl">
-        
+
         {/* Category Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-[#C5A059]/20">
           {categories.map((cat) => (
@@ -114,39 +113,17 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
 
         {/* Second Row: Search + Tag Filters + Saved Pairings Toggle */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
-          
+
           {/* Search Box */}
           <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 absolute left-3 top-3 text-[#C5A059]" />
             <input
               type="text"
-              placeholder="Search Spritz, Negroni, Prosciutto..."
+              placeholder="Search cocktails, food or wine..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-[#181820] border border-[#C5A059]/30 rounded text-xs text-[#FDFBF7] placeholder-[#FDFBF7]/40 focus:outline-none focus:border-[#C5A059] font-sans"
             />
-          </div>
-
-          {/* Tags Dropdown / Filter */}
-          <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto">
-            <span className="text-xs text-[#DFBE7B] font-display whitespace-nowrap flex items-center gap-1 tracking-wider">
-              <Filter className="w-3 h-3" /> Filter Tag:
-            </span>
-            <div className="flex items-center gap-1.5">
-              {tagsList.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => setTagFilter(tag === tagFilter ? 'all' : tag)}
-                  className={`px-2.5 py-1 text-[11px] rounded font-display tracking-wider transition-colors whitespace-nowrap cursor-pointer ${
-                    tagFilter === tag || (tag === 'All Tags' && tagFilter === 'all')
-                      ? 'bg-[#22222D] text-[#FFEAA7] border border-[#C5A059]/60 font-semibold'
-                      : 'bg-[#181820] text-[#FDFBF7]/60 hover:text-[#FDFBF7] border border-transparent'
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Saved Shortlist Button */}
@@ -174,7 +151,6 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
             onClick={() => {
               setActiveCategory('all');
               setSearchQuery('');
-              setTagFilter('all');
               setShowSavedOnly(false);
             }}
             className="px-4 py-2 btn-brass text-xs rounded uppercase tracking-wider cursor-pointer"
@@ -222,7 +198,7 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
                   </div>
 
                   <span className="font-display text-lg font-bold text-[#C5A059] block">
-                    {item.price}
+                    {item.price || 'Please ask our team for prices'}
                   </span>
 
                   <p className="text-xs text-[#E8D5C4] leading-relaxed font-sans">
@@ -231,7 +207,7 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
 
                   {item.tastingNotes && (
                     <div className="p-3 bg-[#131317] rounded-lg border border-[#C5A059]/30 text-[11px] text-[#DFBE7B] font-display italic shadow-inner">
-                      <span className="font-display text-[9px] text-[#C5A059] uppercase not-italic block font-bold mb-0.5 tracking-wider">Sommelier Notes:</span>
+                      <span className="font-display text-[9px] text-[#C5A059] uppercase not-italic block font-bold mb-0.5 tracking-wider">Tasting Notes:</span>
                       "{item.tastingNotes}"
                     </div>
                   )}
@@ -281,7 +257,15 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
             <span>Book Table</span>
           </button>
         </div>
+      )}      {(['all', 'small-plates'].includes(activeCategory) && !searchQuery && !showSavedOnly) && (
+        <section aria-label="Food gallery" className="space-y-4">
+          <h2 className="font-display text-2xl text-[#FFEAA7]">From the AMICA Kitchen</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {FOOD_PHOTOS.map(photo => <a href={photo.src} key={photo.src} target="_blank" rel="noopener noreferrer"><img src={photo.src} alt={photo.alt} loading="lazy" width="1122" height="1402" className="w-full rounded-xl border border-[#C5A059]/30" /></a>)}
+          </div>
+        </section>
       )}
+
     </div>
   );
 };

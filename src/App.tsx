@@ -41,6 +41,7 @@ export default function App() {
       if (params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve') {
         return 'book';
       }
+      if (params.get('page') === 'drinks-food') return 'drinks-food';
       const isSessionUnlocked = sessionStorage.getItem('amica_unlocked') === 'true';
       if (!isSessionUnlocked) {
         return 'coming-soon';
@@ -86,7 +87,7 @@ export default function App() {
   }, []);
 
   const handleNavigate = (page: PageId) => {
-    if (page === 'coming-soon' || page === 'book') {
+    if (page === 'coming-soon' || page === 'book' || page === 'drinks-food') {
       setCurrentPage(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -173,7 +174,7 @@ export default function App() {
           />
         )}
 
-        {isUnlocked && currentPage === 'drinks-food' && (
+        {currentPage === 'drinks-food' && (
           <DrinksFoodPage
             onNavigate={handleNavigate}
             savedPairings={savedPairings}
@@ -212,7 +213,7 @@ export default function App() {
       </main>
 
       {/* Show full footer when on unlocked main site pages or booking page */}
-      {(isUnlocked || currentPage === 'book') && currentPage !== 'coming-soon' && currentPage !== 'admin-bookings' && (
+      {(isUnlocked || currentPage === 'book' || currentPage === 'drinks-food') && currentPage !== 'coming-soon' && currentPage !== 'admin-bookings' && (
         <Footer onNavigate={handleNavigate} />
       )}
 

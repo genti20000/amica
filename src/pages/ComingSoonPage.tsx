@@ -83,6 +83,7 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
               </div>
             )}
 
+            {onNavigate && <button onClick={() => onNavigate('drinks-food')} className="mt-4 px-4 py-2 border border-[#DFBE7B]/60 rounded text-[#DFBE7B] text-xs uppercase tracking-widest">View Food & Drinks Menus</button>}
             {/* CONTACT US: info@amicasoho.com */}
             <div className="mt-3.5 sm:mt-5 pt-3 sm:pt-4 border-t border-[#DFBE7B]/20 w-full flex flex-col items-center">
               <span className="font-sans text-[7.5px] sm:text-[9px] tracking-[0.3em] text-[#DFBE7B]/80 uppercase font-semibold">
