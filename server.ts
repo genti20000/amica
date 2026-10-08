@@ -32,6 +32,7 @@ export const app = express();
 async function configureServer() {
 
   app.use(express.json({ limit: '32kb' }));
+  app.post('/api/admin/logout', (req, res) => { res.clearCookie('amica_admin', {path:'/api'}); res.json({success:true}); });
 
   // Admin authorization is enforced on the server, independent of the preview lock.
   const adminPassword = process.env.ADMIN_PASSWORD;
@@ -79,7 +80,7 @@ async function configureServer() {
 
   // Health check
   app.get('/api/health', async (req, res) => {
-    try { await db.query('SELECT 1 FROM venue_settings LIMIT 1'); } catch { return res.status(503).json({status:'unavailable',database:'unavailable'}); }
+    try { await db.query('SELECT 1 FROM venue_settings LIMIT 1'); } catch (error) { console.error('Supabase health check failed:', error instanceof Error ? error.message : 'Unknown database error'); return res.status(503).json({status:'unavailable',database:'unavailable'}); }
     res.json({
       status: 'ok',
       service: 'Amica Soho Subterranean Booking Engine',
@@ -349,19 +350,10 @@ async function configureServer() {
 
       const csvRows = [headers.join(',')];
       for (const r of rows) {
-        const line = [
-          `"${r.booking_id}"`,
-          `"${r.reservation_date}"`,
-          `"${r.time_slot.replace(/"/g, '""')}"`,
-          r.guests,
-          `"${r.guest_name.replace(/"/g, '""')}"`,
-          `"${r.email}"`,
-          `"${r.phone}"`,
-          `"${r.status}"`,
-          `"${(r.special_occasion || '').replace(/"/g, '""')}"`,
-          `"${(r.dietary_notes || '').replace(/"/g, '""')}"`,
-          `"${r.created_at}"`
-        ];
+        const line = [r.booking_id,r.reservation_date,r.time_slot,r.guests,r.guest_name,r.email,r.phone,r.status,r.special_occasion||'',r.dietary_notes||'',r.created_at].map(value => {
+          let text=String(value); if(/^[=+@\-\t\r]/.test(text))text="'"+text;
+          return '"'+text.replace(/"/g,'""')+'"';
+        });
         csvRows.push(line.join(','));
       }
 

@@ -4,7 +4,7 @@ Vercel project: amica-soho (Malandra / ale17). Supabase project: fnaehebranoyhug
 
 The Vite frontend is served from dist. Requests to /api go to the Express function in api/index.ts. PostgreSQL writes use Supabase transaction pooling and transactions; anonymous/authenticated database roles have no direct access to booking data. Schema is in supabase/migrations.
 
-Required server environment: POSTGRES_URL (Marketplace manages this), ADMIN_PASSWORD, ADMIN_SESSION_SECRET. Until ADMIN_PASSWORD is configured, admin sign-in fails closed. Email delivery additionally needs a verified sender and RESEND_API_KEY or SMTP credentials. A saved reservation does not guarantee email delivery. The newsletter invites contact by email until a mailing service is configured.
+Required server environment: POSTGRES_URL (Marketplace manages this), ADMIN_PASSWORD, ADMIN_SESSION_SECRET. A strong initial admin password and session secret are stored in Vercel environment variables. Retrieve ADMIN_PASSWORD in the Vercel dashboard and rotate it to your preferred strong password; keep it out of code. Missing credentials cause admin sign-in to fail closed. Email delivery additionally needs a verified sender and RESEND_API_KEY or SMTP credentials. A saved reservation does not guarantee email delivery. The newsletter invites contact by email until a mailing service is configured.
 
 Validation: npm ci, npm run lint, npm run build. Vercel runtime health checks must return a connected Supabase database before accepting the deployment.
 

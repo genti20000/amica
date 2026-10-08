@@ -117,6 +117,7 @@ export default function App() {
   };
 
   const handleLockSite = () => {
+    fetch('/api/admin/logout', {method:'POST'}).catch(() => {});
     setIsUnlocked(false);
     try {
       localStorage.removeItem('amica_unlocked');
