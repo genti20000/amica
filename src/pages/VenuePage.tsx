@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PageId } from '../types';
-import { VENUE_INFO } from '../data/venueData';
+import { VENUE_INFO } from '../data/venueData.ts';
 import { MapPin, Wine, Music, Calendar, Clock, Award, Compass, Sparkles, BookOpen, X, ChevronRight, Eye } from 'lucide-react';
 import { HoursLocationGrid } from '../components/HoursLocationGrid';
 import {

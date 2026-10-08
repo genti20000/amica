@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PageId } from '../types';
-import { PRIVATE_HIRE_PACKAGES } from '../data/venueData';
+import { PRIVATE_HIRE_PACKAGES } from '../data/venueData.ts';
 import { Users, Calendar, DollarSign, CheckCircle2, Sparkles, Send, Clock, Wine, Mail, Phone, Info } from 'lucide-react';
 import { amicaOxbloodLounge, amicaArchBooth, amicaVaultBooth } from '../assets/images/photos';
 

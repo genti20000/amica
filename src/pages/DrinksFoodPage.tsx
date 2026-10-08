@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PageId, MenuItem } from '../types';
-import { MENU_ITEMS } from '../data/menuData';
+import { MENU_ITEMS } from '../data/menuData.ts';
 import { Wine, Search, Heart, Sparkles, Filter, Check, Calendar, Info, Share2 } from 'lucide-react';
 
 interface DrinksFoodPageProps {

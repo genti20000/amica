@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PageId, EventItem } from '../types';
-import { EVENTS_DATA } from '../data/eventsData';
+import { EVENTS_DATA } from '../data/eventsData.ts';
 import { Music, Calendar, Clock, Sparkles, Filter, Wine, ArrowRight, Ticket } from 'lucide-react';
 import { amicaMirrorSconces } from '../assets/images/photos';
 

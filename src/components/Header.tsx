@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PageId } from '../types';
 import { X, Calendar, ArrowRight, Instagram, MapPin, Phone, Lock, LogOut, Users } from 'lucide-react';
-import { VENUE_INFO } from '../data/venueData';
+import { VENUE_INFO } from '../data/venueData.ts';
 
 interface HeaderProps {
   currentPage: PageId;

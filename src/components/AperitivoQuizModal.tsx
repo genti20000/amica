@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Wine, Sparkles, Check, RefreshCw, Calendar } from 'lucide-react';
-import { MENU_ITEMS } from '../data/menuData';
+import { MENU_ITEMS } from '../data/menuData.ts';
 
 interface QuizModalProps {
   isOpen: boolean;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { PageId } from '../types';
 import { MapPin, Phone, Mail, Instagram, Clock, ArrowRight } from 'lucide-react';
-import { VENUE_INFO } from '../data/venueData';
+import { VENUE_INFO } from '../data/venueData.ts';
 import { BrandLogo } from './BrandLogo';
 import { JazzAmbientAudio } from './JazzAmbientAudio';
 import { NowPlayingTicker } from './NowPlayingTicker';
