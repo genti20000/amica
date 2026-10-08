@@ -1,3 +1,4 @@
+import { londonDate, nextDefaultServiceDate, serviceInstant } from '../lib/serviceTime';
 import React, { useState, useMemo, useEffect } from 'react';
 import { PageId, BookingFormData, BookingConfirmation } from '../types';
 import {
@@ -28,10 +29,10 @@ interface BookPageProps {
 }
 
 export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPairingsCount }) => {
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayStr = useMemo(() => londonDate(), []);
 
   const [formData, setFormData] = useState<BookingFormData>({
-    date: todayStr,
+    date: nextDefaultServiceDate(),
     timeSlot: '19:00',
     guests: 2,
     seatingArea: 'Vault Dining',
@@ -43,7 +44,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
   });
 
   const [blockedDates, setBlockedDates] = useState<BlockedDateItem[]>([]);
-  const [, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -54,10 +55,10 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
   useEffect(() => {
     fetchBlockedDates().then((dates) => {
       if (dates) setBlockedDates(dates);
-    });
+    }).catch(() => setErrorMessage('Availability could not be loaded. Please retry before booking.'));
     fetchSystemSettings().then((s) => {
       if (s) setSettings(s);
-    });
+    }).catch(() => setErrorMessage('Booking settings could not be loaded. Please retry before booking.'));
   }, []);
 
   // Formatted selected date display
@@ -475,7 +476,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                 className="w-full px-4 py-3 bg-[#0D0204] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] rounded-lg text-sm sm:text-base text-[#FFEAA7] focus:outline-none focus:border-[#DFBE7B] font-['Cinzel',serif] font-semibold appearance-none cursor-pointer shadow-inner transition-all pr-10"
               >
                 {allTimeSlots.map((slot) => (
-                  <option key={slot} value={slot} className="bg-[#120205] text-[#FFEAA7]">
+                  <option disabled={serviceInstant(formData.date,slot)<Date.now()+Number(settings.cutoff_hours||1)*3600000} key={slot} value={slot} className="bg-[#120205] text-[#FFEAA7]">
                     {slot}
                   </option>
                 ))}

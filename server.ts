@@ -1,9 +1,9 @@
 import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto';
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {
+  BookingValidationError,
   getAllReservations,
   getReservationById,
   createReservation,
@@ -250,12 +250,12 @@ async function configureServer() {
       };
 
       // Trigger email dispatch asynchronously
-      const email = await sendReservationEmail(created);
+      const email = created.status==='Confirmed' ? await sendReservationEmail(created) : {success:false};
       res.setHeader('X-Amica-Email-Delivery', email.success ? 'sent' : 'unavailable');
 
       res.status(201).json({ success: true, booking: confirmation, emailSent: email.success });
     } catch (e: any) {
-      res.status(500).json({ success: false, error: 'The request could not be saved. Please try again or contact the venue.' });
+      res.status(e instanceof BookingValidationError ? 400 : 500).json({ success: false, error: e instanceof BookingValidationError ? e.message : 'The request could not be saved. Please try again or contact the venue.' });
     }
   });
 
@@ -459,6 +459,7 @@ async function configureServer() {
   if (process.env.VERCEL) return;
   const isProd = process.env.NODE_ENV === 'production';
   if (!isProd) {
+    const {createServer: createViteServer} = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

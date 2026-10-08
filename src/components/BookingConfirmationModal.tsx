@@ -24,6 +24,7 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
   if (!confirmation) return null;
 
   const { bookingId, formData } = confirmation;
+  const isConfirmed = confirmation.status !== 'Pending';
 
   // Generate standard ICS content for Add to Calendar
   const downloadCalendarFile = () => {
@@ -103,14 +104,14 @@ END:VCALENDAR`;
 
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-[10px] uppercase font-sans font-bold tracking-widest">
             <Zap className="w-3 h-3 text-emerald-400" />
-            <span>RESERVATION CONFIRMED · REF #{bookingId}</span>
+            <span>{isConfirmed ? 'RESERVATION CONFIRMED' : 'RESERVATION REQUEST SAVED'} · REF #{bookingId}</span>
           </div>
 
           <h2 className="font-['Cinzel',serif] text-2xl sm:text-3xl text-[#FDFBF7] tracking-wider font-light">
-            Table Reserved at <span className="text-[#E8CCA0]">AMICA SOHO</span>
+            {isConfirmed ? 'Table Reserved at' : 'Reservation Requested at'} <span className="text-[#E8CCA0]">AMICA SOHO</span>
           </h2>
           <p className="text-xs text-[#DFBE7B]/80 font-sans">
-            Thank you, {formData.name}. Your table for <strong>{formData.guests} {formData.guests === 1 ? 'guest' : 'guests'}</strong> is confirmed.
+            Thank you, {formData.name}. Your table for <strong>{formData.guests} {formData.guests === 1 ? 'guest' : 'guests'}</strong> {isConfirmed ? 'is confirmed.' : 'is awaiting confirmation by the venue.'}
           </p>
         </div>
 
@@ -166,7 +167,7 @@ END:VCALENDAR`;
           <div className="pt-2 flex items-center justify-between bg-[#0A0103] p-2.5 rounded-lg border border-[#DFBE7B]/25">
             <div className="text-left space-y-0.5">
               <span className="text-[9px] font-sans text-emerald-400 uppercase tracking-wider block font-bold">
-                ✓ Confirmed Reservation
+                {isConfirmed ? '✓ Confirmed Reservation' : 'Pending Venue Confirmation'}
               </span>
               <span className="font-mono text-xs text-[#FDFBF7] font-bold block">{bookingId}</span>
             </div>

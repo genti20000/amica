@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
+import { serviceInstant } from '../src/lib/serviceTime.js';
+export class BookingValidationError extends Error { name = 'BookingValidationError'; }
 
 // Vercel Marketplace provides the Supabase transaction-pooler URL server-side.
 const connectionString = process.env.POSTGRES_URL;
@@ -75,10 +77,15 @@ export async function createReservation(data: { booking_id?: string; guest_name:
     // Serialize booking creation with blackout changes to avoid a check/write race.
     await client.query('SELECT pg_advisory_xact_lock(230017)');
     const blocked = await isDateBlocked(data.reservation_date,data.time_slot,client);
-    if (blocked.blocked) throw new Error('This service date or time is unavailable.');
+    if (blocked.blocked) throw new BookingValidationError('This service date or time is unavailable.');
+    const settings=Object.fromEntries((await client.query('SELECT key,value FROM venue_settings')).rows.map(r=>[r.key,r.value]));
+    const cutoff=Number(settings.cutoff_hours ?? 1);
+    if (serviceInstant(data.reservation_date,data.time_slot)<Date.now()+(Number.isFinite(cutoff)&&cutoff>=0?cutoff:1)*3600000) throw new BookingValidationError('Please choose a later reservation time. The booking cutoff has passed.');
+    if(data.guests < Number(settings.min_pax||1) || data.guests > Number(settings.max_pax||20)) throw new BookingValidationError('Please choose a supported party size.');
+    const status=settings.auto_confirm==='false'?'Pending':'Confirmed';
     const id = data.booking_id || 'AMICA-'+randomUUID(); const now=new Date().toISOString();
-    const result = await client.query(`INSERT INTO reservations (booking_id, guest_name, email, phone, guests, reservation_date, time_slot, seating_area, special_occasion, dietary_notes, status, qr_code_value, ip_address, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'Confirmed',$11,$12,$13,$13) RETURNING *`,[id,data.guest_name.trim(),data.email.trim(),data.phone.trim(),data.guests,data.reservation_date,data.time_slot,data.seating_area,data.special_occasion||'',data.dietary_notes||'',`AMICA-SOHO-${id}`,data.ip_address||null,now]);
-    await logAudit(id,'RESERVATION_CONFIRMED','GUEST_WEB_BOOKING',`Reservation saved for ${data.guests} guests.`,client);
+    const result = await client.query(`INSERT INTO reservations (booking_id, guest_name, email, phone, guests, reservation_date, time_slot, seating_area, special_occasion, dietary_notes, status, qr_code_value, ip_address, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$14,$11,$12,$13,$13) RETURNING *`,[id,data.guest_name.trim(),data.email.trim(),data.phone.trim(),data.guests,data.reservation_date,data.time_slot,data.seating_area,data.special_occasion||'',data.dietary_notes||'',`AMICA-SOHO-${id}`,data.ip_address||null,now,status]);
+    await logAudit(id,status==='Pending'?'RESERVATION_PENDING':'RESERVATION_CONFIRMED','GUEST_WEB_BOOKING',`Reservation saved for ${data.guests} guests.`,client);
     return result.rows[0];
   });
 }
