@@ -73,7 +73,7 @@ export function generateConfirmationEmailHtml(reservation: ReservationRow): stri
 
       <div class="reference-box">
         <div class="reference-label">Reservation Reference</div>
-        <div class="reference-code">${reservation.booking_id}</div>
+        <div class="reference-code">${escapeHtml(reservation.booking_id)}</div>
       </div>
 
       <div class="details-box">
@@ -83,7 +83,7 @@ export function generateConfirmationEmailHtml(reservation: ReservationRow): stri
         </div>
         <div class="detail-row">
           <span class="detail-label">Time</span>
-          <span class="detail-value">${reservation.time_slot}</span>
+          <span class="detail-value">${escapeHtml(reservation.time_slot)}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Party Size</span>
