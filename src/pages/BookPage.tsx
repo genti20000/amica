@@ -203,10 +203,15 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
     };
 
     // Save to database
+    setErrorMessage(null);
     saveBooking(confirmation).then((saved) => {
-      onBookingComplete(saved || confirmation);
-    }).catch(() => {
-      onBookingComplete(confirmation);
+      onBookingComplete(saved);
+    }).catch((err) => {
+      setErrorMessage(
+        err instanceof Error && err.message
+          ? `We could not complete your reservation: ${err.message}`
+          : 'We could not complete your reservation. Please try again or contact us directly.'
+      );
     });
   };
 

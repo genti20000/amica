@@ -1,6 +1,35 @@
 import { BookingConfirmation } from '../types';
 
 const STORAGE_KEY = 'amica_reservations';
+const ADMIN_PASSWORD_KEY = 'amica_admin_password';
+
+// Calls an admin-only API route with the staff password from this tab's session.
+// Prompts for the password when none is stored or the server rejects it.
+export const adminFetch = async (url: string, init: RequestInit = {}): Promise<Response> => {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let password = sessionStorage.getItem(ADMIN_PASSWORD_KEY);
+    if (!password || attempt > 0) {
+      password = window.prompt(attempt > 0 ? 'Incorrect admin password. Try again:' : 'Admin password:');
+      if (!password) break;
+      sessionStorage.setItem(ADMIN_PASSWORD_KEY, password);
+    }
+    const res = await fetch(url, {
+      ...init,
+      headers: { ...(init.headers as Record<string, string>), 'x-admin-password': password }
+    });
+    if (res.status !== 401) return res;
+    sessionStorage.removeItem(ADMIN_PASSWORD_KEY);
+  }
+  throw new Error('Admin password required');
+};
+
+const ensureOk = async (res: Response): Promise<any> => {
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json?.success) {
+    throw new Error(json?.error || `Request failed (${res.status})`);
+  }
+  return json;
+};
 
 // Initial reservations - starts empty with zero demo bookings
 export const INITIAL_BOOKINGS: BookingConfirmation[] = [];
@@ -21,7 +50,7 @@ export const getStoredBookings = (): BookingConfirmation[] => {
 
 export const fetchBookingsFromDb = async (): Promise<BookingConfirmation[]> => {
   try {
-    const res = await fetch('/api/bookings');
+    const res = await adminFetch('/api/bookings');
     if (res.ok) {
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
@@ -35,40 +64,28 @@ export const fetchBookingsFromDb = async (): Promise<BookingConfirmation[]> => {
   return getStoredBookings();
 };
 
+// Throws when the server did not create the reservation, so callers never
+// show a confirmation for a booking that does not exist.
 export const saveBooking = async (booking: BookingConfirmation): Promise<BookingConfirmation> => {
-  try {
-    const current = getStoredBookings();
-    const updated = [booking, ...current.filter((b) => b.bookingId !== booking.bookingId)];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-
-    // Persist to proper SQLite database
-    const res = await fetch('/api/bookings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        bookingId: booking.bookingId,
-        formData: booking.formData,
-        actor: 'GUEST_WEB_BOOKING'
-      })
-    });
-
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.booking) {
-        const synced = [json.booking, ...current.filter((b) => b.bookingId !== booking.bookingId)];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(synced));
-        return json.booking;
-      }
-    }
-  } catch (e) {
-    console.error('Failed to save booking to database', e);
-  }
-  return booking;
+  const res = await fetch('/api/bookings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      bookingId: booking.bookingId,
+      formData: booking.formData,
+      actor: 'GUEST_WEB_BOOKING'
+    })
+  });
+  const json = await ensureOk(res);
+  const current = getStoredBookings();
+  const synced = [json.booking, ...current.filter((b) => b.bookingId !== json.booking.bookingId)];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(synced));
+  return json.booking;
 };
 
 export const sendBookingConfirmationEmail = async (bookingId: string) => {
   try {
-    const res = await fetch(`/api/bookings/${bookingId}/send-email`, {
+    const res = await adminFetch(`/api/bookings/${bookingId}/send-email`, {
       method: 'POST'
     });
     if (res.ok) {
@@ -82,7 +99,7 @@ export const sendBookingConfirmationEmail = async (bookingId: string) => {
 
 export const fetchBookingEmailPreview = async (bookingId: string) => {
   try {
-    const res = await fetch(`/api/bookings/${bookingId}/email-preview`);
+    const res = await adminFetch(`/api/bookings/${bookingId}/email-preview`);
     if (res.ok) {
       return await res.json();
     }
@@ -98,22 +115,16 @@ export const updateBookingStatus = async (
   actor = 'ADMIN_PORTAL',
   notes = ''
 ): Promise<BookingConfirmation[]> => {
-  try {
-    const current = getStoredBookings();
-    const updated = current.map((b) => (b.bookingId === bookingId ? { ...b, status } : b));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  const res = await adminFetch(`/api/bookings/${bookingId}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, actor, notes })
+  });
+  await ensureOk(res);
 
-    // Persist status change to SQLite database
-    await fetch(`/api/bookings/${bookingId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, actor, notes })
-    });
-
-    return updated;
-  } catch {
-    return getStoredBookings();
-  }
+  const updated = getStoredBookings().map((b) => (b.bookingId === bookingId ? { ...b, status } : b));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  return updated;
 };
 
 export const deleteBooking = async (
@@ -121,27 +132,21 @@ export const deleteBooking = async (
   actor = 'ADMIN_PORTAL',
   reason = 'Admin portal deletion'
 ): Promise<BookingConfirmation[]> => {
-  try {
-    const current = getStoredBookings();
-    const updated = current.filter((b) => b.bookingId !== bookingId);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  const res = await adminFetch(`/api/bookings/${bookingId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ actor, reason })
+  });
+  await ensureOk(res);
 
-    // Archive and delete in SQLite database
-    await fetch(`/api/bookings/${bookingId}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ actor, reason })
-    });
-
-    return updated;
-  } catch {
-    return getStoredBookings();
-  }
+  const updated = getStoredBookings().filter((b) => b.bookingId !== bookingId);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  return updated;
 };
 
 export const fetchBookingAuditLogs = async (bookingId: string) => {
   try {
-    const res = await fetch(`/api/bookings/${bookingId}`);
+    const res = await adminFetch(`/api/bookings/${bookingId}`);
     if (res.ok) {
       const data = await res.json();
       return data.auditLogs || [];
@@ -154,7 +159,7 @@ export const fetchBookingAuditLogs = async (bookingId: string) => {
 
 export const fetchDatabaseStatus = async () => {
   try {
-    const res = await fetch('/api/database/status');
+    const res = await adminFetch('/api/database/status');
     if (res.ok) {
       const data = await res.json();
       return data.stats;
@@ -171,14 +176,20 @@ export const fetchDatabaseStatus = async () => {
 };
 
 export const resetBookings = async (): Promise<BookingConfirmation[]> => {
-  try {
-    await fetch('/api/database/reset', { method: 'POST' });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_BOOKINGS));
-    return INITIAL_BOOKINGS;
-  } catch {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_BOOKINGS));
-    return INITIAL_BOOKINGS;
-  }
+  await ensureOk(await adminFetch('/api/database/reset', { method: 'POST' }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_BOOKINGS));
+  return INITIAL_BOOKINGS;
+};
+
+export const downloadBookingsCsv = async (): Promise<void> => {
+  const res = await adminFetch('/api/export/csv');
+  if (!res.ok) throw new Error(`Export failed (${res.status})`);
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `amica_reservations_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 };
 
 // =========================================================================
@@ -254,50 +265,18 @@ export const addBlockedDate = async (data: {
   reason: string;
   notes?: string;
 }): Promise<BlockedDateItem[]> => {
-  try {
-    const res = await fetch('/api/system/blocked-dates', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (res.ok) {
-      return await fetchBlockedDates();
-    }
-  } catch (e) {
-    console.error('Failed to add blocked date via API', e);
-  }
-
-  // Fallback to local storage
-  const current = await fetchBlockedDates();
-  const newItem: BlockedDateItem = {
-    id: Date.now(),
-    blocked_date: data.blocked_date,
-    is_full_day: data.is_full_day ? 1 : 0,
-    start_time: data.start_time || null,
-    end_time: data.end_time || null,
-    reason: data.reason,
-    notes: data.notes || null,
-    created_at: new Date().toISOString()
-  };
-  const updated = [...current, newItem];
-  localStorage.setItem(BLOCKED_DATES_KEY, JSON.stringify(updated));
-  return updated;
+  const res = await adminFetch('/api/system/blocked-dates', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  await ensureOk(res);
+  return await fetchBlockedDates();
 };
 
 export const removeBlockedDate = async (idOrDate: number | string): Promise<BlockedDateItem[]> => {
-  try {
-    const res = await fetch(`/api/system/blocked-dates/${idOrDate}`, { method: 'DELETE' });
-    if (res.ok) {
-      return await fetchBlockedDates();
-    }
-  } catch (e) {
-    console.error('Failed to remove blocked date via API', e);
-  }
-
-  const current = await fetchBlockedDates();
-  const updated = current.filter((item) => item.id !== Number(idOrDate) && item.blocked_date !== String(idOrDate));
-  localStorage.setItem(BLOCKED_DATES_KEY, JSON.stringify(updated));
-  return updated;
+  await ensureOk(await adminFetch(`/api/system/blocked-dates/${idOrDate}`, { method: 'DELETE' }));
+  return await fetchBlockedDates();
 };
 
 export const fetchSystemSettings = async (): Promise<SystemSettings> => {
@@ -325,25 +304,12 @@ export const fetchSystemSettings = async (): Promise<SystemSettings> => {
 };
 
 export const updateSystemSettings = async (settings: Partial<SystemSettings>): Promise<SystemSettings> => {
-  try {
-    const res = await fetch('/api/system/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ settings })
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.settings) {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(json.settings));
-        return { ...DEFAULT_SETTINGS, ...json.settings };
-      }
-    }
-  } catch (e) {
-    console.error('Failed to update settings via API', e);
-  }
-
-  const current = await fetchSystemSettings();
-  const updated = { ...current, ...settings };
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
-  return updated;
+  const res = await adminFetch('/api/system/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ settings })
+  });
+  const json = await ensureOk(res);
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(json.settings));
+  return { ...DEFAULT_SETTINGS, ...json.settings };
 };

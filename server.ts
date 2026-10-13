@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { timingSafeEqual } from 'crypto';
 import {
   getAllReservations,
   getReservationById,
@@ -36,6 +37,39 @@ async function startServer() {
   // CORS / headers for local safety
   app.use((req, res, next) => {
     res.setHeader('X-Amica-Database', 'SQLite3-WAL');
+    next();
+  });
+
+  // =========================================================================
+  // ADMIN AUTH
+  // Everything under /api except the guest booking flow needs the
+  // x-admin-password header to match ADMIN_PASSWORD.
+  // =========================================================================
+  const PUBLIC_API_ROUTES = new Set([
+    'GET /api/health',
+    'POST /api/bookings',
+    'GET /api/system/blocked-dates',
+    'GET /api/system/settings'
+  ]);
+
+  const isAdminPassword = (supplied: unknown): boolean => {
+    const expected = process.env.ADMIN_PASSWORD;
+    if (!expected || typeof supplied !== 'string') return false;
+    const a = Buffer.from(supplied);
+    const b = Buffer.from(expected);
+    return a.length === b.length && timingSafeEqual(a, b);
+  };
+
+  app.use('/api', (req, res, next) => {
+    if (PUBLIC_API_ROUTES.has(`${req.method} ${req.baseUrl}${req.path}`.replace(/\/$/, ''))) {
+      return next();
+    }
+    if (!process.env.ADMIN_PASSWORD) {
+      return res.status(503).json({ success: false, error: 'Admin access is not configured (ADMIN_PASSWORD is unset)' });
+    }
+    if (!isAdminPassword(req.get('x-admin-password'))) {
+      return res.status(401).json({ success: false, error: 'Admin password required' });
+    }
     next();
   });
 
