@@ -5,6 +5,7 @@ import { AdminCalendarView } from '../components/AdminCalendarView';
 import {
   getStoredBookings,
   fetchBookingsFromDb,
+  downloadBookingsCsv,
   saveBooking,
   updateBookingStatus,
   deleteBooking,
@@ -118,6 +119,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Unknown error');
+
   const loadData = async () => {
     try {
       const data = await fetchBookingsFromDb();
@@ -175,7 +178,13 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   };
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
-    const updated = await updateBookingStatus(bookingId, newStatus, 'MAÎTRE_D_ADMIN', `Status switched to ${newStatus}`);
+    let updated: BookingConfirmation[];
+    try {
+      updated = await updateBookingStatus(bookingId, newStatus, 'MAÎTRE_D_ADMIN', `Status switched to ${newStatus}`);
+    } catch (err) {
+      showToast(`Status not saved: ${errorText(err)}`);
+      return;
+    }
     setBookings(updated);
     if (selectedBooking && selectedBooking.bookingId === bookingId) {
       setSelectedBooking({ ...selectedBooking, status: newStatus });
@@ -187,7 +196,13 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
   const handleDelete = async (bookingId: string) => {
     if (window.confirm(`Are you sure you want to cancel reservation #${bookingId}? It will be logged in the database audit table.`)) {
-      const updated = await deleteBooking(bookingId, 'MAÎTRE_D_ADMIN', 'Cancelled from admin dashboard');
+      let updated: BookingConfirmation[];
+      try {
+        updated = await deleteBooking(bookingId, 'MAÎTRE_D_ADMIN', 'Cancelled from admin dashboard');
+      } catch (err) {
+        showToast(`Cancellation not saved: ${errorText(err)}`);
+        return;
+      }
       setBookings(updated);
       if (selectedBooking?.bookingId === bookingId) setSelectedBooking(null);
       showToast(`Reservation #${bookingId} cancelled and archived in database`);
@@ -196,7 +211,13 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
   const handleResetData = async () => {
     if (window.confirm('Reset database back to standard Amica Soho reservations?')) {
-      const updated = await resetBookings();
+      let updated: BookingConfirmation[];
+      try {
+        updated = await resetBookings();
+      } catch (err) {
+        showToast(`Reset failed: ${errorText(err)}`);
+        return;
+      }
       setBookings(updated);
       const stats = await fetchDatabaseStatus();
       setDbStats(stats);
@@ -221,7 +242,12 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       status: 'Confirmed'
     };
 
-    await saveBooking(created);
+    try {
+      await saveBooking(created);
+    } catch (err) {
+      showToast(`Reservation not saved: ${errorText(err)}`);
+      return;
+    }
     await loadData();
     setIsAddModalOpen(false);
     showToast(`Reservation #${bookingId} recorded and auto-confirmed in SQLite!`);
@@ -257,8 +283,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       setBlockedDates(updated);
       setIsBlockModalOpen(false);
       showToast(`Date ${newBlock.date} blocked and recorded in database!`);
-    } catch {
-      showToast('Failed to block date');
+    } catch (err) {
+      showToast(`Failed to block date: ${errorText(err)}`);
     }
   };
 
@@ -269,8 +295,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
         const updated = await removeBlockedDate(id);
         setBlockedDates(updated);
         showToast(`Date ${dateStr} unblocked successfully`);
-      } catch {
-        showToast('Failed to unblock date');
+      } catch (err) {
+        showToast(`Failed to unblock date: ${errorText(err)}`);
       }
     }
   };
@@ -283,8 +309,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       const updated = await updateSystemSettings(systemSettings);
       setSystemSettings(updated);
       showToast('System settings updated and saved to database!');
-    } catch {
-      showToast('Failed to save settings');
+    } catch (err) {
+      showToast(`Failed to save settings: ${errorText(err)}`);
     } finally {
       setIsSavingSettings(false);
     }
@@ -292,8 +318,9 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
   // Export to CSV
   const handleExportCSV = () => {
-    window.open('/api/export/csv', '_blank');
-    showToast('Downloading database records as CSV...');
+    downloadBookingsCsv()
+      .then(() => showToast('Downloading database records as CSV...'))
+      .catch((err) => showToast(`Export failed: ${errorText(err)}`));
   };
 
   // Filtered list
