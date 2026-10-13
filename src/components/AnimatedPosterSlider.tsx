@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, ZoomIn, X, Sparkles, BookOpen, Quote, ShieldCheck } from 'lucide-react';
 
 import {
-  amicaNeonLounge as posterBurlesque,
-  amicaBarDisplay as posterMilanoNy,
-  amicaCrimsonBar as posterSpritz,
-  amicaVaultBooth as posterVermouth,
-  amicaArchBooth as posterCampari,
-  amicaOxbloodLounge as posterCicchetti,
+  photoSilverTier as posterBurlesque,
+  photoSalmonTier as posterMilanoNy,
+  photoBar as posterSpritz,
+  photoCocktail as posterVermouth,
+  photoChampagne as posterCampari,
+  photoGoldTier as posterCicchetti,
 } from '../assets/images/photos';
 
 interface VintagePoster {

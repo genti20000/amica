@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { PageId, EventItem } from '../types';
 import { EVENTS_DATA } from '../data/eventsData.ts';
 import { Music, Calendar, Clock, Sparkles, Filter, Wine, ArrowRight, Ticket } from 'lucide-react';
-import { amicaMirrorSconces } from '../assets/images/photos';
+import { photoCocktail } from '../assets/images/photos';
 
 interface WhatsOnPageProps {
   onNavigate: (page: PageId) => void;
@@ -113,7 +113,7 @@ export const WhatsOnPage: React.FC<WhatsOnPageProps> = ({ onNavigate }) => {
       <div className="bg-[#141418] border-2 border-[#C5A059] rounded-2xl p-8 sm:p-12 text-center space-y-6 shadow-2xl relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src={amicaMirrorSconces}
+            src={photoCocktail}
             alt="Amica Soho Vinyl & Cocktails"
             className="w-full h-full object-cover filter brightness-[0.25] contrast-[1.2]"
             referrerPolicy="no-referrer"

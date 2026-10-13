@@ -4,16 +4,16 @@ import { VENUE_INFO } from '../data/venueData.ts';
 import { MapPin, Wine, Music, Calendar, Clock, Award, Compass, Sparkles, BookOpen, X, ChevronRight, Eye } from 'lucide-react';
 import { HoursLocationGrid } from '../components/HoursLocationGrid';
 import {
-  amicaEntranceDome,
-  amicaFacadeNight,
-  amicaCrimsonBar,
-  amicaVaultBooth,
-  amicaArchBooth,
-  amicaOxbloodLounge,
-  amicaNeonLounge,
-  amicaBarDisplay,
-  amicaMirrorSconces,
-  amicaPowderRoom,
+  photoMenuHat,
+  photoMenus,
+  photoBar,
+  photoCocktail,
+  photoChampagne,
+  photoGoldTier,
+  photoSilverTier,
+  photoSalmonTier,
+  photoMozzarellaSalmon,
+  photoCheeseBoard,
   AMICA_PHOTOS,
 } from '../assets/images/photos';
 
@@ -31,8 +31,8 @@ export const VenuePage: React.FC<VenuePageProps> = ({ onNavigate }) => {
       <section className="relative min-h-[55vh] flex items-center justify-center bg-[#08080A] overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src={amicaFacadeNight}
-            alt="AMICA SOHO exterior facade and subterranean cocktail haven on 23 Frith Street"
+            src={photoMenus}
+            alt="AMICA SOHO menus on the bar"
             className="w-full h-full object-cover filter brightness-[0.45] contrast-[1.1]"
             referrerPolicy="no-referrer"
           />
@@ -78,14 +78,14 @@ export const VenuePage: React.FC<VenuePageProps> = ({ onNavigate }) => {
 
           <div className="relative rounded-xl overflow-hidden border border-[#9D7E54]/40 shadow-2xl aspect-[4/3]">
             <img
-              src={amicaVaultBooth}
-              alt="Barrel-vaulted dining booth at AMICA SOHO"
+              src={photoCocktail}
+              alt="A red cocktail on the bar at AMICA SOHO"
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#08080A] via-transparent to-transparent opacity-70" />
             <div className="absolute bottom-4 left-4 right-4 p-3 bg-[#121215]/90 border border-[#9D7E54]/30 backdrop-blur-md rounded text-xs text-[#DFBE7B] font-serif italic">
-              "The vault alcoves offer complete privacy for intimate gatherings and late-night toasts."
+              "Cocktails on the marble bar, from aperitivo hour until late."
             </div>
           </div>
         </div>
@@ -94,29 +94,29 @@ export const VenuePage: React.FC<VenuePageProps> = ({ onNavigate }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="relative rounded-xl overflow-hidden border border-[#9D7E54]/40 shadow-xl group aspect-[16/10]">
             <img
-              src={amicaCrimsonBar}
-              alt="The Crimson Speakeasy Bar at AMICA SOHO"
+              src={photoBar}
+              alt="The bar at AMICA SOHO"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               referrerPolicy="no-referrer"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#08080A] via-transparent to-transparent opacity-80" />
             <div className="absolute bottom-4 left-4 right-4 text-xs font-display text-[#DFBE7B]">
-              <span className="block font-bold text-sm text-[#FDFBF7]">The Crimson Cocktail Bar</span>
-              <span className="text-[11px] text-[#DFBE7B]/80 font-sans">Fluted walnut counter with backlit amber and ruby spirits</span>
+              <span className="block font-bold text-sm text-[#FDFBF7]">The Bar</span>
+              <span className="text-[11px] text-[#DFBE7B]/80 font-sans">Red fringe lamps, leather stools and a marble counter</span>
             </div>
           </div>
 
           <div className="relative rounded-xl overflow-hidden border border-[#9D7E54]/40 shadow-xl group aspect-[16/10]">
             <img
-              src={amicaNeonLounge}
-              alt="The Nocturnal Lounge and Neon Wall at AMICA SOHO"
+              src={photoSilverTier}
+              alt="Sharing stand of aperitivo food at AMICA SOHO"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               referrerPolicy="no-referrer"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#08080A] via-transparent to-transparent opacity-80" />
             <div className="absolute bottom-4 left-4 right-4 text-xs font-display text-[#DFBE7B]">
-              <span className="block font-bold text-sm text-[#FDFBF7]">Soho After Dark Neon Lounge</span>
-              <span className="text-[11px] text-[#DFBE7B]/80 font-sans">Curated red neon typography grid and late-night seating</span>
+              <span className="block font-bold text-sm text-[#FDFBF7]">Aperitivo to Share</span>
+              <span className="text-[11px] text-[#DFBE7B]/80 font-sans">Sharing stands of bruschetta, crispy bites and skewers</span>
             </div>
           </div>
         </div>

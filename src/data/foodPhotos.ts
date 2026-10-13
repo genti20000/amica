@@ -34,5 +34,13 @@ export const FOOD_PHOTOS = [
   {
     "src": "/images/food/amica-food-09.webp",
     "alt": "AMICA Soho food presentation 9"
+  },
+  {
+    "src": "/images/food/amica-food-10.webp",
+    "alt": "AMICA Soho food presentation 10"
+  },
+  {
+    "src": "/images/food/amica-food-11.webp",
+    "alt": "AMICA Soho food presentation 11"
   }
 ];

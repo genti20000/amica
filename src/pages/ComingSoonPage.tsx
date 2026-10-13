@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Mail, Lock, ArrowRight, Calendar } from 'lucide-react';
 import { PageId } from '../types';
-import FACADE_IMAGE from '../assets/images/regenerated_image_1790200582456.png';
+import { photoBar as FACADE_IMAGE } from '../assets/images/photos';
 
 interface ComingSoonPageProps {
   onNavigate?: (page: PageId) => void;
@@ -40,7 +40,7 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
           {/* Main Facade Image - 100% full view */}
           <img
             src={FACADE_IMAGE}
-            alt="AMICA SOHO 23 Frith Street Entrance Facade"
+            alt="The AMICA SOHO bar"
             className="w-full h-auto block select-none pointer-events-none"
             referrerPolicy="no-referrer"
           />

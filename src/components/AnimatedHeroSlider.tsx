@@ -2,18 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Calendar, Sparkles, MapPin, Clock } from 'lucide-react';
 import { PageId } from '../types';
-import {
-  amicaEntranceDome,
-  amicaFacadeNight,
-  amicaCrimsonBar,
-  amicaVaultBooth,
-  amicaArchBooth,
-  amicaOxbloodLounge,
-  amicaNeonLounge,
-  amicaBarDisplay,
-  amicaMirrorSconces,
-  amicaPowderRoom,
-} from '../assets/images/photos';
+import { AMICA_PHOTOS } from '../assets/images/photos';
 
 interface HeroSlide {
   id: string;
@@ -23,78 +12,13 @@ interface HeroSlide {
   subtitle: string;
 }
 
-const HERO_SLIDES: HeroSlide[] = [
-  {
-    id: 'amica-entrance-dome',
-    image: amicaEntranceDome,
-    title: 'AMICA SOHO · 23 Frith Street, London',
-    type: 'venue',
-    subtitle: 'Aperitivo · Music · Late | Iconic burgundy dome canopy & amber reeded entrance',
-  },
-  {
-    id: 'amica-facade-night',
-    image: amicaFacadeNight,
-    title: 'Art Deco Facade & Cocktail Coupe Crest',
-    type: 'venue',
-    subtitle: 'Ribbed brass sconces, black panel doors, and Parisian bistro corner at night',
-  },
-  {
-    id: 'amica-crimson-bar',
-    image: amicaCrimsonBar,
-    title: 'The Crimson Speakeasy Bar · Cocktails & Spirits',
-    type: 'venue',
-    subtitle: 'Fluted walnut bar counter, crimson illuminated backbar, and bespoke mixology',
-  },
-  {
-    id: 'amica-vault-booth',
-    image: amicaVaultBooth,
-    title: 'Barrel-Vaulted Dining Arch · Intimate Seclusion',
-    type: 'venue',
-    subtitle: 'Curved textured ceiling, warm gold cove uplighting, and tufted leather banquettes',
-  },
-  {
-    id: 'amica-arch-booth',
-    image: amicaArchBooth,
-    title: 'The Private Scalloped Alcove · Velvet & Wine',
-    type: 'venue',
-    subtitle: 'Burgundy Art Deco fan wallpaper, concealed ambient glow, and champagne service',
-  },
-  {
-    id: 'amica-oxblood-lounge',
-    image: amicaOxbloodLounge,
-    title: 'The Oxblood Cocktail Lounge · Subterranean Haven',
-    type: 'venue',
-    subtitle: 'Arched golden wine displays, cognac leather Chesterfield, and bespoke salon tables',
-  },
-  {
-    id: 'amica-neon-lounge',
-    image: amicaNeonLounge,
-    title: 'Soho After Dark · Red Neon Grid Lounge',
-    type: 'venue',
-    subtitle: 'Six glowing crimson typography panels, dark walnut paneling, and late-night revelry',
-  },
-  {
-    id: 'amica-bar-display',
-    image: amicaBarDisplay,
-    title: 'The Curated Back-Bar Cabinet · Heritage Glassware',
-    type: 'venue',
-    subtitle: 'Antiqued mercury mirror cubbies, crystal decanters, and vintage cocktail literature',
-  },
-  {
-    id: 'amica-mirror-sconces',
-    image: amicaMirrorSconces,
-    title: 'Midnight Navy Wall & Fluted Brass Sconces',
-    type: 'venue',
-    subtitle: 'Brushed brass pivot mirror capturing golden reflections of the cocktail bar',
-  },
-  {
-    id: 'amica-powder-room',
-    image: amicaPowderRoom,
-    title: 'The Art Deco Powder Room · Opulent Hospitality',
-    type: 'venue',
-    subtitle: 'Burgundy fan-patterned wallpaper, dark glazed subway tile, and warm brass fixtures',
-  },
-];
+const HERO_SLIDES: HeroSlide[] = AMICA_PHOTOS.map((photo) => ({
+  id: `amica-${photo.id}`,
+  image: photo.src,
+  title: photo.title,
+  type: 'venue',
+  subtitle: photo.subtitle,
+}));
 
 interface AnimatedHeroSliderProps {
   onNavigate: (page: PageId) => void;

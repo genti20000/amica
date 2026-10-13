@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { PageId } from '../types';
 import { Mail, Phone, Instagram, MapPin, X, ChevronRight, ExternalLink } from 'lucide-react';
 import {
-  amicaEntranceDome,
-  amicaFacadeNight,
-  amicaCrimsonBar,
-  amicaVaultBooth,
-  amicaArchBooth,
-  amicaOxbloodLounge,
-  amicaNeonLounge,
-  amicaBarDisplay,
-  amicaMirrorSconces,
-  amicaPowderRoom,
+  photoMenuHat,
+  photoMenus,
+  photoBar,
+  photoCocktail,
+  photoChampagne,
+  photoGoldTier,
+  photoSilverTier,
+  photoSalmonTier,
+  photoMozzarellaSalmon,
+  photoCheeseBoard,
+  AMICA_PHOTOS,
 } from '../assets/images/photos';
 
 interface HomePageProps {
@@ -22,59 +23,7 @@ interface HomePageProps {
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) => {
   const [activeLightboxIndex, setActiveLightboxIndex] = useState<number | null>(null);
 
-  // Gallery items featuring the 10 authentic AMICA SOHO photographs
-  const galleryItems = [
-    {
-      src: amicaCrimsonBar,
-      alt: 'The Crimson Speakeasy Bar',
-      caption: 'Subterranean walnut counter with crimson illuminated backbar & cocktail trolley',
-    },
-    {
-      src: amicaVaultBooth,
-      alt: 'Barrel-Vaulted Dining Arch',
-      caption: 'Warm gold cove lighting, tufted leather banquettes & brass sunburst medallion',
-    },
-    {
-      src: amicaArchBooth,
-      alt: 'The Private Scalloped Alcove',
-      caption: 'Burgundy Art Deco fan wallpaper with ambient uplighting & chilled champagne',
-    },
-    {
-      src: amicaOxbloodLounge,
-      alt: 'The Oxblood Cocktail Lounge',
-      caption: 'Arched golden wine displays, cognac leather Chesterfield & mid-century armchairs',
-    },
-    {
-      src: amicaNeonLounge,
-      alt: 'Soho After Dark Neon Wall',
-      caption: 'Curated red typography panels: Cocktails & Mischief Till Late',
-    },
-    {
-      src: amicaBarDisplay,
-      alt: 'The Curated Back-Bar Cabinet',
-      caption: 'Antiqued mercury mirror cubbies, decanters & vintage coupe collection',
-    },
-    {
-      src: amicaMirrorSconces,
-      alt: 'Midnight Wall & Fluted Sconces',
-      caption: 'Brushed brass pivot mirror capturing golden reflections of the cocktail bar',
-    },
-    {
-      src: amicaPowderRoom,
-      alt: 'The Art Deco Powder Room',
-      caption: 'Burgundy ginkgo fan wallpaper, dark glazed tiles & polished brass fittings',
-    },
-    {
-      src: amicaFacadeNight,
-      alt: '23 Frith Street Wedge Awning',
-      caption: 'Cocktail coupe icon, solid black doors & Parisian bistro table at night',
-    },
-    {
-      src: amicaEntranceDome,
-      alt: 'Burgundy Dome Entrance',
-      caption: 'Velvet rounded canopy, brass sconces & nighttime Soho cobblestones',
-    },
-  ];
+  const galleryItems = AMICA_PHOTOS.map((photo) => ({ src: photo.src, alt: photo.title, caption: photo.subtitle }));
 
   return (
     <div className="w-full bg-maroon-deep text-[#FDFBF7] font-sans selection:bg-[#C5A059] selection:text-[#150306] overflow-x-hidden">
@@ -89,8 +38,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
         {/* Full Hero Image Background */}
         <div className="absolute inset-0 w-full h-full">
           <img
-            src={amicaCrimsonBar}
-            alt="AMICA SOHO Crimson Speakeasy Cocktail Bar"
+            src={photoBar}
+            alt="The AMICA SOHO bar with red fringe lamps"
             className="w-full h-full object-cover object-center"
             referrerPolicy="no-referrer"
           />
@@ -205,8 +154,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
             </div>
             <div className="w-full sm:w-1/2 min-h-[160px] sm:min-h-[190px] relative overflow-hidden border-t sm:border-t-0 sm:border-l border-maroon">
               <img
-                src={amicaVaultBooth}
-                alt="AMICA SOHO warm vaulted candlelit booths"
+                src={photoMenuHat}
+                alt="AMICA menu card and an orange fedora in a velvet booth"
                 className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700"
                 referrerPolicy="no-referrer"
               />
@@ -236,8 +185,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
             </div>
             <div className="w-full sm:w-1/2 min-h-[160px] sm:min-h-[190px] relative overflow-hidden border-t sm:border-t-0 sm:border-l border-maroon">
               <img
-                src={amicaBarDisplay}
-                alt="AMICA SOHO curated backbar and crystal cocktail coupes"
+                src={photoCocktail}
+                alt="A red cocktail on the marble bar at AMICA SOHO"
                 className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700"
                 referrerPolicy="no-referrer"
               />
@@ -267,8 +216,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
             </div>
             <div className="w-full sm:w-1/2 min-h-[160px] sm:min-h-[190px] relative overflow-hidden border-t sm:border-t-0 sm:border-l border-maroon">
               <img
-                src={amicaMirrorSconces}
-                alt="AMICA SOHO midnight wall and brass sconces"
+                src={photoChampagne}
+                alt="Champagne on ice under red light at AMICA SOHO"
                 className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-700"
                 referrerPolicy="no-referrer"
               />
@@ -312,8 +261,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
           {/* Right Panoramic Image */}
           <div className="w-full lg:w-[72%] xl:w-[74%] min-h-[220px] sm:min-h-[280px] relative overflow-hidden border-t lg:border-t-0 lg:border-l border-maroon">
             <img
-              src={amicaNeonLounge}
-              alt="AMICA SOHO Subterranean Private Hire Lounge and Bar"
+              src={photoBar}
+              alt="The AMICA SOHO bar, available for private hire"
               className="w-full h-full object-cover object-center transform hover:scale-102 transition-transform duration-700"
               referrerPolicy="no-referrer"
             />
@@ -529,7 +478,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
           <div className="hidden md:flex items-center gap-3">
             <div className="w-12 h-12 rounded-full overflow-hidden border border-[#DFBE7B] shadow-md">
               <img
-                src={amicaEntranceDome}
+                src={photoMenuHat}
                 alt="Amica Soho Entrance"
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
