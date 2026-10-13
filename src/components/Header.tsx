@@ -69,14 +69,14 @@ export const Header: React.FC<HeaderProps> = ({
             {currentPage === 'book' ? (
               <button
                 onClick={() => handleNavClick('coming-soon')}
-                className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
+                className="inline-flex items-center gap-1 px-3 sm:px-2.5 py-2 sm:py-1 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[10px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
               >
                 <span>← Coming Soon</span>
               </button>
             ) : (
               <button
                 onClick={() => handleNavClick('book')}
-                className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
+                className="inline-flex items-center gap-1 px-3 sm:px-2.5 py-2 sm:py-1 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[10px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
                 title="Book Table (1–20 Pax Auto-Confirmed)"
               >
                 <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#DFBE7B]" />
@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            <span className="font-sans text-[10px] sm:text-[11.5px] tracking-[0.22em] sm:tracking-[0.26em] uppercase text-[#E8CCA0] font-medium leading-tight">
+            <span className="hidden sm:inline font-sans text-[10px] sm:text-[11.5px] tracking-[0.22em] sm:tracking-[0.26em] uppercase text-[#E8CCA0] font-medium leading-tight whitespace-nowrap">
               23 Frith St, Soho
             </span>
 
@@ -113,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
               onOpenLogin && (
                 <button
                   onClick={onOpenLogin}
-                  className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded bg-[#1D060B] hover:bg-[#2F0B13] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
+                  className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-2.5 py-2 sm:py-1 rounded bg-[#1D060B] hover:bg-[#2F0B13] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[10px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
                   title="Staff Login"
                   aria-label="Login to Main Site"
                 >
@@ -130,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-maroon-deep/95 backdrop-blur-md border-b border-maroon transition-all duration-300">
+      <header className="sticky top-0 z-40 w-full bg-maroon-deep/95 backdrop-blur-md border-b border-maroon transition-all duration-300">
         <div className="w-full px-3 sm:px-8 lg:px-12">
           <div className="flex items-center justify-between h-16 sm:h-20 relative">
             
@@ -155,10 +155,10 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Right: HOME | COMING SOON + BOOK NOW + 3-line Hamburger Menu */}
-            <div className="flex items-center gap-3 sm:gap-6">
+            <div className="flex items-center gap-3 md:gap-6">
               
               {/* HOME | COCKTAILS | ABOUT Navigation */}
-              <nav className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-xs font-sans tracking-[0.2em] sm:tracking-[0.26em] uppercase">
+              <nav className="hidden sm:flex items-center gap-2 sm:gap-4 whitespace-nowrap text-[10px] sm:text-xs font-sans tracking-[0.2em] sm:tracking-[0.26em] uppercase">
                 <button
                   onClick={() => handleNavClick('home')}
                   className={`relative py-1 cursor-pointer transition-colors min-h-[44px] flex items-center ${
@@ -194,7 +194,7 @@ export const Header: React.FC<HeaderProps> = ({
               {onLockSite && (
                 <button
                   onClick={onLockSite}
-                  className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] text-[10px] tracking-[0.18em] uppercase transition-all duration-200 cursor-pointer shadow-sm"
+                  className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 whitespace-nowrap rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] text-[10px] tracking-[0.18em] uppercase transition-all duration-200 cursor-pointer shadow-sm"
                   title="Lock Main Site & Return to Coming Soon"
                 >
                   <Lock className="w-3 h-3 text-[#DFBE7B]" />
@@ -219,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Brushed Gold 'BOOK NOW' Button */}
               <button
                 onClick={() => handleNavClick('book')}
-                className="hidden sm:flex bg-[#C5A059] hover:bg-[#DFBE7B] text-[#08080A] font-sans font-semibold text-[10px] sm:text-xs tracking-[0.18em] sm:tracking-[0.22em] uppercase min-h-[44px] py-2 sm:py-2.5 px-3 sm:px-5 transition-all duration-200 cursor-pointer shadow-[0_4px_14px_rgba(74,14,23,0.5)] active:scale-95 whitespace-nowrap border border-[#FFEAA7]/40 items-center justify-center rounded-sm"
+                className="flex bg-[#C5A059] hover:bg-[#DFBE7B] text-[#08080A] font-sans font-semibold text-[11px] sm:text-xs tracking-[0.18em] sm:tracking-[0.22em] uppercase min-h-[44px] py-2 sm:py-2.5 px-3 sm:px-5 transition-all duration-200 cursor-pointer shadow-[0_4px_14px_rgba(74,14,23,0.5)] active:scale-95 whitespace-nowrap border border-[#FFEAA7]/40 items-center justify-center rounded-sm"
               >
                 BOOK NOW
               </button>
@@ -263,7 +263,7 @@ export const Header: React.FC<HeaderProps> = ({
               </h2>
               <div className="flex items-center justify-center gap-2 mt-1 text-[#DFBE7B]">
                 <span className="w-5 sm:w-6 h-[1px] bg-[#DFBE7B]/80" />
-                <span className="font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.36em] uppercase font-medium">
+                <span className="font-sans text-[10px] sm:text-[9.5px] tracking-[0.36em] uppercase font-medium">
                   SOHO
                 </span>
                 <span className="w-5 sm:w-6 h-[1px] bg-[#DFBE7B]/80" />

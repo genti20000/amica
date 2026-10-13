@@ -189,7 +189,7 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
             return (
               <div
                 key={item.id}
-                className="bg-gradient-to-b from-[#16161C] to-[#101014] border border-[#C5A059]/30 hover:border-[#C5A059] rounded-xl p-6 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-[0_10px_30px_rgba(197,160,89,0.15)] relative group"
+                className="bg-gradient-to-b from-[#16161C] to-[#101014] border border-[#C5A059]/30 hover:border-[#C5A059] rounded-xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 shadow-xl hover:shadow-[0_10px_30px_rgba(197,160,89,0.15)] relative group"
               >
                 {/* Save Heart Button (Minimum 44x44px touch target) */}
                 <button
@@ -201,7 +201,7 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
                   <Heart className={`w-4 h-4 ${isSaved ? 'fill-current text-[#C5A059] hover:text-[#0B0B0C]' : 'text-[#DFBE7B]'}`} />
                 </button>
 
-                <div className="space-y-3 pr-10">
+                <div className="space-y-3 pr-14">
                   {/* Category / Italian Name */}
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[10px] font-display text-[#DFBE7B] uppercase tracking-wider font-semibold">
