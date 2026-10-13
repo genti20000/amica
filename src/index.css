@@ -20,6 +20,13 @@
   .font-display {
     font-family: var(--font-display);
   }
+
+  /* iOS Safari zooms the page when a focused field is under 16px */
+  @media (max-width: 639px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
 }
 
 /* Custom scrollbar in moody charcoal & aged brass */

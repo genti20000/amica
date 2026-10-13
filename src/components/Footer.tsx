@@ -58,28 +58,28 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </h4>
             <ul className="space-y-3 text-xs text-[#E8D5C4]">
               <li>
-                <button onClick={() => onNavigate('home')} className="hover:text-[#DFBE7B] transition-colors py-1 text-left cursor-pointer font-sans">Home & Atmosphere</button>
+                <button onClick={() => onNavigate('home')} className="hover:text-[#DFBE7B] transition-colors py-2 sm:py-1 text-left cursor-pointer font-sans">Home & Atmosphere</button>
               </li>
               <li>
-                <button onClick={() => onNavigate('drinks-food')} className="hover:text-[#DFBE7B] transition-colors py-1 text-left cursor-pointer font-sans">Drinks & Cicchetti Menu</button>
+                <button onClick={() => onNavigate('drinks-food')} className="hover:text-[#DFBE7B] transition-colors py-2 sm:py-1 text-left cursor-pointer font-sans">Drinks & Cicchetti Menu</button>
               </li>
               <li>
-                <button onClick={() => onNavigate('venue')} className="hover:text-[#DFBE7B] transition-colors py-1 text-left cursor-pointer font-sans">The Amica Soho Venue</button>
+                <button onClick={() => onNavigate('venue')} className="hover:text-[#DFBE7B] transition-colors py-2 sm:py-1 text-left cursor-pointer font-sans">The Amica Soho Venue</button>
               </li>
               <li>
-                <button onClick={() => onNavigate('private-hire')} className="hover:text-[#DFBE7B] transition-colors py-1 text-left cursor-pointer font-sans">Private Hire & Vault Buyouts</button>
+                <button onClick={() => onNavigate('private-hire')} className="hover:text-[#DFBE7B] transition-colors py-2 sm:py-1 text-left cursor-pointer font-sans">Private Hire & Vault Buyouts</button>
               </li>
               <li>
-                <button onClick={() => onNavigate('whats-on')} className="hover:text-[#DFBE7B] transition-colors py-1 text-left cursor-pointer font-sans">What’s On & Vinyl Sessions</button>
+                <button onClick={() => onNavigate('whats-on')} className="hover:text-[#DFBE7B] transition-colors py-2 sm:py-1 text-left cursor-pointer font-sans">What’s On & Vinyl Sessions</button>
               </li>
               <li>
-                <button onClick={() => onNavigate('visit')} className="hover:text-[#DFBE7B] transition-colors py-1 text-left cursor-pointer font-sans">Visit, Hours & Directions</button>
+                <button onClick={() => onNavigate('visit')} className="hover:text-[#DFBE7B] transition-colors py-2 sm:py-1 text-left cursor-pointer font-sans">Visit, Hours & Directions</button>
               </li>
               <li>
                 <button onClick={() => onNavigate('book')} className="text-[#DFBE7B] font-display font-bold hover:underline py-1 text-left cursor-pointer tracking-wider">Book A Table Online →</button>
               </li>
               <li className="pt-2 border-t border-[#4A0E17]/60">
-                <button onClick={() => onNavigate('admin-bookings')} className="text-xs text-[#DFBE7B]/60 hover:text-[#DFBE7B] transition-colors py-1 text-left cursor-pointer font-sans tracking-wide">
+                <button onClick={() => onNavigate('admin-bookings')} className="text-xs text-[#DFBE7B]/60 hover:text-[#DFBE7B] transition-colors py-2 sm:py-1 text-left cursor-pointer font-sans tracking-wide">
                   Staff: Admin Bookings Portal →
                 </button>
               </li>

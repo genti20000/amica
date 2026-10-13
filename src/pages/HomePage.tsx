@@ -159,13 +159,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
           Directly celebrates the rich maroon velvet dome awning with gold embroidery
          ========================================================================= */}
       <div className="w-full bg-maroon-awning border-y border-maroon-gold py-2.5 sm:py-3 px-3 sm:px-4 text-center select-none shadow-[inset_0_1px_0_rgba(223,190,123,0.3)]">
-        <div className="max-w-6xl mx-auto flex items-center justify-center gap-3 sm:gap-8 text-gold-amica">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-8 text-gold-amica">
           <span className="hidden sm:inline text-xs opacity-70">✦</span>
-          <span className="font-serif text-xs sm:text-base tracking-[0.25em] sm:tracking-[0.35em] text-[#FDFBF7] uppercase font-light">
+          <span className="font-serif text-xs sm:text-base tracking-[0.25em] sm:tracking-[0.35em] text-[#FDFBF7] uppercase font-light whitespace-nowrap">
             A M I C A&nbsp;&nbsp;S O H O
           </span>
-          <span className="text-xs text-gold-subtle">✦</span>
-          <span className="font-serif text-[10px] sm:text-xs tracking-[0.22em] sm:tracking-[0.3em] text-[#FFEAA7] uppercase font-medium">
+          <span className="hidden sm:inline text-xs text-gold-subtle">✦</span>
+          <span className="whitespace-nowrap font-serif text-[10px] sm:text-xs tracking-[0.22em] sm:tracking-[0.3em] text-[#FFEAA7] uppercase font-medium">
             APERITIVO &nbsp;•&nbsp; MUSIC &nbsp;•&nbsp; LATE
           </span>
           <span className="hidden sm:inline text-xs opacity-70">✦</span>
