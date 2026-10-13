@@ -1,0 +1,313 @@
+import { MenuItem } from '../types';
+
+export const MENU_ITEMS: MenuItem[] = [
+  // =========================================================================
+  // AMICA SIGNATURE COCKTAILS
+  // =========================================================================
+  {
+    id: 'emmas-affair',
+    name: "Emma's Affair",
+    category: 'cocktails',
+    price: '£14.00',
+    description: 'Gin • Passion Fruit • Sloe Gin • Tonic • Lemon',
+    tastingNotes: 'Bright. Juicy. A little dangerous.',
+    tags: ['Signature', 'Gin', 'Refreshing'],
+    pairingRecommendation: 'House Baked Rosemary & Sea Salt Focaccia',
+  },
+  {
+    id: 'peachy-pamela',
+    name: 'Peachy Pamela',
+    category: 'cocktails',
+    price: '£14.00',
+    description: "Jack Daniel's No. 7 • Peach • Lemon",
+    tastingNotes: 'Smooth, peachy and dangerously refreshing.',
+    tags: ['Signature', 'Whiskey', 'Fruity'],
+    pairingRecommendation: 'Warm Marinated Sicilian Olives',
+  },
+  {
+    id: 'lychee-lucy',
+    name: 'Lychee Lucy',
+    category: 'cocktails',
+    price: '£14.00',
+    description: 'Spiced Rum • Lychee • Lime • Coconut',
+    tastingNotes: 'Tropical, silky and seriously easy to love.',
+    tags: ['Signature', 'Rum', 'Tropical'],
+    pairingRecommendation: 'Baccalà Mantecato Crostini',
+  },
+  {
+    id: 'dirty-diana',
+    name: 'Dirty Diana',
+    category: 'cocktails',
+    price: '£14.50',
+    description: 'Mezcal • Martini Rosso • Campari',
+    tastingNotes: 'Smoky. Bitter. Beautifully bad.',
+    tags: ['Signature', 'Mezcal', 'Strong', 'Smoky'],
+    pairingRecommendation: 'Heritage Pork & Fennel Meatballs',
+  },
+  {
+    id: 'sophie-in-soho',
+    name: 'Sophie in Soho',
+    category: 'cocktails',
+    price: '£14.50',
+    description: "Hendrick's Gin • Cucumber • Lemon",
+    tastingNotes: 'Fresh, cool and made for Soho nights.',
+    tags: ['Signature', 'Gin', 'Fresh'],
+    pairingRecommendation: 'Warm Marinated Sicilian Olives',
+  },
+  {
+    id: 'rosie-amore',
+    name: 'Rosie Amore',
+    category: 'cocktails',
+    price: '£14.00',
+    description: 'Bacardi Oro • Carta Blanca • Almond • Orange • Pineapple',
+    tastingNotes: 'Tropical romance in a glass.',
+    tags: ['Signature', 'Rum', 'Tropical'],
+    pairingRecommendation: 'House Baked Rosemary Focaccia',
+  },
+  {
+    id: 'kats-secret',
+    name: "Kat's Secret",
+    category: 'cocktails',
+    price: '£14.50',
+    description: 'Vodka • Sauvignon Blanc • Elderflower • Mint • Lemon',
+    tastingNotes: 'Cool, crisp and effortlessly elegant.',
+    tags: ['Signature', 'Vodka', 'Wine Cocktail', 'Crisp'],
+    pairingRecommendation: 'Artisanal Italian Cheese Board',
+  },
+  {
+    id: 'olivia-old-fashioned',
+    name: 'Olivia Old Fashioned',
+    category: 'cocktails',
+    price: '£15.00',
+    description: 'Woodford Reserve • Orange Bitters • Angostura • Brown Sugar',
+    tastingNotes: 'Old school. Never out of style. Allow 5–7 minutes.',
+    tags: ['Signature', 'Bourbon', 'Classic', 'Strong'],
+    pairingRecommendation: 'The AMICA SOHO Grand Board',
+  },
+  {
+    id: 'sophia-picante',
+    name: 'Sophia Picante',
+    category: 'cocktails',
+    price: '£14.50',
+    description: 'Tequila • Agave • Pineapple • Lime • Coriander • Spices',
+    tastingNotes: 'Sweet heat with a little attitude.',
+    tags: ['Signature', 'Tequila', 'Spicy'],
+    pairingRecommendation: 'Heritage Pork & Fennel Meatballs',
+  },
+  {
+    id: 'espresso-emily',
+    name: 'Espresso Emily',
+    category: 'cocktails',
+    price: '£14.50',
+    description: 'Diplomático Rum • Espresso • Kahlúa',
+    tastingNotes: 'Dark, smooth and made for after midnight.',
+    tags: ['Signature', 'Espresso', 'Late Night', 'Rum'],
+    pairingRecommendation: 'Artisanal Italian Cheese Board',
+  },
+
+  // =========================================================================
+  // AMICA'S SPRITZ
+  // =========================================================================
+  {
+    id: 'holly-bloom',
+    name: 'Holly Bloom',
+    category: 'spritz',
+    price: '£14.00',
+    description: 'Elderflower • Mint • Prosecco',
+    tastingNotes: 'Floral. Fresh. Effortlessly cool.',
+    tags: ['Spritz', 'Prosecco', 'Floral'],
+    pairingRecommendation: 'Baccalà Mantecato Crostini',
+  },
+  {
+    id: 'rosa-sarti',
+    name: 'Rosa Sarti',
+    category: 'spritz',
+    price: '£14.00',
+    description: 'Sarti Rosa • Prosecco • Soda',
+    tastingNotes: 'Fruity, floral and beautifully pink.',
+    tags: ['Spritz', 'Prosecco', 'Fruity'],
+    pairingRecommendation: 'Warm Marinated Sicilian Olives',
+  },
+  {
+    id: 'aperol-olivia',
+    name: 'Aperol Olivia',
+    category: 'spritz',
+    price: '£14.00',
+    description: 'Aperol • Prosecco • Soda',
+    tastingNotes: 'The one everyone knows. The one everyone loves.',
+    tags: ['Spritz', 'Classic', 'Aperol'],
+    pairingRecommendation: 'House Baked Rosemary & Sea Salt Focaccia',
+  },
+  {
+    id: 'campari-carla',
+    name: 'Campari Carla',
+    category: 'spritz',
+    price: '£14.00',
+    description: 'Campari • Prosecco • Soda',
+    tastingNotes: 'Bitter. Bold. Italian.',
+    tags: ['Spritz', 'Campari', 'Bitter'],
+    pairingRecommendation: 'The AMICA SOHO Grand Board',
+  },
+
+  // =========================================================================
+  // AMICA'S ZERO (NO ALCOHOL • ALL ATTITUDE)
+  // =========================================================================
+  {
+    id: 'shirley-temple',
+    name: 'Shirley Temple',
+    category: 'zero',
+    price: '£7.00',
+    description: 'Grenadine • Lime • Ginger Ale',
+    tastingNotes: 'Sweet, sparkling and iconic.',
+    tags: ['Zero-Alcohol', 'Mocktail', 'Sweet'],
+    pairingRecommendation: 'House Baked Rosemary Focaccia',
+  },
+  {
+    id: 'minty-molly',
+    name: 'Minty Molly',
+    category: 'zero',
+    price: '£7.00',
+    description: 'Mint • Lime • Apple • Soda',
+    tastingNotes: 'Fresh. Clean. No regrets.',
+    tags: ['Zero-Alcohol', 'Mocktail', 'Refreshing'],
+    pairingRecommendation: 'Warm Marinated Sicilian Olives',
+  },
+  {
+    id: 'passionate-amy',
+    name: 'Passionate Amy',
+    category: 'zero',
+    price: '£7.00',
+    description: 'Apple • Passion Fruit • Lime • Agave',
+    tastingNotes: 'Tropical, bright and full of flavour.',
+    tags: ['Zero-Alcohol', 'Mocktail', 'Tropical'],
+    pairingRecommendation: 'Baccalà Mantecato Crostini',
+  },
+
+  // =========================================================================
+  // CICCHETTI & SMALL PLATES
+  // =========================================================================
+  {
+    id: 'focaccia-rosemary',
+    name: 'House Baked Rosemary & Sea Salt Focaccia',
+    category: 'small-plates',
+    price: '£6.50',
+    description: 'Served warm with single-estate Ligurian extra virgin olive oil and aged balsamic.',
+    tastingNotes: 'Crisp golden crust, pillowy airy interior.',
+    tags: ['V', 'VG Option'],
+  },
+  {
+    id: 'castelvetrano-olives',
+    name: 'Warm Marinated Sicilian Olives',
+    category: 'small-plates',
+    price: '£5.50',
+    description: 'Castelvetrano green olives infused with orange zest, rosemary, and fennel seed.',
+    tastingNotes: 'Buttery texture, warm citrus aroma.',
+    tags: ['VG', 'GF'],
+  },
+  {
+    id: 'whipped-baccala',
+    name: 'Baccalà Mantecato Crostini',
+    category: 'small-plates',
+    price: '£9.50',
+    description: 'Venetian whipped salt cod, garlic, extra virgin olive oil served on grilled sourdough.',
+    tastingNotes: 'Creamy, delicate seafood savory goodness.',
+    tags: ['Venetian Classic'],
+  },
+  {
+    id: 'pork-polpette',
+    name: 'Heritage Pork & Fennel Meatballs',
+    category: 'small-plates',
+    price: '£11.00',
+    description: 'Slow-braised in San Marzano tomato ragù, topped with shaved 30-month Parmigiano.',
+    tastingNotes: 'Rich savory tomato, aromatic fennel, meltingly tender.',
+    tags: ['Warm Plate'],
+  },
+
+  // =========================================================================
+  // CHARCUTERIE & CHEESE
+  // =========================================================================
+  {
+    id: 'lac-gran-tagliere',
+    name: 'The AMICA SOHO Grand Board',
+    category: 'charcuterie',
+    price: '£26.00',
+    description: 'Prosciutto di Parma 24-month, Finocchiona salami, Bresaola, Ubriaco al Raboso cheese, Gorgonzola Dolce, pickled chillies, gnocco fritto & chutney.',
+    tastingNotes: 'A grand tour of Italian curing traditions.',
+    tags: ['Sharing', 'Best Seller'],
+    pairingRecommendation: 'Dirty Diana or Olivia Old Fashioned',
+  },
+  {
+    id: 'formaggi-selection',
+    name: 'Artisanal Italian Cheese Board',
+    category: 'charcuterie',
+    price: '£18.50',
+    description: 'Taleggio DOP, Pecorino Sardo, Parmigiano Reggiano 36-month, black truffle honey, toasted walnuts, rustic biscuits.',
+    tastingNotes: 'Nutty, sharp, creamy, sweet floral honey notes.',
+    tags: ['V', 'Sharing'],
+  },
+
+  // =========================================================================
+  // WINES BY GLASS & BOTTLE
+  // =========================================================================
+  {
+    id: 'etna-rosso-tenuta',
+    name: 'Etna Rosso, Tenuta delle Terre Nere 2022',
+    category: 'wines',
+    price: '£13.50 / £58.00',
+    description: 'Nerello Mascalese from volcanic soils of Mount Etna, Sicily.',
+    tastingNotes: 'Wild strawberry, dried cranberry, mineral iron notes, fine tannins.',
+    tags: ['Volcanic', 'Sommelier Pick'],
+    pairingRecommendation: 'Heritage Pork & Fennel Meatballs',
+  },
+  {
+    id: 'gavi-di-gavi',
+    name: 'Gavi di Gavi, La Giustiniana 2023',
+    category: 'wines',
+    price: '£11.50 / £48.00',
+    description: '100% Cortese from Piedmont, stainless steel aged.',
+    tastingNotes: 'Green apple, white peach, toasted almond, crisp acidity.',
+    tags: ['Organic', 'Vegan'],
+    pairingRecommendation: 'Baccalà Mantecato Crostini',
+  },
+  {
+    id: 'franciacorta-brut',
+    name: "Franciacorta Brut, Ca’ del Bosco Cuvée Prestige",
+    category: 'wines',
+    price: '£16.00 / £78.00',
+    description: 'Lombardy’s premier sparkling wine, produced using traditional méthode champenoise.',
+    tastingNotes: 'Brioche crust, crisp citrus, mineral precision, persistent bubbles.',
+    tags: ['Sparkling', 'Luxury'],
+    pairingRecommendation: 'Artisanal Italian Cheese Board',
+  },
+
+  // =========================================================================
+  // DIGESTIVI & AFTERS
+  // =========================================================================
+  {
+    id: 'amaro-montenegro',
+    name: 'Amaro Montenegro',
+    category: 'digestivi',
+    price: '£8.50',
+    description: '40 botanicals from around the world. Served neat or on a single ice rock.',
+    tastingNotes: 'Sweet orange peel, coriander, marjoram, and clove.',
+    tags: ['Digestivo'],
+  },
+  {
+    id: 'fernet-branca',
+    name: 'Fernet-Branca',
+    category: 'digestivi',
+    price: '£9.00',
+    description: 'Milanese bitter herbal liqueur aged in oak barrels for 12 months.',
+    tastingNotes: 'Intense menthol, saffron, chamomile, and bitter roots.',
+    tags: ['Bold Digestivo'],
+  },
+  {
+    id: 'limoncello-house',
+    name: 'House Amalfi Limoncello Infusion',
+    category: 'digestivi',
+    price: '£8.00',
+    description: 'Organic Amalfi lemon peels steeped for 60 days in house grain spirits.',
+    tastingNotes: 'Vibrant lemon oil, smooth balanced sweetness.',
+    tags: ['House Made', 'Chilled'],
+  }
+];
