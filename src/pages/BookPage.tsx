@@ -27,11 +27,24 @@ interface BookPageProps {
   savedPairingsCount: number;
 }
 
+const toLocalDateStr = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+// Open Wednesday to Saturday, so default the form to the next open day
+// instead of greeting phone visitors with a "closed" error.
+const nextOpenDateStr = (from: Date) => {
+  const d = new Date(from);
+  while (d.getDay() < 3) d.setDate(d.getDate() + 1);
+  return toLocalDateStr(d);
+};
+
 export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPairingsCount }) => {
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  // Local calendar date (toISOString would give yesterday after midnight in BST)
+  const todayStr = useMemo(() => toLocalDateStr(new Date()), []);
+  const firstOpenDateStr = useMemo(() => nextOpenDateStr(new Date()), []);
 
   const [formData, setFormData] = useState<BookingFormData>({
-    date: todayStr,
+    date: firstOpenDateStr,
     timeSlot: '19:00',
     guests: 2,
     seatingArea: 'Vault Dining',

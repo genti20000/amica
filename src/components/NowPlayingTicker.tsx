@@ -266,7 +266,7 @@ export const NowPlayingTicker: React.FC = () => {
                 <button
                   key={track.dayIndex}
                   onClick={() => setSelectedDay(track.dayIndex)}
-                  className={`py-1.5 sm:py-1 px-1 sm:px-2.5 rounded text-[8.5px] sm:text-[10px] font-sans uppercase font-medium transition-all duration-200 cursor-pointer relative text-center flex items-center justify-center min-h-[30px] sm:min-h-[26px] ${
+                  className={`py-1.5 sm:py-1 px-1 sm:px-2.5 rounded text-[10px] font-sans uppercase font-medium transition-all duration-200 cursor-pointer relative text-center flex items-center justify-center min-h-[40px] sm:min-h-[26px] ${
                     isSelected
                       ? 'bg-gradient-to-r from-[#DFBE7B] to-[#9D7E54] text-[#120306] font-bold shadow-[0_2px_8px_rgba(223,190,123,0.35)]'
                       : 'bg-[#1D060B]/70 text-[#DFBE7B]/70 hover:text-[#FFEAA7] hover:bg-[#2E0A12] border border-[#9D7E54]/20'
@@ -378,7 +378,7 @@ export const NowPlayingTicker: React.FC = () => {
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   onClick={handlePrevDay}
-                  className="p-1.5 sm:p-2 rounded bg-[#1C050A] hover:bg-[#2D0911] border border-[#9D7E54]/40 text-[#DFBE7B] transition-colors cursor-pointer"
+                  className="p-2.5 sm:p-2 rounded bg-[#1C050A] hover:bg-[#2D0911] border border-[#9D7E54]/40 text-[#DFBE7B] transition-colors cursor-pointer"
                   title="Previous day track"
                   aria-label="Previous day track"
                 >
@@ -386,7 +386,7 @@ export const NowPlayingTicker: React.FC = () => {
                 </button>
                 <button
                   onClick={handleNextDay}
-                  className="p-1.5 sm:p-2 rounded bg-[#1C050A] hover:bg-[#2D0911] border border-[#9D7E54]/40 text-[#DFBE7B] transition-colors cursor-pointer"
+                  className="p-2.5 sm:p-2 rounded bg-[#1C050A] hover:bg-[#2D0911] border border-[#9D7E54]/40 text-[#DFBE7B] transition-colors cursor-pointer"
                   title="Next day track"
                   aria-label="Next day track"
                 >
