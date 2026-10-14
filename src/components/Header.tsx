@@ -42,7 +42,21 @@ export const Header: React.FC<HeaderProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (['coming-soon', 'book', 'drinks-food'].includes(currentPage)) {
+  if (currentPage === 'coming-soon') {
+    return <header className="w-full bg-[#080505] border-b border-[#D4B887]/25">
+      <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-6">
+        <a href="/" aria-label="AMICA Soho home" className="shrink min-w-0 inline-flex items-center">
+          <img src="/images/amica-header-logo.png" alt="AMICA Soho" className="block w-[clamp(145px,46vw,220px)] sm:w-[300px] lg:w-[340px] h-auto" />
+        </a>
+        <a href="https://www.google.com/maps/search/?api=1&query=23+Frith+Street+Soho+London+W1D+4RR" target="_blank" rel="noopener noreferrer" className="shrink-0 text-[#D4B887] text-[9px] sm:text-xs tracking-wide min-h-11 inline-flex items-center gap-1 sm:gap-2 hover:underline">
+          <MapPin className="w-4 h-4 shrink-0" />
+          <span>23 Frith Street, Soho</span>
+        </a>
+      </div>
+    </header>;
+  }
+
+  if (['book', 'drinks-food'].includes(currentPage)) {
     return <header className="bg-[#080505] border-b border-[#D4B887]/20">
       <div className="max-w-[650px] mx-auto px-6 py-5 flex items-center justify-between gap-4">
         <button onClick={() => handleNavClick('coming-soon')} aria-label="AMICA Soho home" className="text-[#D4B887] font-serif text-2xl tracking-[.2em] cursor-pointer">AMICA<span className="block text-center font-sans text-[9px] tracking-[.55em] mt-1">SOHO</span></button>
