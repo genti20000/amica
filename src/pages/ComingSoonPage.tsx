@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, Instagram, MessageCircle } from 'lucide-react';
 import { PageId } from '../types';
-import FACADE_IMAGE from '../assets/images/regenerated_image_1790200582456.png';
 interface ComingSoonPageProps { onNavigate?: (page: PageId) => void; onOpenLogin?: () => void; isUnlocked?: boolean; onLockSite?: () => void; }
 export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ onNavigate }) => {
   const [scrolling, setScrolling] = useState(false);
@@ -15,11 +14,18 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ onNavigate }) =>
     return () => { window.removeEventListener('scroll', onScroll); clearTimeout(timer); };
   }, []);
   return <div className="bg-[#080505] text-[#F7EFE1] pb-28">
-    <div className="max-w-[560px] mx-auto">
-      <h1 className="sr-only">AMICA Soho — Opening Soon — 23 Frith Street</h1>
-      <img src={FACADE_IMAGE} alt="AMICA Soho entrance at 23 Frith Street" className="w-full h-auto block brightness-[.91] saturate-[.87]" fetchPriority="high" />
+    <div className="max-w-[1200px] mx-auto">
+      <h1 className="sr-only">AMICA Soho — 23 Frith Street</h1>
+      <div className="relative w-full h-[min(72svh,780px)] min-h-[520px] overflow-hidden bg-[#080505] sm:h-[min(76svh,820px)] sm:min-h-[560px]">
+        <img
+          src="/images/amica-homepage-entrance.jpg"
+          alt="AMICA Soho’s burgundy canopy and entrance at 23 Frith Street, framed by plants and warm lights"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_30%] sm:object-[50%_13%]"
+          sizes="100vw"
+          fetchPriority="high"
+        />
+      </div>
       <section className="bg-[#240609] px-6 pt-7 pb-5 text-center" aria-label="Menus and contact">
-        <p className="text-[#D4B887] text-[11px] tracking-[.32em] mb-5">OPENING SOON</p>
         <button onClick={() => onNavigate?.('drinks-food')} className="min-h-12 px-5 border border-[#D4B887]/60 text-[#D4B887] text-[11px] tracking-widest hover:bg-[#D4B887]/10 cursor-pointer">VIEW FOOD &amp; DRINKS MENU</button>
         <div className="flex items-center justify-between gap-4 mt-6 pt-5 border-t border-[#D4B887]/20">
           <a href="mailto:info@amicasoho.com" className="text-xs text-[#E9D6B6] hover:underline">info@amicasoho.com</a>
