@@ -42,90 +42,13 @@ export const Header: React.FC<HeaderProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If on Coming Soon page (or Book page while locked), render the minimal header
-  if (currentPage === 'coming-soon' || (!isUnlocked && currentPage === 'book')) {
-    return (
-      <header className="w-full bg-[#000000] border-b border-[#140206] select-none z-40 relative">
-        <div className="w-full max-w-[560px] mx-auto px-4 sm:px-6 h-13 sm:h-16 flex items-center justify-between">
-          {/* Left: AMICA / — SOHO — */}
-          <div
-            onClick={() => handleNavClick('coming-soon')}
-            className="flex flex-col items-start cursor-pointer group"
-          >
-            <span className="font-['Cinzel',serif] text-base sm:text-xl md:text-2xl tracking-[0.24em] sm:tracking-[0.28em] text-[#E8CCA0] uppercase font-light leading-none group-hover:text-[#FFEAA7] transition-colors">
-              AMICA
-            </span>
-            <div className="flex items-center gap-1.5 mt-1 text-[#DFBE7B]">
-              <span className="w-3 sm:w-4 h-[1px] bg-[#DFBE7B]/80" />
-              <span className="font-sans text-[7px] sm:text-[8.5px] tracking-[0.34em] uppercase font-medium">
-                SOHO
-              </span>
-              <span className="w-3 sm:w-4 h-[1px] bg-[#DFBE7B]/80" />
-            </div>
-          </div>
-
-          {/* Right: Address & Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 select-none">
-            {currentPage === 'book' ? (
-              <button
-                onClick={() => handleNavClick('coming-soon')}
-                className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
-              >
-                <span>← Coming Soon</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => handleNavClick('book')}
-                className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
-                title="Book Table (1–20 Pax Auto-Confirmed)"
-              >
-                <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#DFBE7B]" />
-                <span>Book</span>
-              </button>
-            )}
-
-            <span className="font-sans text-[10px] sm:text-[11.5px] tracking-[0.22em] sm:tracking-[0.26em] uppercase text-[#E8CCA0] font-medium leading-tight">
-              23 Frith St, Soho
-            </span>
-
-            {isUnlocked ? (
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => handleNavClick('home')}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#C5A059] hover:bg-[#DFBE7B] text-[#0A0103] font-sans font-semibold text-[8.5px] sm:text-[10px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
-                  title="Return to Main Site"
-                >
-                  <span>Main Site</span>
-                  <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                </button>
-                {onLockSite && (
-                  <button
-                    onClick={onLockSite}
-                    className="p-1 rounded text-[#DFBE7B]/60 hover:text-[#DFBE7B] transition-colors cursor-pointer"
-                    title="Lock Main Site"
-                    aria-label="Lock Main Site"
-                  >
-                    <Lock className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            ) : (
-              onOpenLogin && (
-                <button
-                  onClick={onOpenLogin}
-                  className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded bg-[#1D060B] hover:bg-[#2F0B13] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.16em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
-                  title="Staff Login"
-                  aria-label="Login to Main Site"
-                >
-                  <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#DFBE7B]" />
-                  <span>Login</span>
-                </button>
-              )
-            )}
-          </div>
-        </div>
-      </header>
-    );
+  if (['coming-soon', 'book', 'drinks-food'].includes(currentPage)) {
+    return <header className="bg-[#080505] border-b border-[#D4B887]/20">
+      <div className="max-w-[650px] mx-auto px-6 py-5 flex items-center justify-between gap-4">
+        <button onClick={() => handleNavClick('coming-soon')} aria-label="AMICA Soho home" className="text-[#D4B887] font-serif text-2xl tracking-[.2em] cursor-pointer">AMICA<span className="block text-center font-sans text-[9px] tracking-[.55em] mt-1">SOHO</span></button>
+        <a href="https://www.google.com/maps/search/?api=1&query=23+Frith+Street+Soho+London+W1D+4RR" target="_blank" rel="noopener noreferrer" className="text-[#D4B887] text-[11px] tracking-wide min-h-11 inline-flex items-center gap-1.5 hover:underline"><MapPin className="w-4 h-4 shrink-0" />23 Frith Street, Soho</a>
+      </div>
+    </header>;
   }
 
   return (
