@@ -326,3 +326,23 @@
   }
 }
 
+
+/* Booking forms stay readable with mobile keyboards, zoom and short screens. */
+.booking-page { width: 100%; min-width: 0; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+.booking-page input:not([type="hidden"]), .booking-page select { font-size: 16px; min-height: 48px; min-width: 0; scroll-margin: 90px; }
+.booking-page button { min-height: 44px; }
+.booking-page :focus-visible, .booking-confirmation :focus-visible { outline: 2px solid #DFBE7B; outline-offset: 3px; }
+.booking-calendar-overlay, .booking-confirmation-overlay { overflow-y: auto; overscroll-behavior: contain; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+.booking-calendar, .booking-confirmation { max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; min-width: 0; }
+.booking-confirmation button { min-height: 44px; flex-shrink: 0; }
+.booking-confirmation .font-mono, .booking-confirmation span { overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .booking-page { padding-left: 12px; padding-right: 12px; }
+  .booking-page form { padding: 16px; }
+  .booking-calendar { padding: 16px 12px; }
+  .booking-confirmation { padding: 24px 16px 16px; }
+  .booking-date-change { flex-shrink: 0; margin-left: 8px; letter-spacing: 0; }
+  .booking-confirmation .inline-flex { max-width: 100%; }
+}
+@media (max-width: 360px) { .booking-date-change { display: none; } }
+@media (max-height: 540px) { .booking-calendar-overlay, .booking-confirmation-overlay { align-items: flex-start; } }

@@ -42,7 +42,7 @@ export const saveBooking = async (booking: BookingConfirmation): Promise<Booking
   if (!res.ok || !json?.success || !json.booking) {
     throw new Error(json?.error || 'Your reservation could not be saved. Please try again or contact reservations@amicasoho.com.');
   }
-  return json.booking;
+  return { ...json.booking, emailSent: json.emailSent === true };
 };
 
 export const sendBookingConfirmationEmail = async (bookingId: string) => {
