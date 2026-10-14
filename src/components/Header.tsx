@@ -46,10 +46,10 @@ export const Header: React.FC<HeaderProps> = ({
     return <header className="w-full bg-[#080505] border-b border-[#D4B887]/25">
       <div className="w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-6">
         <a href="/" aria-label="AMICA Soho home" className="shrink min-w-0 inline-flex items-center">
-          <img src="/images/amica-header-logo.png" alt="AMICA Soho" className="block w-[clamp(145px,46vw,220px)] sm:w-[300px] lg:w-[340px] h-auto" />
+          <img src="/images/amica-header-logo.png" srcSet="/images/amica-header-logo.png 1x, /images/amica-header-logo-2x.png 2x" alt="AMICA Soho" className="block w-[clamp(145px,46vw,220px)] sm:w-[300px] lg:w-[340px] h-auto" />
         </a>
-        <a href="https://www.google.com/maps/search/?api=1&query=23+Frith+Street+Soho+London+W1D+4RR" target="_blank" rel="noopener noreferrer" className="shrink-0 text-[#D4B887] text-[9px] sm:text-xs tracking-wide min-h-11 inline-flex items-center gap-1 sm:gap-2 hover:underline">
-          <MapPin className="w-4 h-4 shrink-0" />
+        <a href="https://www.google.com/maps/search/?api=1&query=23+Frith+Street+Soho+London+W1D+4RR" target="_blank" rel="noopener noreferrer" className="shrink-0 text-[#D4B887] text-[10px] sm:text-sm tracking-wide min-h-11 inline-flex items-center gap-1.5 sm:gap-2.5 hover:underline">
+          <MapPin className="w-[18px] h-[18px] sm:w-5 sm:h-5 shrink-0" />
           <span>23 Frith Street, Soho</span>
         </a>
       </div>
