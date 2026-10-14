@@ -1,159 +1,41 @@
-import React from 'react';
-import { motion } from 'motion/react';
-import { Mail, Lock, ArrowRight, Calendar } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Calendar, Instagram, MessageCircle } from 'lucide-react';
 import { PageId } from '../types';
 import FACADE_IMAGE from '../assets/images/regenerated_image_1790200582456.png';
-
-interface ComingSoonPageProps {
-  onNavigate?: (page: PageId) => void;
-  onOpenLogin?: () => void;
-  isUnlocked?: boolean;
-  onLockSite?: () => void;
-}
-
-export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
-  onNavigate,
-  onOpenLogin,
-  isUnlocked = false,
-  onLockSite
-}) => {
-  return (
-    <div className="w-full min-h-[calc(100dvh-3.25rem)] sm:min-h-[calc(100dvh-4rem)] bg-[#000000] text-[#FDFBF7] font-sans selection:bg-[#C5A059] selection:text-[#150306] flex flex-col items-center justify-start">
-      
-      {/* Centered Column for both Mobile & Desktop surrounded by dark black */}
-      <div className="w-full max-w-[560px] mx-auto bg-[#000000] flex flex-col shadow-2xl relative">
-        
-        {/* Semantic accessibility information */}
-        <h1 className="sr-only">AMICA SOHO — Coming Soon — 23 Frith Street, London</h1>
-        <p className="sr-only">Opening Soon · 23 Frith Street, Soho London · info@amicasoho.com</p>
-
-        {/* =========================================================================
-            HERO FACADE - DISPLAYED IN FULL (NO CROPPING)
-           ========================================================================= */}
-        <motion.div
-          id="coming-soon-hero"
-          initial={{ opacity: 0, scale: 0.99 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full relative flex items-center justify-center bg-[#000000] overflow-hidden select-none"
-        >
-          {/* Main Facade Image - 100% full view */}
-          <img
-            src={FACADE_IMAGE}
-            alt="AMICA SOHO 23 Frith Street Entrance Facade"
-            className="w-full h-auto block select-none pointer-events-none"
-            referrerPolicy="no-referrer"
-          />
-        </motion.div>
-
-        {/* =========================================================================
-            LOWER SECTION: SIGNATURE VELVET MAROON CANVAS WITH OPENING SOON & CONTACT
-           ========================================================================= */}
-        <motion.section
-          id="coming-soon-creed"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.0, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="relative w-full bg-gradient-to-b from-[#140205] via-[#180307] to-[#0A0103] py-4 sm:py-7 px-4 sm:px-6 flex flex-col items-center justify-center text-center overflow-hidden shrink-0"
-        >
-          {/* Subtle warm ambient glow in center */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#DFBE7B]/5 blur-[100px] pointer-events-none" />
-
-          <div className="relative z-10 max-w-sm mx-auto flex flex-col items-center select-none w-full">
-            {/* OPENING SOON with Radiant Golden Shine Animation */}
-            <div className="flex flex-col items-center select-none">
-              <div className="golden-shine-badge px-4 sm:px-7 py-2 sm:py-2.5 rounded-[3px] bg-gradient-to-r from-[#200A0E] via-[#321118] to-[#200A0E] border border-[#DFBE7B]/60 shadow-[0_4px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,234,167,0.35)]">
-                <span className="golden-shine-text font-['Cinzel',serif] text-xs sm:text-sm md:text-base tracking-[0.32em] sm:tracking-[0.4em] uppercase font-bold leading-none block">
-                  OPENING SOON
-                </span>
-              </div>
-            </div>
-
-            {/* Direct Table Reservation CTA */}
-            {onNavigate && (
-              <div className="mt-3.5">
-                <button
-                  onClick={() => onNavigate('book')}
-                  className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded bg-gradient-to-r from-[#2A080F] via-[#3D0C15] to-[#2A080F] hover:from-[#3D0C15] hover:to-[#55101E] border border-[#DFBE7B]/60 hover:border-[#FFEAA7] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.2em] uppercase transition-all duration-200 cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.7)] active:scale-95"
-                  title="Reserve Table Online"
-                >
-                  <Calendar className="w-3 h-3 text-[#DFBE7B]" />
-                  <span>Reserve Table</span>
-                </button>
-              </div>
-            )}
-
-            {onNavigate && <button onClick={() => onNavigate('drinks-food')} className="mt-4 px-4 py-2 border border-[#DFBE7B]/60 rounded text-[#DFBE7B] text-xs uppercase tracking-widest">View Food & Drinks Menus</button>}
-            {/* CONTACT US: info@amicasoho.com */}
-            <div className="mt-3.5 sm:mt-5 pt-3 sm:pt-4 border-t border-[#DFBE7B]/20 w-full flex flex-col items-center">
-              <span className="font-sans text-[7.5px] sm:text-[9px] tracking-[0.3em] text-[#DFBE7B]/80 uppercase font-semibold">
-                Contact Us
-              </span>
-              <a
-                href="mailto:info@amicasoho.com"
-                className="mt-1.5 inline-flex items-center gap-1.5 sm:gap-2 group text-[#FDFBF7] hover:text-[#FFEAA7] transition-all cursor-pointer"
-                aria-label="Contact us at info@amicasoho.com"
-              >
-                <Mail className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#DFBE7B] group-hover:scale-110 transition-transform" />
-                <span className="font-sans text-[11px] sm:text-xs md:text-[13px] tracking-[0.2em] font-medium border-b border-[#DFBE7B]/50 group-hover:border-[#FFEAA7] transition-colors pb-0.5">
-                  info@amicasoho.com
-                </span>
-              </a>
-              <p className="mt-2.5 sm:mt-3 text-[7px] sm:text-[8px] tracking-[0.26em] text-[#E8CCA0]/40 uppercase select-none">
-                © 2026 AMICA SOHO · All Rights Reserved
-              </p>
-
-              {/* Login to Main Site Trigger */}
-              <div className="mt-3 pt-2.5 border-t border-[#DFBE7B]/15 w-full flex items-center justify-center">
-                {isUnlocked ? (
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => onNavigate?.('home')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-gradient-to-r from-[#200A0E] via-[#321118] to-[#200A0E] hover:from-[#321118] hover:to-[#4A1521] border border-[#DFBE7B]/50 hover:border-[#DFBE7B] text-[#DFBE7B] hover:text-[#FFEAA7] font-sans text-[8.5px] sm:text-[9.5px] tracking-[0.2em] uppercase transition-all duration-200 cursor-pointer shadow-sm active:scale-95"
-                    >
-                      <span>Enter Main Site</span>
-                      <ArrowRight className="w-3 h-3 text-[#DFBE7B]" />
-                    </button>
-                    {onLockSite && (
-                      <button
-                        onClick={onLockSite}
-                        className="text-[8px] sm:text-[9px] text-[#DFBE7B]/50 hover:text-[#DFBE7B] tracking-[0.2em] uppercase transition-colors cursor-pointer py-1 px-2"
-                        title="Lock Site"
-                      >
-                        Lock
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    {onOpenLogin && (
-                      <button
-                        onClick={onOpenLogin}
-                        className="inline-flex items-center gap-1.5 text-[8px] sm:text-[9px] tracking-[0.24em] uppercase text-[#DFBE7B]/70 hover:text-[#FFEAA7] transition-all py-1 px-2.5 rounded hover:bg-[#200A0E] border border-transparent hover:border-[#DFBE7B]/30 cursor-pointer active:scale-95"
-                        title="Enter password to access main site"
-                      >
-                        <Lock className="w-2.5 h-2.5 text-[#DFBE7B]" />
-                        <span>Staff Login</span>
-                      </button>
-                    )}
-                    <span className="text-[#DFBE7B]/30 text-[9px]">•</span>
-                    <button
-                      onClick={() => onNavigate?.('admin-bookings')}
-                      className="inline-flex items-center gap-1 text-[8px] sm:text-[9px] tracking-[0.2em] uppercase text-[#DFBE7B]/60 hover:text-[#FFEAA7] transition-colors py-1 px-2.5 rounded hover:bg-[#200A0E] cursor-pointer"
-                      title="Maître d' Admin Bookings Dashboard"
-                    >
-                      <span>Admin Bookings</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+interface ComingSoonPageProps { onNavigate?: (page: PageId) => void; onOpenLogin?: () => void; isUnlocked?: boolean; onLockSite?: () => void; }
+export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ onNavigate }) => {
+  const [scrolling, setScrolling] = useState(false);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const onScroll = () => {
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) setScrolling(true);
+      clearTimeout(timer); timer = setTimeout(() => setScrolling(false), 400);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.removeEventListener('scroll', onScroll); clearTimeout(timer); };
+  }, []);
+  return <div className="bg-[#080505] text-[#F7EFE1] pb-28">
+    <div className="max-w-[560px] mx-auto">
+      <h1 className="sr-only">AMICA Soho — Opening Soon — 23 Frith Street</h1>
+      <img src={FACADE_IMAGE} alt="AMICA Soho entrance at 23 Frith Street" className="w-full h-auto block brightness-[.91] saturate-[.87]" fetchPriority="high" />
+      <section className="bg-[#240609] px-6 pt-7 pb-5 text-center" aria-label="Menus and contact">
+        <p className="text-[#D4B887] text-[11px] tracking-[.32em] mb-5">OPENING SOON</p>
+        <button onClick={() => onNavigate?.('drinks-food')} className="min-h-12 px-5 border border-[#D4B887]/60 text-[#D4B887] text-[11px] tracking-widest hover:bg-[#D4B887]/10 cursor-pointer">VIEW FOOD &amp; DRINKS MENU</button>
+        <div className="flex items-center justify-between gap-4 mt-6 pt-5 border-t border-[#D4B887]/20">
+          <a href="mailto:info@amicasoho.com" className="text-xs text-[#E9D6B6] hover:underline">info@amicasoho.com</a>
+          <div className="flex gap-2">
+            <a href="https://instagram.com/amicasoho" target="_blank" rel="noopener noreferrer" aria-label="AMICA Soho Instagram" className="w-11 h-11 grid place-items-center rounded-full border border-[#D4B887]/40 text-[#D4B887]"><Instagram className="w-5 h-5" /></a>
+            <a href="https://www.tiktok.com/@amicasoho" target="_blank" rel="noopener noreferrer" aria-label="AMICA Soho TikTok" className="w-11 h-11 grid place-items-center rounded-full border border-[#D4B887]/40 text-[#D4B887]"><svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M14 3v13a5 5 0 1 1-4-4.9M14 3c1 4 3 6 7 6M17 8v8a8 8 0 1 1-7-7.9" /></svg></a>
           </div>
-
-        </motion.section>
-
-      </div>
-
+        </div>
+      </section>
+      <p className="text-center text-[9px] tracking-widest text-[#B29678] py-5">© {new Date().getFullYear()} AMICA SOHO</p>
     </div>
-  );
+    <nav aria-label="Booking and WhatsApp" onFocus={() => setScrolling(false)} className={`fixed bottom-0 inset-x-0 z-40 border-t border-[#D4B887]/40 bg-[#100608]/95 px-5 pt-3 pb-[max(13px,env(safe-area-inset-bottom))] transition-transform motion-reduce:transition-none ${scrolling ? 'translate-y-full' : 'translate-y-0'}`}>
+      <div className="max-w-[602px] mx-auto grid grid-cols-2 gap-2.5">
+        <button onClick={() => onNavigate?.('book')} className="min-h-12 flex justify-center items-center gap-2 bg-[#D4B887] text-[#230B0A] text-[11px] tracking-widest cursor-pointer"><Calendar className="w-4 h-4" />BOOK A TABLE</button>
+        <a href="https://wa.me/447459959699" target="_blank" rel="noopener noreferrer" className="min-h-12 flex justify-center items-center gap-2 border border-[#D4B887]/60 text-[#D4B887] text-[11px] tracking-widest"><MessageCircle className="w-4 h-4" />WHATSAPP</a>
+      </div>
+    </nav>
+  </div>;
 };

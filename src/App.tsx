@@ -213,7 +213,7 @@ export default function App() {
       </main>
 
       {/* Show full footer when on unlocked main site pages or booking page */}
-      {(isUnlocked || currentPage === 'book' || currentPage === 'drinks-food') && currentPage !== 'coming-soon' && currentPage !== 'admin-bookings' && (
+      {isUnlocked && !['coming-soon', 'book', 'drinks-food', 'admin-bookings'].includes(currentPage) && (
         <Footer onNavigate={handleNavigate} />
       )}
 
