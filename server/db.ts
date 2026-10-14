@@ -1,89 +1,25 @@
-import { DatabaseSync } from 'node:sqlite';
-import path from 'node:path';
-import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import pg from 'pg';
+import { supabaseCa } from './supabaseCa.js';
+import { serviceInstant } from '../src/lib/serviceTime.js';
+import { fitsBookingCapacity, occupyingStatuses } from '../src/lib/bookingCapacity.js';
+export class BookingValidationError extends Error { name = 'BookingValidationError'; }
 
-const DB_DIR = path.resolve(process.cwd(), 'data');
-if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true });
+// Vercel Marketplace provides the Supabase transaction-pooler URL server-side.
+const connectionString = process.env.POSTGRES_URL;
+const dbUrl = connectionString ? new URL(connectionString) : null;
+if (dbUrl) { dbUrl.searchParams.delete('sslmode'); dbUrl.searchParams.delete('pgbouncer'); }
+export const db = new pg.Pool({ connectionString: dbUrl?.toString(), ssl: { ca: supabaseCa, rejectUnauthorized: true }, max: 2, idleTimeoutMillis: 10000, connectionTimeoutMillis: 10000 });
+export async function transaction<T>(run: (client: pg.PoolClient) => Promise<T>): Promise<T> {
+  if (!connectionString) throw new Error('Supabase database is not configured.');
+  const client = await db.connect();
+  try { await client.query('BEGIN'); const result = await run(client); await client.query('COMMIT'); return result; }
+  catch (error) { await client.query('ROLLBACK'); throw error; }
+  finally { client.release(); }
 }
-
-const DB_PATH = path.join(DB_DIR, 'amica.sqlite');
-export const db = new DatabaseSync(DB_PATH);
-
-// Enable WAL mode for performance & concurrent reads
-db.exec('PRAGMA journal_mode = WAL;');
-db.exec('PRAGMA foreign_keys = ON;');
-
-// Initialize tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS venue_settings (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS blocked_dates (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    blocked_date TEXT NOT NULL,
-    is_full_day INTEGER NOT NULL DEFAULT 1,
-    start_time TEXT,
-    end_time TEXT,
-    reason TEXT NOT NULL,
-    notes TEXT,
-    created_at TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS reservations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    booking_id TEXT UNIQUE NOT NULL,
-    guest_name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    guests INTEGER NOT NULL CHECK(guests >= 1 AND guests <= 20),
-    reservation_date TEXT NOT NULL,
-    time_slot TEXT NOT NULL,
-    seating_area TEXT NOT NULL,
-    special_occasion TEXT,
-    dietary_notes TEXT,
-    status TEXT NOT NULL DEFAULT 'Auto-Confirmed',
-    table_number TEXT,
-    qr_code_value TEXT NOT NULL,
-    ip_address TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS booking_audit_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    booking_id TEXT NOT NULL,
-    action TEXT NOT NULL,
-    actor TEXT NOT NULL,
-    details TEXT,
-    created_at TEXT NOT NULL
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_reservations_date ON reservations(reservation_date);
-  CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status);
-  CREATE INDEX IF NOT EXISTS idx_reservations_booking_id ON reservations(booking_id);
-  CREATE INDEX IF NOT EXISTS idx_audit_booking_id ON booking_audit_logs(booking_id);
-`);
-
-// Insert default venue settings only if they do not already exist (preserves custom admin settings across deployments)
-const setSettingStmt = db.prepare(`
-  INSERT OR IGNORE INTO venue_settings (key, value, updated_at)
-  VALUES (?, ?, ?)
-`);
-
-const nowIso = new Date().toISOString();
-setSettingStmt.run('venue_name', 'AMICA SOHO', nowIso);
-setSettingStmt.run('address', '23 Frith Street, Soho, London W1D 4RR', nowIso);
-setSettingStmt.run('opening_hours', '17:00 - 03:00 (5:00 PM - 3:00 AM) Wednesday to Saturday', nowIso);
-setSettingStmt.run('min_pax', '1', nowIso);
-setSettingStmt.run('max_pax', '20', nowIso);
-setSettingStmt.run('auto_confirm_rule', 'Auto-confirmed instantly up to 1 hour before opening / service time', nowIso);
-
-// Venue settings initialization complete.
-
+export async function logAudit(bookingId: string, action: string, actor: string, details: string, client: pg.Pool | pg.PoolClient = db) {
+  await client.query('INSERT INTO booking_audit_logs (booking_id, action, actor, details, created_at) VALUES ($1,$2,$3,$4,$5)', [bookingId,action,actor,details,new Date().toISOString()]);
+}
 export interface ReservationRow {
   id: number;
   booking_id: string;
@@ -113,198 +49,6 @@ export interface BookingAuditRow {
   created_at: string;
 }
 
-export function getAllReservations(filters?: {
-  search?: string;
-  date?: string;
-  status?: string;
-  guests?: number;
-}): ReservationRow[] {
-  let query = 'SELECT * FROM reservations WHERE 1=1';
-  const params: any[] = [];
-
-  if (filters?.search) {
-    query += ' AND (guest_name LIKE ? OR email LIKE ? OR phone LIKE ? OR booking_id LIKE ?)';
-    const term = `%${filters.search}%`;
-    params.push(term, term, term, term);
-  }
-
-  if (filters?.date) {
-    query += ' AND reservation_date = ?';
-    params.push(filters.date);
-  }
-
-  if (filters?.status && filters.status !== 'all') {
-    query += ' AND status = ?';
-    params.push(filters.status);
-  }
-
-  if (filters?.guests) {
-    query += ' AND guests = ?';
-    params.push(filters.guests);
-  }
-
-  query += ' ORDER BY reservation_date ASC, time_slot ASC, id DESC';
-  const stmt = db.prepare(query);
-  return stmt.all(...params) as unknown as ReservationRow[];
-}
-
-export function getReservationById(bookingId: string): {
-  reservation: ReservationRow | null;
-  auditLogs: BookingAuditRow[];
-} {
-  const stmt = db.prepare('SELECT * FROM reservations WHERE booking_id = ?');
-  const reservation = (stmt.get(bookingId) as unknown as ReservationRow) || null;
-
-  const auditStmt = db.prepare('SELECT * FROM booking_audit_logs WHERE booking_id = ? ORDER BY id DESC');
-  const auditLogs = auditStmt.all(bookingId) as unknown as BookingAuditRow[];
-
-  return { reservation, auditLogs };
-}
-
-export function createReservation(data: {
-  booking_id?: string;
-  guest_name: string;
-  email: string;
-  phone: string;
-  guests: number;
-  reservation_date: string;
-  time_slot: string;
-  seating_area: string;
-  special_occasion?: string;
-  dietary_notes?: string;
-  ip_address?: string;
-  actor?: string;
-}): ReservationRow {
-  const guests = Math.max(1, Math.min(20, Number(data.guests) || 1));
-  const booking_id = data.booking_id || ('AMICA-' + Math.floor(100000 + Math.random() * 900000));
-  const now = new Date().toISOString();
-  const qr_code = `AMICA-SOHO-${booking_id}-${data.reservation_date}-${guests}PAX`;
-
-  // No specific room or table allocation
-  const table_number = null;
-
-  const stmt = db.prepare(`
-    INSERT INTO reservations (
-      booking_id, guest_name, email, phone, guests,
-      reservation_date, time_slot, seating_area, special_occasion,
-      dietary_notes, status, table_number, qr_code_value,
-      ip_address, created_at, updated_at
-    ) VALUES (
-      ?, ?, ?, ?, ?,
-      ?, ?, ?, ?,
-      ?, ?, ?, ?,
-      ?, ?, ?
-    )
-  `);
-
-  stmt.run(
-    booking_id,
-    data.guest_name.trim(),
-    data.email.trim(),
-    data.phone.trim(),
-    guests,
-    data.reservation_date,
-    data.time_slot,
-    data.seating_area || 'Vault Dining',
-    data.special_occasion || 'Casual Dining & Drinks',
-    data.dietary_notes || '',
-    'Confirmed',
-    table_number,
-    qr_code,
-    data.ip_address || null,
-    now,
-    now
-  );
-
-  const auditStmt = db.prepare(`
-    INSERT INTO booking_audit_logs (booking_id, action, actor, details, created_at)
-    VALUES (?, ?, ?, ?, ?)
-  `);
-
-  const actor = data.actor || 'RESERVATION_ENGINE';
-  auditStmt.run(
-    booking_id,
-    'RESERVATION_CONFIRMED',
-    actor,
-    `Confirmed table reservation for ${guests} guests on ${data.reservation_date} at ${data.time_slot}.`,
-    now
-  );
-
-  return (db.prepare('SELECT * FROM reservations WHERE booking_id = ?').get(booking_id) as unknown as ReservationRow);
-}
-
-export function updateReservationStatus(bookingId: string, status: string, actor = 'ADMIN_PORTAL', notes = ''): ReservationRow | null {
-  const now = new Date().toISOString();
-  const current = db.prepare('SELECT * FROM reservations WHERE booking_id = ?').get(bookingId) as unknown as ReservationRow | undefined;
-  if (!current) return null;
-
-  db.prepare('UPDATE reservations SET status = ?, updated_at = ? WHERE booking_id = ?').run(status, now, bookingId);
-
-  db.prepare(`
-    INSERT INTO booking_audit_logs (booking_id, action, actor, details, created_at)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(
-    bookingId,
-    `STATUS_CHANGED_${status.toUpperCase().replace(/\s+/g, '_')}`,
-    actor,
-    `Status updated from '${current.status}' to '${status}'. ${notes ? 'Notes: ' + notes : ''}`,
-    now
-  );
-
-  return (db.prepare('SELECT * FROM reservations WHERE booking_id = ?').get(bookingId) as unknown as ReservationRow);
-}
-
-export function deleteReservation(bookingId: string, actor = 'ADMIN_PORTAL', reason = 'Admin cancellation'): boolean {
-  const current = db.prepare('SELECT * FROM reservations WHERE booking_id = ?').get(bookingId) as unknown as ReservationRow | undefined;
-  if (!current) return false;
-
-  const now = new Date().toISOString();
-  db.prepare(`
-    INSERT INTO booking_audit_logs (booking_id, action, actor, details, created_at)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(
-    bookingId,
-    'CANCELLED_AND_ARCHIVED',
-    actor,
-    `Reservation cancelled by ${actor}. Reason: ${reason}. Original guest: ${current.guest_name} (${current.guests} pax).`,
-    now
-  );
-
-  db.prepare('DELETE FROM reservations WHERE booking_id = ?').run(bookingId);
-  return true;
-}
-
-export function getDatabaseMetadata() {
-  const totalBookings = (db.prepare('SELECT COUNT(*) as c FROM reservations').get() as any)?.c || 0;
-  const totalAuditLogs = (db.prepare('SELECT COUNT(*) as c FROM booking_audit_logs').get() as any)?.c || 0;
-  const autoConfirmed = (db.prepare("SELECT COUNT(*) as c FROM reservations WHERE status = 'Auto-Confirmed'").get() as any)?.c || 0;
-  const seated = (db.prepare("SELECT COUNT(*) as c FROM reservations WHERE status = 'Seated'").get() as any)?.c || 0;
-  const totalGuests = (db.prepare('SELECT SUM(guests) as c FROM reservations').get() as any)?.c || 0;
-  const totalBlockedDates = (db.prepare('SELECT COUNT(*) as c FROM blocked_dates').get() as any)?.c || 0;
-
-  let dbSize = 0;
-  try {
-    const stats = fs.statSync(DB_PATH);
-    dbSize = stats.size;
-  } catch {
-    // ignore
-  }
-
-  return {
-    database: 'SQLite 3 (WAL mode)',
-    filePath: DB_PATH,
-    sizeBytes: dbSize,
-    totalBookings,
-    totalAuditLogs,
-    autoConfirmed,
-    seated,
-    totalGuests: totalGuests || 0,
-    totalBlockedDates,
-    openingHours: '17:00 – 03:00 (Wednesday to Saturday)',
-    autoConfirmPolicy: '1 to 20 pax auto confirmed up to 1 hour before service'
-  };
-}
-
 export interface BlockedDateRow {
   id: number;
   blocked_date: string;
@@ -316,147 +60,78 @@ export interface BlockedDateRow {
   created_at: string;
 }
 
-export function getBlockedDates(): BlockedDateRow[] {
-  const stmt = db.prepare('SELECT * FROM blocked_dates ORDER BY blocked_date ASC, id DESC');
-  return stmt.all() as unknown as BlockedDateRow[];
+
+export async function getAllReservations(filters?: { search?: string; date?: string; status?: string; guests?: number }): Promise<ReservationRow[]> {
+  const where: string[] = []; const values: unknown[] = [];
+  const param = (v: unknown) => { values.push(v); return '$' + values.length; };
+  if (filters?.search) { const n=param('%'+filters.search+'%'); where.push(`(guest_name ILIKE ${n} OR email ILIKE ${n} OR phone ILIKE ${n} OR booking_id ILIKE ${n})`); }
+  if (filters?.date) where.push('reservation_date = '+param(filters.date));
+  if (filters?.status && filters.status !== 'all') where.push('status = '+param(filters.status));
+  if (filters?.guests) where.push('guests = '+param(filters.guests));
+  return (await db.query('SELECT * FROM reservations'+(where.length?' WHERE '+where.join(' AND '):'')+' ORDER BY reservation_date, time_slot, id DESC',values)).rows;
 }
-
-export function isDateBlocked(date: string, timeSlot?: string): { blocked: boolean; reason?: string; isFullDay?: boolean } {
-  const rows = db.prepare('SELECT * FROM blocked_dates WHERE blocked_date = ?').all(date) as unknown as BlockedDateRow[];
-  if (!rows || rows.length === 0) return { blocked: false };
-
-  for (const r of rows) {
-    if (r.is_full_day === 1) {
-      return { blocked: true, reason: r.reason, isFullDay: true };
-    }
-    if (timeSlot && r.start_time && r.end_time) {
-      const match = timeSlot.match(/(\d{2}):(\d{2})/);
-      if (match) {
-        const slotTime = `${match[1]}:${match[2]}`;
-        if (slotTime >= r.start_time && slotTime <= r.end_time) {
-          return { blocked: true, reason: r.reason, isFullDay: false };
-        }
-      }
-    }
-  }
-
-  return { blocked: false };
+export async function getReservationById(bookingId: string): Promise<{ reservation: ReservationRow | null; auditLogs: BookingAuditRow[] }> {
+  const [booking, audit] = await Promise.all([db.query('SELECT * FROM reservations WHERE booking_id=$1',[bookingId]), db.query('SELECT * FROM booking_audit_logs WHERE booking_id=$1 ORDER BY id DESC',[bookingId])]);
+  return {reservation: booking.rows[0] || null, auditLogs: audit.rows};
 }
-
-export function addBlockedDate(data: {
-  blocked_date: string;
-  is_full_day: boolean;
-  start_time?: string;
-  end_time?: string;
-  reason: string;
-  notes?: string;
-  actor?: string;
-}): BlockedDateRow {
-  const now = new Date().toISOString();
-  const stmt = db.prepare(`
-    INSERT INTO blocked_dates (
-      blocked_date, is_full_day, start_time, end_time, reason, notes, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  stmt.run(
-    data.blocked_date,
-    data.is_full_day ? 1 : 0,
-    data.start_time || null,
-    data.end_time || null,
-    data.reason.trim(),
-    data.notes?.trim() || null,
-    now
-  );
-
-  const actor = data.actor || 'MAÎTRE_D_ADMIN';
-  db.prepare(`
-    INSERT INTO booking_audit_logs (booking_id, action, actor, details, created_at)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(
-    'SYSTEM_SETTINGS',
-    'BLOCKED_DATE_ADDED',
-    actor,
-    `Blocked date ${data.blocked_date} (${data.is_full_day ? 'Full Day' : `${data.start_time} - ${data.end_time}`}). Reason: ${data.reason}.`,
-    now
-  );
-
-  return db.prepare('SELECT * FROM blocked_dates WHERE blocked_date = ? ORDER BY id DESC LIMIT 1').get(data.blocked_date) as unknown as BlockedDateRow;
+async function assertCapacity(client: pg.PoolClient, candidate: Pick<ReservationRow, 'guests' | 'reservation_date' | 'time_slot'>, excludeId = '') {
+  const rows = await client.query(`SELECT guests, reservation_date, time_slot FROM reservations
+    WHERE reservation_date BETWEEN (($1::date - 1)::text) AND (($1::date + 1)::text)
+    AND status = ANY($2::text[]) AND booking_id <> $3`, [candidate.reservation_date, occupyingStatuses, excludeId]);
+  if (!fitsBookingCapacity(candidate, rows.rows)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
 }
-
-export function removeBlockedDate(idOrDate: number | string, actor = 'MAÎTRE_D_ADMIN'): boolean {
-  let rows: BlockedDateRow[] = [];
-  const strVal = String(idOrDate).trim();
-
-  if (/^\d+$/.test(strVal)) {
-    const numericId = Number(strVal);
-    const row = db.prepare('SELECT * FROM blocked_dates WHERE id = ?').get(numericId) as unknown as BlockedDateRow | undefined;
-    if (row) rows.push(row);
-  } else {
-    rows = db.prepare('SELECT * FROM blocked_dates WHERE blocked_date = ?').all(strVal) as unknown as BlockedDateRow[];
-  }
-
-  if (!rows || rows.length === 0) return false;
-
-  const now = new Date().toISOString();
-  for (const current of rows) {
-    db.prepare('DELETE FROM blocked_dates WHERE id = ?').run(current.id);
-
-    db.prepare(`
-      INSERT INTO booking_audit_logs (booking_id, action, actor, details, created_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(
-      'SYSTEM_SETTINGS',
-      'BLOCKED_DATE_REMOVED',
-      actor,
-      `Unblocked date ${current.blocked_date} (Reason was: ${current.reason}). Date is now open for bookings.`,
-      now
-    );
-  }
-
-  return true;
+export async function createReservation(data: { booking_id?: string; guest_name: string; email: string; phone: string; guests: number; reservation_date: string; time_slot: string; seating_area: string; special_occasion?: string; dietary_notes?: string; ip_address?: string; actor?: string }): Promise<ReservationRow> {
+  return transaction(async client => {
+    // Serialize booking creation with blackout changes to avoid a check/write race.
+    await client.query('SELECT pg_advisory_xact_lock(230017)');
+    const blocked = await isDateBlocked(data.reservation_date,data.time_slot,client);
+    if (blocked.blocked) throw new BookingValidationError('This service date or time is unavailable.');
+    const settings=Object.fromEntries((await client.query('SELECT key,value FROM venue_settings')).rows.map(r=>[r.key,r.value]));
+    const cutoff=Number(settings.cutoff_hours ?? 1);
+    if (serviceInstant(data.reservation_date,data.time_slot)<Date.now()+(Number.isFinite(cutoff)&&cutoff>=0?cutoff:1)*3600000) throw new BookingValidationError('Please choose a later reservation time. The booking cutoff has passed.');
+    if(data.guests < Number(settings.min_pax||1) || data.guests > Number(settings.max_pax||20)) throw new BookingValidationError('Please choose a supported party size.');
+    await assertCapacity(client, data);
+    const status=settings.auto_confirm==='false'?'Pending':'Confirmed';
+    const id = data.booking_id || 'AMICA-'+randomUUID(); const now=new Date().toISOString();
+    const result = await client.query(`INSERT INTO reservations (booking_id, guest_name, email, phone, guests, reservation_date, time_slot, seating_area, special_occasion, dietary_notes, status, qr_code_value, ip_address, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$14,$11,$12,$13,$13) RETURNING *`,[id,data.guest_name.trim(),data.email.trim(),data.phone.trim(),data.guests,data.reservation_date,data.time_slot,data.seating_area,data.special_occasion||'',data.dietary_notes||'',`AMICA-SOHO-${id}`,data.ip_address||null,now,status]);
+    await logAudit(id,status==='Pending'?'RESERVATION_PENDING':'RESERVATION_CONFIRMED','GUEST_WEB_BOOKING',`Reservation saved for ${data.guests} guests.`,client);
+    return result.rows[0];
+  });
 }
-
-export function getVenueSettings(): Record<string, string> {
-  const rows = db.prepare('SELECT key, value FROM venue_settings').all() as unknown as { key: string; value: string }[];
-  const settings: Record<string, string> = {
-    auto_confirm: 'true',
-    min_pax: '1',
-    max_pax: '20',
-    cutoff_hours: '1',
-    opening_time: '17:00',
-    closing_time: '03:00',
-    days_open: 'Monday – Sunday (7 Days a Week)',
-    announcement: 'Subterranean table reservations auto-confirmed instantly up to 1 hour before opening'
-  };
-
-  for (const r of rows) {
-    settings[r.key] = r.value;
-  }
-  return settings;
+export async function updateReservationStatus(id: string, status: string, actor='ADMIN_PORTAL', notes=''): Promise<ReservationRow | null> {
+  if (!['Confirmed','Auto-Confirmed','Pending','Seated','Completed','Cancelled','No-Show'].includes(status)) throw new Error('Invalid reservation status.');
+  return transaction(async client => {
+    await client.query('SELECT pg_advisory_xact_lock(230017)');
+    const current = (await client.query('SELECT * FROM reservations WHERE booking_id=$1', [id])).rows[0];
+    if (!current) return null;
+    if (occupyingStatuses.includes(status)) await assertCapacity(client, current, id);
+    const result = await client.query('UPDATE reservations SET status=$1, updated_at=$2 WHERE booking_id=$3 RETURNING *', [status,new Date().toISOString(),id]);
+    await logAudit(id,'STATUS_CHANGED',actor,`${status}. ${notes}`,client);
+    return result.rows[0];
+  });
 }
-
-export function updateVenueSettingsBatch(newSettings: Record<string, string>, actor = 'MAÎTRE_D_ADMIN'): Record<string, string> {
-  const now = new Date().toISOString();
-  const stmt = db.prepare(`
-    INSERT OR REPLACE INTO venue_settings (key, value, updated_at)
-    VALUES (?, ?, ?)
-  `);
-
-  for (const [k, v] of Object.entries(newSettings)) {
-    stmt.run(k, String(v), now);
-  }
-
-  db.prepare(`
-    INSERT INTO booking_audit_logs (booking_id, action, actor, details, created_at)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(
-    'SYSTEM_SETTINGS',
-    'SETTINGS_UPDATED',
-    actor,
-    `System settings updated: ${Object.keys(newSettings).join(', ')}.`,
-    now
-  );
-
-  return getVenueSettings();
+export async function deleteReservation(id: string, actor='ADMIN_PORTAL', reason='Admin cancellation') {
+  return transaction(async client => { const result=await client.query("UPDATE reservations SET status='Cancelled', updated_at=$2 WHERE booking_id=$1 RETURNING *",[id,new Date().toISOString()]); if(!result.rows.length)return false; await logAudit(id,'CANCELLED_AND_ARCHIVED',actor,reason,client); return true; });
+}
+export async function getDatabaseMetadata() {
+  const r=await db.query(`SELECT count(*)::int AS "totalBookings", count(*) FILTER (WHERE status IN ('Confirmed','Auto-Confirmed'))::int AS "autoConfirmed", count(*) FILTER (WHERE status='Seated')::int AS seated, coalesce(sum(guests),0)::int AS "totalGuests" FROM reservations`);
+  const a=await db.query('SELECT count(*)::int AS count FROM booking_audit_logs'); const b=await db.query('SELECT count(*)::int AS count FROM blocked_dates');
+  return {database:'Supabase PostgreSQL',filePath:'Managed Supabase database',sizeBytes:0,...r.rows[0],totalAuditLogs:a.rows[0].count,totalBlockedDates:b.rows[0].count,openingHours:'17:00 – 03:00 (Wednesday to Saturday)'};
+}
+export async function getBlockedDates(): Promise<BlockedDateRow[]> { return (await db.query('SELECT * FROM blocked_dates ORDER BY blocked_date, id DESC')).rows; }
+const serviceMinutes=(v:string)=>{const [h,m]=v.split(':').map(Number);return (h<5?h+24:h)*60+m;};
+export async function isDateBlocked(date: string, slot?: string, client: pg.Pool | pg.PoolClient = db): Promise<{blocked:boolean; reason?:string}> {
+  const rows=(await client.query('SELECT * FROM blocked_dates WHERE blocked_date=$1',[date])).rows;
+  for(const r of rows) if(r.is_full_day===1 || (slot && r.start_time && r.end_time && serviceMinutes(slot)>=serviceMinutes(r.start_time) && serviceMinutes(slot)<=serviceMinutes(r.end_time)))return {blocked:true,reason:r.reason};
+  return {blocked:false};
+}
+export async function addBlockedDate(data:{blocked_date:string;is_full_day:boolean;start_time?:string;end_time?:string;reason:string;notes?:string;actor?:string}): Promise<BlockedDateRow> {
+  return transaction(async client=>{await client.query('SELECT pg_advisory_xact_lock(230017)');const r=await client.query('INSERT INTO blocked_dates (blocked_date,is_full_day,start_time,end_time,reason,notes,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',[data.blocked_date,data.is_full_day?1:0,data.start_time||null,data.end_time||null,data.reason,data.notes||null,new Date().toISOString()]);await logAudit('SYSTEM_SETTINGS','BLOCKED_DATE_ADDED',data.actor||'ADMIN_PORTAL',data.blocked_date,client);return r.rows[0];});
+}
+export async function removeBlockedDate(value:number|string, actor='ADMIN_PORTAL') {
+  return transaction(async client=>{await client.query('SELECT pg_advisory_xact_lock(230017)');const key=/^\d+$/.test(String(value))?'id':'blocked_date';const r=await client.query(`DELETE FROM blocked_dates WHERE ${key}=$1 RETURNING id`,[value]);if(!r.rows.length)return false;await logAudit('SYSTEM_SETTINGS','BLOCKED_DATE_REMOVED',actor,String(value),client);return true;});
+}
+export async function getVenueSettings(): Promise<Record<string,string>> { return Object.fromEntries((await db.query('SELECT key,value FROM venue_settings')).rows.map(r=>[r.key,r.value])); }
+export async function updateVenueSettingsBatch(settings: Record<string,string>, actor='ADMIN_PORTAL') {
+  await transaction(async client=>{for(const [key,value] of Object.entries(settings))await client.query('INSERT INTO venue_settings (key,value,updated_at) VALUES ($1,$2,$3) ON CONFLICT (key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at',[key,String(value),new Date().toISOString()]);await logAudit('SYSTEM_SETTINGS','SETTINGS_UPDATED',actor,Object.keys(settings).join(', '),client);});return getVenueSettings();
 }

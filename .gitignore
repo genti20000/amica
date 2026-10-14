@@ -8,7 +8,10 @@ coverage/
 !.env.example
 
 # Local SQLite Database (preserves production bookings & settings across GitHub pushes)
-data/
+/data/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
+
+# Supabase CLI cache
+supabase/.temp/

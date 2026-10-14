@@ -131,22 +131,25 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       const sSettings = await fetchSystemSettings();
       setSystemSettings(sSettings);
     } catch {
-      setBookings(getStoredBookings());
+      setBookings([]); showToast('Could not load reservations. Please sign in again or retry.'); throw new Error('Could not load reservations.');
     }
   };
 
   useEffect(() => {
-    loadData();
+    loadData().catch(() => {});
   }, []);
 
   const handleRefresh = async () => {
+    try {
     setIsRefreshing(true);
     try {
       await loadData();
-      showToast('Database & system settings synchronized with SQLite store');
+      showToast('Database & system settings synchronized with Supabase PostgreSQL store');
     } finally {
       setIsRefreshing(false);
     }
+
+    } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
   const handleCopyAdminLink = () => {
@@ -161,6 +164,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   };
 
   const handleSelectBooking = async (b: BookingConfirmation) => {
+    try {
     setSelectedBooking(b);
     setActiveModalTab('details');
     setIsLoadingAudit(true);
@@ -172,9 +176,12 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     } finally {
       setIsLoadingAudit(false);
     }
+
+    } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
+    try {
     const updated = await updateBookingStatus(bookingId, newStatus, 'MAÎTRE_D_ADMIN', `Status switched to ${newStatus}`);
     setBookings(updated);
     if (selectedBooking && selectedBooking.bookingId === bookingId) {
@@ -183,18 +190,24 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       setAuditLogs(logs);
     }
     showToast(`Reservation #${bookingId} status recorded as ${newStatus}`);
+
+    } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
   const handleDelete = async (bookingId: string) => {
+    try {
     if (window.confirm(`Are you sure you want to cancel reservation #${bookingId}? It will be logged in the database audit table.`)) {
       const updated = await deleteBooking(bookingId, 'MAÎTRE_D_ADMIN', 'Cancelled from admin dashboard');
       setBookings(updated);
       if (selectedBooking?.bookingId === bookingId) setSelectedBooking(null);
       showToast(`Reservation #${bookingId} cancelled and archived in database`);
     }
+
+    } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
   const handleResetData = async () => {
+    try {
     if (window.confirm('Reset database back to standard Amica Soho reservations?')) {
       const updated = await resetBookings();
       setBookings(updated);
@@ -202,9 +215,12 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       setDbStats(stats);
       showToast('Database reset to default seed schedule');
     }
+
+    } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
   const handleCreateManualBooking = async (e: React.FormEvent) => {
+    try {
     e.preventDefault();
     if (!newBooking.name || !newBooking.phone) return;
 
@@ -224,8 +240,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     await saveBooking(created);
     await loadData();
     setIsAddModalOpen(false);
-    showToast(`Reservation #${bookingId} recorded and auto-confirmed in SQLite!`);
-    
+    showToast(`Reservation #${bookingId} recorded and auto-confirmed in Supabase PostgreSQL!`);
+
     // Reset form
     setNewBooking({
       date: todayStr,
@@ -238,10 +254,13 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       dietaryNotes: '',
       specialOccasion: 'Casual Dining & Drinks'
     });
+
+    } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
   // Block Date Form Submit
   const handleCreateBlockDate = async (e: React.FormEvent) => {
+    try {
     e.preventDefault();
     if (!newBlock.date || !newBlock.reason) return;
 
@@ -260,10 +279,13 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     } catch {
       showToast('Failed to block date');
     }
+
+    } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
   // Remove Blocked Date
   const handleRemoveBlock = async (id: number, dateStr: string) => {
+    try {
     if (window.confirm(`Unblock date ${dateStr} and reopen for general online reservations?`)) {
       try {
         const updated = await removeBlockedDate(id);
@@ -273,10 +295,13 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
         showToast('Failed to unblock date');
       }
     }
+
+    } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
   // Save System Settings
   const handleSaveSettings = async (e: React.FormEvent) => {
+    try {
     e.preventDefault();
     setIsSavingSettings(true);
     try {
@@ -288,6 +313,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     } finally {
       setIsSavingSettings(false);
     }
+
+    } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
   };
 
   // Export to CSV
@@ -344,7 +371,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
   return (
     <div className="min-h-screen bg-[#000000] text-[#FDFBF7] font-sans py-8 px-4 sm:px-6 lg:px-10 space-y-7">
-      
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#1A0509] border border-[#DFBE7B] text-[#FFEAA7] px-4 py-2.5 rounded-lg shadow-2xl flex items-center gap-2 text-xs font-sans tracking-wide animate-fadeIn">
@@ -481,14 +508,14 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-mono font-bold text-[#FFEAA7] tracking-wider uppercase">
-                DATABASE: SQLite 3 ENGINE (PERSISTENT DISK STORAGE)
+                DATABASE: Supabase PostgreSQL 3 ENGINE (PERSISTENT DISK STORAGE)
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-[9px] uppercase tracking-widest font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live & Connected
               </span>
             </div>
             <p className="text-[11px] text-[#DFBE7B]/80 font-sans mt-0.5">
-              Storage File: <span className="font-mono text-[#FFEAA7]">data/amica.sqlite</span> · Tables: <span className="font-mono text-[#FFEAA7]">reservations</span>, <span className="font-mono text-[#FFEAA7]">blocked_dates</span>, <span className="font-mono text-[#FFEAA7]">venue_settings</span> & <span className="font-mono text-[#FFEAA7]">booking_audit_logs</span>.
+              Storage: <span className="font-mono text-[#FFEAA7]">Supabase PostgreSQL</span> · Tables: <span className="font-mono text-[#FFEAA7]">reservations</span>, <span className="font-mono text-[#FFEAA7]">blocked_dates</span>, <span className="font-mono text-[#FFEAA7]">venue_settings</span> & <span className="font-mono text-[#FFEAA7]">booking_audit_logs</span>.
             </p>
           </div>
         </div>
@@ -603,7 +630,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
           {/* Filter & Search Bar */}
           <div className="max-w-7xl mx-auto bg-[#140306] border border-[#DFBE7B]/25 rounded-xl p-4 space-y-3.5 shadow-md">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-              
+
               {/* Search Input */}
               <div className="md:col-span-4 relative">
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#DFBE7B]/60" />
@@ -1032,6 +1059,10 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                 </div>
               </div>
 
+              <div className="bg-[#140306] border border-[#DFBE7B]/30 rounded-lg p-4 space-y-2">
+                <span className="font-semibold text-[#FFEAA7] uppercase tracking-wider text-[11px] block">Booking Capacity</span>
+                <p className="text-[#DFBE7B]/70 text-[11px] leading-relaxed">80 guests maximum · 18 tables · 2-hour reservations. Pending reservations also hold capacity. Larger parties reserve enough four-seat tables until the exact four/six-seat mix is configured.</p>
+              </div>
               {/* Cutoff Hours Notice */}
               <div className="bg-[#140306] border border-[#DFBE7B]/30 rounded-lg p-4 space-y-2">
                 <span className="font-semibold text-[#FFEAA7] uppercase tracking-wider text-[11px] block">
@@ -1318,7 +1349,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                 Reservation #{selectedBooking.bookingId}
               </h2>
               <p className="text-xs text-[#DFBE7B]/80 font-sans mt-0.5">
-                Created: {new Date(selectedBooking.createdAt).toLocaleString()} · Recorded in SQLite
+                Created: {new Date(selectedBooking.createdAt).toLocaleString()} · Recorded in Supabase PostgreSQL
               </p>
             </div>
 
@@ -1458,7 +1489,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
               <div className="space-y-3 text-xs">
                 <div className="bg-[#140306] border border-[#DFBE7B]/30 rounded-lg p-4 space-y-3 max-h-72 overflow-y-auto">
                   {isLoadingAudit ? (
-                    <div className="py-6 text-center text-[#DFBE7B]/60">Loading SQLite audit trail...</div>
+                    <div className="py-6 text-center text-[#DFBE7B]/60">Loading Supabase PostgreSQL audit trail...</div>
                   ) : auditLogs.length === 0 ? (
                     <div className="py-6 text-center text-[#DFBE7B]/60">
                       Auto-confirmed table recorded at {new Date(selectedBooking.createdAt).toLocaleString()}.
@@ -1508,7 +1539,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                 SYSTEM ARCHITECTURE & PERSISTENCE
               </span>
               <h2 className="font-['Cinzel',serif] text-2xl text-[#E8CCA0]">
-                SQLite 3 Subterranean Database
+                Supabase PostgreSQL 3 Subterranean Database
               </h2>
               <p className="text-xs text-[#DFBE7B]/80 font-sans mt-0.5">
                 Path: <code className="text-[#FFEAA7]">data/amica.sqlite</code> · Write-Ahead Logging (WAL) Enabled
@@ -1575,7 +1606,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                 className="py-2.5 px-4 rounded bg-[#200A0E] hover:bg-[#321118] border border-[#DFBE7B]/40 text-[#DFBE7B] text-xs font-sans uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Download SQLite Database CSV</span>
+                <span>Download Supabase PostgreSQL Database CSV</span>
               </button>
               <button
                 onClick={() => setIsDbExplorerOpen(false)}
@@ -1609,7 +1640,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                 Create Walk-In / Phone Reservation
               </h2>
               <p className="text-xs text-[#DFBE7B]/80 font-sans mt-0.5">
-                Automatically recorded & confirmed in SQLite (1 to 20 pax · 5:00 PM – 3:00 AM)
+                Automatically recorded & confirmed in Supabase PostgreSQL (1 to 20 pax · 5:00 PM – 3:00 AM)
               </p>
             </div>
 

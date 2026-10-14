@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { db, ReservationRow } from './db.js';
+import { logAudit, ReservationRow } from './db.js';
 
 export interface EmailDispatchResult {
   success: boolean;
@@ -330,30 +330,13 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
 
   // Record dispatch log in database
   try {
-    db.prepare(`
-      INSERT INTO booking_audit_logs (booking_id, action, actor, details, created_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(
-      reservation.booking_id,
-      'EMAIL_CONFIRMATION_DISPATCHED',
-      mode.toUpperCase() + '_SERVICE',
-      JSON.stringify({
-        sender: 'reservations@amicasoho.com',
-        recipient: reservation.email,
-        mode,
-        provider,
-        externalId: externalId || null,
-        subject,
-        dispatchedAt
-      }),
-      dispatchedAt
-    );
+    await logAudit(reservation.booking_id, mode === 'simulated' ? 'EMAIL_NOT_SENT' : 'EMAIL_CONFIRMATION_DISPATCHED', 'EMAIL_SERVICE', JSON.stringify({mode,provider,externalId:externalId||null}));
   } catch (e) {
     console.error('Failed to log email dispatch audit:', e);
   }
 
   return {
-    success: true,
+    success: mode !== 'simulated',
     mode,
     provider,
     bookingId: reservation.booking_id,
