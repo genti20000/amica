@@ -29,25 +29,25 @@ export const AperitivoQuizModal: React.FC<QuizModalProps> = ({ isOpen, onClose, 
       return {
         drink: MENU_ITEMS.find((i) => i.id === 'dirty-diana') || MENU_ITEMS[3],
         food: MENU_ITEMS.find((i) => i.id === 'bresaola') || MENU_ITEMS[18],
-        reasoning: 'The smoky, bitter perfection of Dirty Diana (Mezcal, Martini Rosso, Campari) pairs with the cured beef in Bresaola e Foglie Amare.'
+        reasoning: 'The smoky, bitter perfection of Dirty Diana (Mezcal, Martini Rosso, Campari) pairs with The Bresaola Trio: bresaola, Grana Padano, goat’s cheese and fruit jam.'
       };
     } else if (flavor === 'citrus-refreshing') {
       return {
         drink: MENU_ITEMS.find((i) => i.id === 'sophie-in-soho') || MENU_ITEMS[4],
         food: MENU_ITEMS.find((i) => i.id === 'bruschetta-classic') || MENU_ITEMS[17],
-        reasoning: 'The cool cucumber & Hendrick’s crispness of Sophie in Soho pairs with Bruschetta Classic.'
+        reasoning: 'The cool cucumber & Hendrick’s crispness of Sophie in Soho pairs with Bruschetta al Fresco, topped with tomato and basil.'
       };
     } else if (flavor === 'rich-herbal') {
       return {
         drink: MENU_ITEMS.find((i) => i.id === 'olivia-old-fashioned') || MENU_ITEMS[7],
         food: MENU_ITEMS.find((i) => i.id === 'pan-fried-brie') || MENU_ITEMS[19],
-        reasoning: 'Woodford Reserve Old Fashioned with orange bitters pairs with Pan-Fried Brie and its slow-cooked pear.'
+        reasoning: 'Woodford Reserve Old Fashioned with orange bitters pairs with Brie Mine and its slow-cooked pear.'
       };
     } else {
       return {
         drink: MENU_ITEMS.find((i) => i.id === 'aperol-olivia') || MENU_ITEMS[12],
         food: MENU_ITEMS.find((i) => i.id === 'olives') || MENU_ITEMS[18],
-        reasoning: 'The iconic Aperol Olivia Spritz paired with olives is the quintessential Soho aperitivo.'
+        reasoning: 'The iconic Aperol Olivia Spritz paired with Olives, Darling is the quintessential Soho aperitivo.'
       };
     }
   };

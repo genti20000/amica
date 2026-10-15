@@ -140,250 +140,178 @@ const MENU_BASE: MenuItem[] = [
   },
   {
     "id": "olives",
-    "name": "Olives",
+    "name": "Olives, Darling",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "",
+    "price": "4",
+    "description": "Mixed olives",
     "tastingNotes": ""
   },
   {
     "id": "bruschetta-classic",
-    "name": "Bruschetta Classic",
+    "name": "Bruschetta al Fresco",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "French stick",
-    "tastingNotes": ""
-  },
-  {
-    "id": "patattini-fritte",
-    "name": "Patattini Fritte",
-    "category": "small-plates",
-    "price": "3 for £10",
-    "description": "Or with tartufo",
+    "price": "4",
+    "description": "Tomato & basil on classic bruschetta",
     "tastingNotes": ""
   },
   {
     "id": "bruschetta-mushroom",
-    "name": "Bruschetta Mushroom and Goat’s Cheese",
+    "name": "Woodland Bruschetta",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "French stick",
+    "price": "5",
+    "description": "Mushrooms & goat's cheese",
+    "tastingNotes": ""
+  },
+  {
+    "id": "bresaola-affair",
+    "name": "The Bresaola Affair",
+    "category": "small-plates",
+    "price": "5",
+    "description": "Bruschetta with rocket, stracciatella & bresaola",
     "tastingNotes": ""
   },
   {
     "id": "zucchini-fritte",
-    "name": "Zucchini Fritte",
+    "name": "Golden Zucchine Fritte",
     "category": "small-plates",
-    "price": "3 for £10",
+    "price": "5",
     "description": "Courgette tempura with aioli sauce",
     "tastingNotes": ""
   },
   {
     "id": "fried-mozzarella",
-    "name": "Fried Baby Mozzarella",
+    "name": "Little Mozzarella Kisses",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "",
+    "price": "4",
+    "description": "Fried baby mozzarella",
+    "tastingNotes": ""
+  },
+  {
+    "id": "fries-benefits",
+    "name": "Fries with Benefits",
+    "category": "small-plates",
+    "price": "4",
+    "description": "Classic fries · Add truffle paste & Parmesan +1",
     "tastingNotes": ""
   },
   {
     "id": "tenderstem-broccoli",
-    "name": "Tenderstem Broccoli",
+    "name": "Broccoli with a Kick",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "With garlic and chilli",
-    "tastingNotes": ""
-  },
-  {
-    "id": "caprese-salad",
-    "name": "Caprese Salad",
-    "category": "small-plates",
-    "price": "3 for £10",
-    "description": "",
+    "price": "4",
+    "description": "Tenderstem broccoli with chilli & white wine",
     "tastingNotes": ""
   },
   {
     "id": "penne-arrabbiata",
-    "name": "Penne Arrabbiata",
+    "name": "Penne with Attitude",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "",
-    "tastingNotes": ""
-  },
-  {
-    "id": "ricotta-gnudi",
-    "name": "Fried Ricotta & Herb Gnudi",
-    "category": "small-plates",
-    "price": "3 for £10",
-    "description": "Calabrian chilli marmellata",
+    "price": "5",
+    "description": "Penne arrabbiata",
     "tastingNotes": ""
   },
   {
     "id": "pan-fried-brie",
-    "name": "Pan-Fried Brie",
+    "name": "Brie Mine",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "With slow-cooked pear and homemade jam",
+    "price": "5",
+    "description": "Pan-fried brie with slow-cooked pear & homemade jam",
     "tastingNotes": ""
   },
   {
     "id": "pan-fried-mushrooms",
-    "name": "Pan-Fried Mushrooms",
+    "name": "Midnight Mushrooms",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "With chilli, garlic, white wine and Parmesan cheese",
+    "price": "4",
+    "description": "Pan-fried mushrooms with chilli, garlic, white wine & Parmesan",
     "tastingNotes": ""
   },
   {
     "id": "goats-cheese",
-    "name": "Goat’s Cheese",
+    "name": "Goat's Cheese, Please",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "With toasted ciabatta, mixed salad and red onion caramel",
+    "price": "5",
+    "description": "Toasted ciabatta, mixed salad & red onion caramel",
     "tastingNotes": ""
   },
   {
     "id": "gnocchi",
-    "name": "Gnocchi",
+    "name": "Saucy Little Gnocchi",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "Cooked in chilli, garlic, tomato and white wine sauce",
+    "price": "5",
+    "description": "Gnocchi in chilli, garlic, tomato & creamy white wine sauce",
     "tastingNotes": ""
   },
   {
     "id": "ravioli",
-    "name": "Spinach and Ricotta Ravioli",
+    "name": "Ravioli Romance",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "Served in smoked salmon and creamy tomato sauce",
+    "price": "5",
+    "description": "Spinach & ricotta ravioli in creamy tomato sauce",
     "tastingNotes": ""
   },
   {
     "id": "king-prawns",
-    "name": "Butterflied King Prawns",
+    "name": "King Prawns After Dark",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "In garlic, chilli and white wine sauce",
+    "price": "6",
+    "description": "Butterflied king prawns with garlic, chilli & white wine",
     "tastingNotes": ""
   },
   {
     "id": "chicken-popcorn",
-    "name": "Chicken Popcorn",
+    "name": "Popcorn Chicken Crush",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "With homemade salsa sauce",
+    "price": "5",
+    "description": "Chicken popcorn with homemade vegetable sauce",
     "tastingNotes": ""
   },
   {
     "id": "chicken-satay",
-    "name": "Chicken Satay",
+    "name": "Skewered & Smitten",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "With dipping sauce",
+    "price": "5",
+    "description": "Chicken skewers with dipping sauce",
     "tastingNotes": ""
   },
   {
     "id": "sicilian-arancini",
-    "name": "Sicilian Arancini",
+    "name": "Golden Sicilian Arancini",
     "category": "small-plates",
-    "price": "3 for £10",
+    "price": "4",
     "description": "Rice balls filled with beef ragù",
     "tastingNotes": ""
   },
   {
     "id": "bresaola",
-    "name": "Bresaola e Foglie Amare",
+    "name": "The Bresaola Trio",
     "category": "small-plates",
-    "price": "3 for £10",
-    "description": "Cured beef, Italian bitter leaves, focaccia croutons, Parmigiano Reggiano dressing",
-    "tastingNotes": ""
-  },
-  {
-    "id": "complimentary-olives",
-    "name": "Olives",
-    "category": "complimentary",
-    "price": "Complimentary",
-    "description": "",
-    "tastingNotes": ""
-  },
-  {
-    "id": "complimentary-bruschetta-classic",
-    "name": "Bruschetta Classic",
-    "category": "complimentary",
-    "price": "Complimentary",
-    "description": "French stick",
-    "tastingNotes": ""
-  },
-  {
-    "id": "complimentary-bruschetta-mushroom",
-    "name": "Bruschetta Mushroom and Goat’s Cheese",
-    "category": "complimentary",
-    "price": "Complimentary",
-    "description": "French stick",
-    "tastingNotes": ""
-  },
-  {
-    "id": "complimentary-zucchini-fritte",
-    "name": "Zucchini Fritte",
-    "category": "complimentary",
-    "price": "Complimentary",
-    "description": "Courgette tempura with aioli sauce",
-    "tastingNotes": ""
-  },
-  {
-    "id": "pistachio-ice-cream",
-    "name": "Pistachio Ice Cream",
-    "category": "desserts",
-    "price": "",
-    "description": "",
-    "tastingNotes": ""
-  },
-  {
-    "id": "fior-di-latte-ice-cream",
-    "name": "Fior di Latte Ice Cream",
-    "category": "desserts",
-    "price": "",
-    "description": "",
-    "tastingNotes": ""
-  },
-  {
-    "id": "lime-ice-cream",
-    "name": "Lime Ice Cream",
-    "category": "desserts",
-    "price": "",
-    "description": "",
-    "tastingNotes": ""
-  },
-  {
-    "id": "passionfruit-ice-cream",
-    "name": "Passionfruit Ice Cream",
-    "category": "desserts",
-    "price": "",
-    "description": "",
+    "price": "6",
+    "description": "Bresaola, Grana Padano, goat's cheese & fruit jam",
     "tastingNotes": ""
   },
   {
     "id": "affogato",
-    "name": "Affogato",
+    "name": "Affogato Amore",
     "category": "desserts",
-    "price": "",
-    "description": "Fior di Latte gelato, espresso",
+    "price": "5",
+    "description": "Fior di latte gelato & espresso",
     "tastingNotes": ""
   },
   {
     "id": "cannolo",
-    "name": "Cannolo Siciliano con Ricotta, Pistachio e Cioccolato",
+    "name": "Cannoli Kisses",
     "category": "desserts",
-    "price": "",
-    "description": "Sicilian cannolo, ricotta, pistachio, chocolate",
+    "price": "5",
+    "description": "Sicilian cannoli with ricotta, pistachio & chocolate",
     "tastingNotes": ""
   },
   {
     "id": "tiramisu",
-    "name": "Tiramisu",
+    "name": "Tiramisu Temptation",
     "category": "desserts",
-    "price": "",
-    "description": "",
+    "price": "5",
+    "description": "Classic tiramisu with espresso-soaked ladyfingers, mascarpone & cocoa",
     "tastingNotes": ""
   }
 ];
