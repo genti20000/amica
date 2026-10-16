@@ -61,7 +61,7 @@ interface AdminBookingsPageProps {
 
 export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate }) => {
   // Navigation Tabs
-  const [activeAdminTab, setActiveAdminTab] = useState<'bookings' | 'calendar' | 'blocked-dates' | 'settings'>('bookings');
+  const [activeAdminTab, setActiveAdminTab] = useState<'bookings' | 'calendar' | 'blocked-dates' | 'settings'>('calendar');
 
   // Bookings state
   const [bookings, setBookings] = useState<BookingConfirmation[]>([]);
@@ -84,6 +84,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
   const [copiedLink, setCopiedLink] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [undoStatus, setUndoStatus] = useState<{ bookingId: string; previousStatus: string; nextStatus: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dbStats, setDbStats] = useState<any>(null);
 
@@ -114,6 +115,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   });
 
   const showToast = (msg: string) => {
+    if (!msg.startsWith('Status changed:')) setUndoStatus(null);
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
@@ -182,16 +184,34 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {
+    const previousStatus = bookings.find((booking) => booking.bookingId === bookingId)?.status || 'Auto-Confirmed';
     const updated = await updateBookingStatus(bookingId, newStatus, 'MAÎTRE_D_ADMIN', `Status switched to ${newStatus}`);
     setBookings(updated);
+    setUndoStatus({ bookingId, previousStatus, nextStatus: newStatus });
     if (selectedBooking && selectedBooking.bookingId === bookingId) {
       setSelectedBooking({ ...selectedBooking, status: newStatus });
       const logs = await fetchBookingAuditLogs(bookingId);
       setAuditLogs(logs);
     }
-    showToast(`Reservation #${bookingId} status recorded as ${newStatus}`);
+    showToast(`Status changed: ${previousStatus} → ${newStatus}`);
 
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
+  };
+
+  const handleUndoStatusChange = async () => {
+    if (!undoStatus) return;
+    const action = undoStatus;
+    try {
+      const updated = await updateBookingStatus(action.bookingId, action.previousStatus, 'MAÎTRE_D_ADMIN', `Undid status change from ${action.nextStatus}`);
+      setBookings(updated);
+      if (selectedBooking?.bookingId === action.bookingId) {
+        setSelectedBooking({ ...selectedBooking, status: action.previousStatus });
+      }
+      setUndoStatus(null);
+      showToast(`Status restored to ${action.previousStatus}`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Could not undo the status change.');
+    }
   };
 
   const handleDelete = async (bookingId: string) => {
@@ -370,13 +390,14 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   }, [bookings, todayStr]);
 
   return (
-    <div className="min-h-screen bg-[#000000] text-[#FDFBF7] font-sans py-8 px-4 sm:px-6 lg:px-10 space-y-7">
+    <div className="amica-admin min-h-screen bg-[#000000] text-[#FDFBF7] font-sans py-8 px-4 sm:px-6 lg:px-10 space-y-7">
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#1A0509] border border-[#DFBE7B] text-[#FFEAA7] px-4 py-2.5 rounded-lg shadow-2xl flex items-center gap-2 text-xs font-sans tracking-wide animate-fadeIn">
+        <div className="admin-toast fixed bottom-6 right-6 z-50 bg-[#1A0509] border border-[#DFBE7B] text-[#FFEAA7] px-4 py-2.5 rounded-lg shadow-2xl flex items-center gap-2 text-xs font-sans tracking-wide animate-fadeIn">
           <Sparkles className="w-4 h-4 text-[#DFBE7B]" />
           <span>{toastMessage}</span>
+          {undoStatus && <button type="button" onClick={handleUndoStatusChange} className="ml-2 min-h-9 rounded-md border border-[#DFBE7B]/50 px-3 font-bold uppercase text-[10px]">Undo</button>}
         </div>
       )}
 
@@ -384,7 +405,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#DFBE7B]/20 pb-5">
         <div>
           <div className="flex items-center gap-3">
-            <span className="font-['Cinzel',serif] text-2xl sm:text-3xl tracking-[0.24em] text-[#E8CCA0] uppercase font-light">
+            <span className="font-['Cormorant_Garamond',serif] text-2xl sm:text-3xl tracking-[0.15em] text-[#E8CCA0] uppercase font-medium">
               AMICA SOHO
             </span>
             <span className="px-2.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 font-sans text-[10px] tracking-widest uppercase font-bold">
@@ -397,7 +418,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="admin-top-actions flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleCopyAdminLink}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded bg-[#1A0509] hover:bg-[#2A080F] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] text-[#DFBE7B] text-xs font-sans tracking-wider uppercase transition-colors cursor-pointer shadow-sm"
@@ -443,7 +464,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       </div>
 
       {/* Main Admin Section Tabs */}
-      <div className="max-w-7xl mx-auto flex items-center gap-2 border-b border-[#DFBE7B]/30 pb-3 flex-wrap">
+      <div className="admin-section-tabs max-w-7xl mx-auto flex items-center gap-2 border-b border-[#DFBE7B]/30 pb-3 flex-wrap">
         <button
           onClick={() => setActiveAdminTab('bookings')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-sans font-bold uppercase tracking-wider transition-all cursor-pointer ${
@@ -500,7 +521,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       </div>
 
       {/* Database Status & Storage Persistence Banner */}
-      <div className="max-w-7xl mx-auto bg-gradient-to-r from-[#1B0409] via-[#120205] to-[#0D0204] border border-[#DFBE7B]/40 rounded-xl p-4 sm:p-5 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="admin-system-banner max-w-7xl mx-auto bg-gradient-to-r from-[#1B0409] via-[#120205] to-[#0D0204] border border-[#DFBE7B]/40 rounded-xl p-4 sm:p-5 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3.5">
           <div className="w-10 h-10 rounded-lg bg-[#2D0911] border border-[#DFBE7B]/50 flex items-center justify-center shrink-0 shadow-inner">
             <Database className="w-5 h-5 text-[#DFBE7B]" />
@@ -540,7 +561,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       </div>
 
       {/* Shareable Admin Direct URL Card */}
-      <div className="max-w-7xl mx-auto bg-[#120205] border border-[#DFBE7B]/30 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+      <div className="admin-direct-link max-w-7xl mx-auto bg-[#120205] border border-[#DFBE7B]/30 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2.5 flex-wrap">
           <span className="text-[10px] uppercase font-sans tracking-[0.2em] text-[#DFBE7B] font-bold">
             Direct Admin URL:
@@ -729,8 +750,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
           {/* Bookings Table View */}
           <div className="max-w-7xl mx-auto bg-gradient-to-b from-[#180307] to-[#100204] border border-[#DFBE7B]/30 rounded-xl overflow-hidden shadow-2xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-sans">
+            <div className="overflow-x-auto admin-bookings-table-wrap">
+              <table className="w-full text-left text-xs font-sans admin-bookings-table">
                 <thead className="bg-[#24070D] text-[#DFBE7B] uppercase tracking-wider text-[10px] border-b border-[#DFBE7B]/20">
                   <tr>
                     <th className="py-3.5 px-4 font-semibold">Ref & Status</th>
@@ -1383,10 +1404,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                 <div className="bg-[#140306] border border-[#DFBE7B]/30 rounded-lg p-5 space-y-3.5 text-xs">
                   <div className="grid grid-cols-2 gap-3 pb-3 border-b border-[#DFBE7B]/20">
                     <div>
-                      <span className="text-[10px] text-[#DFBE7B]/70 uppercase block">Party Size</span>
-                      <p className="text-sm font-bold text-[#FFEAA7] mt-0.5">
-                        {selectedBooking.formData.guests} Guests (Pax)
-                      </p>
+                      <span className="text-[10px] text-[#DFBE7B]/70 uppercase block">Seating Area</span>
+                      <p className="text-sm font-bold text-[#FFEAA7] mt-0.5">{selectedBooking.formData.seatingArea}</p>
                     </div>
                     <div>
                       <span className="text-[10px] text-[#DFBE7B]/70 uppercase block">Date & Time</span>
@@ -1793,6 +1812,21 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
           </div>
         </div>
       )}
+
+      <nav className="admin-mobile-nav" aria-label="Admin sections">
+        <button type="button" onClick={() => setActiveAdminTab('calendar')} aria-current={activeAdminTab === 'calendar' ? 'page' : undefined}>
+          <Calendar className="h-5 w-5" /><span>Calendar</span>
+        </button>
+        <button type="button" onClick={() => setActiveAdminTab('bookings')} aria-current={activeAdminTab === 'bookings' ? 'page' : undefined}>
+          <TableIcon className="h-5 w-5" /><span>Bookings</span>
+        </button>
+        <button type="button" onClick={() => setActiveAdminTab('blocked-dates')} aria-current={activeAdminTab === 'blocked-dates' ? 'page' : undefined}>
+          <CalendarX className="h-5 w-5" /><span>Spaces</span>
+        </button>
+        <button type="button" onClick={() => setActiveAdminTab('settings')} aria-current={activeAdminTab === 'settings' ? 'page' : undefined}>
+          <Sliders className="h-5 w-5" /><span>More</span>
+        </button>
+      </nav>
 
     </div>
   );

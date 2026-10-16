@@ -46,7 +46,7 @@ export default function App() {
       if (!isSessionUnlocked) {
         return 'coming-soon';
       }
-      if (params.get('admin') === 'true' || hash === '#admin' || hash === '#admin-bookings') {
+      if (window.location.pathname.replace(/\/$/, '') === '/admin' || params.get('admin') === 'true' || hash === '#admin' || hash === '#admin-bookings') {
         return 'admin-bookings';
       }
       return 'home';
@@ -76,7 +76,7 @@ export default function App() {
         return;
       }
 
-      const isDirectAdmin = params.get('admin') === 'true' || hash === '#admin' || hash === '#admin-bookings';
+      const isDirectAdmin = window.location.pathname.replace(/\/$/, '') === '/admin' || params.get('admin') === 'true' || hash === '#admin' || hash === '#admin-bookings';
       if (isDirectAdmin) {
         setPostLoginTarget('admin-bookings');
         setIsLoginModalOpen(true);

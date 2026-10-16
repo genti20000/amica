@@ -35,7 +35,8 @@ async function configureServer() {
   app.post('/api/admin/logout', (req, res) => { res.clearCookie('amica_admin', {path:'/api'}); res.json({success:true}); });
 
   // Admin authorization is enforced on the server, independent of the preview lock.
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminPasswords = [process.env.ADMIN_PASSWORD, process.env.ADMIN_PASSWORD_EXTRA]
+    .filter((password): password is string => typeof password === 'string' && password.length > 0);
   const sessionKey = process.env.ADMIN_SESSION_SECRET || randomBytes(32).toString('hex');
   const sign = (value: string) => createHmac('sha256', sessionKey).update(value).digest('hex');
   const equal = (a: string, b: string) => {
@@ -43,8 +44,11 @@ async function configureServer() {
     return aa.length === bb.length && timingSafeEqual(aa, bb);
   };
   app.post('/api/admin/login', async (req, res) => {
-    if (!adminPassword) return res.status(503).json({ success: false, error: 'Admin access needs to be configured.' });
-    if (!equal(String(req.body.password || ''), adminPassword)) return res.status(401).json({ success: false, error: 'Incorrect admin password.' });
+    if (adminPasswords.length === 0) return res.status(503).json({ success: false, error: 'Admin access needs to be configured.' });
+    const submittedPassword = String(req.body.password || '');
+    if (!adminPasswords.some((candidate) => equal(submittedPassword, candidate))) {
+      return res.status(401).json({ success: false, error: 'Incorrect admin password.' });
+    }
     const expires = String(Date.now() + 8 * 60 * 60 * 1000);
     res.cookie('amica_admin', `${expires}.${sign(expires)}`, {
       httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 8 * 60 * 60 * 1000, path: '/api'
@@ -57,7 +61,7 @@ async function configureServer() {
     if (publicRead || (req.method === 'POST' && req.path === '/bookings')) return next();
     const cookie = (req.headers.cookie || '').split(';').map(v => v.trim()).find(v => v.startsWith('amica_admin='))?.slice(12) || '';
     const [expires, signature] = cookie.split('.');
-    if (!adminPassword || !expires || !signature || Number(expires) < Date.now() || !equal(signature, sign(expires))) {
+    if (adminPasswords.length === 0 || !expires || !signature || Number(expires) < Date.now() || !equal(signature, sign(expires))) {
       return res.status(401).json({ success: false, error: 'Admin sign-in is required.' });
     }
     if (!['GET', 'HEAD'].includes(req.method) && req.headers.origin) {

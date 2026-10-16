@@ -81,8 +81,8 @@ END:VCALENDAR`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-lg bg-gradient-to-b from-[#180307] via-[#120205] to-[#0A0103] border-2 border-[#DFBE7B] rounded-xl p-5 sm:p-7 text-[#FDFBF7] shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto">
+    <div className="booking-confirmation-overlay fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+      <div role="dialog" aria-modal="true" aria-label="Reservation details" className="booking-confirmation relative w-full max-w-lg bg-gradient-to-b from-[#180307] via-[#120205] to-[#0A0103] border-2 border-[#DFBE7B] rounded-xl p-5 sm:p-7 text-[#FDFBF7] shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto">
         
         {/* Top Metallic Border Decor */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#DFBE7B] via-[#C5A059] to-[#DFBE7B]" />
@@ -192,6 +192,12 @@ END:VCALENDAR`;
             </button>
           </div>
         </div>
+
+        {isConfirmed && confirmation.emailSent === false && (
+          <p role="status" className="mb-4 rounded-lg border border-[#DFBE7B]/30 p-3 text-sm text-[#FDFBF7]/80">
+            Your reservation is saved, but the confirmation email could not be sent. Please keep your booking reference. For help, contact reservations@amicasoho.com.
+          </p>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-2.5">
