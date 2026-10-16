@@ -346,3 +346,197 @@
 }
 @media (max-width: 360px) { .booking-date-change { display: none; } }
 @media (max-height: 540px) { .booking-calendar-overlay, .booking-confirmation-overlay { align-items: flex-start; } }
+
+/* AMICA reservations admin: warm paper, oxblood accents, compact mobile app shell. */
+.amica-admin {
+  --admin-paper: #f5f2ed;
+  --admin-card: #fffefa;
+  --admin-soft: #f8f5f0;
+  --admin-line: #e6ded5;
+  --admin-ink: #24201e;
+  --admin-muted: #746d67;
+  --admin-wine: #781827;
+  min-height: 100dvh;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  color: var(--admin-ink) !important;
+  background: var(--admin-paper) !important;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.amica-admin [class*="bg-[#"] {
+  background-color: var(--admin-card) !important;
+  background-image: none !important;
+}
+.amica-admin [class*="from-[#"],
+.amica-admin [class*="via-[#"],
+.amica-admin [class*="to-[#"] { background-image: none !important; }
+.amica-admin [class*="bg-[#DFBE7B]"],
+.amica-admin [class*="bg-[#C5A059]"],
+.amica-admin [class*="from-[#C5A059]"],
+.amica-admin [class*="to-[#DFBE7B]"] {
+  background-color: var(--admin-wine) !important;
+  color: #fff !important;
+}
+.amica-admin [class*="bg-[#000000]"] { background-color: var(--admin-paper) !important; }
+.amica-admin [class*="text-[#FDFBF7]"],
+.amica-admin [class*="text-[#E8CCA0]"] { color: var(--admin-ink) !important; }
+.amica-admin [class*="text-[#DFBE7B]"],
+.amica-admin [class*="text-[#FFEAA7]"] { color: var(--admin-wine) !important; }
+.amica-admin [class*="text-[#120205]"] { color: #fff !important; }
+.amica-admin [class*="border-[#DFBE7B]"] { border-color: var(--admin-line) !important; }
+.amica-admin [class*="border-[#C5A059]"] { border-color: #d7b8a1 !important; }
+.amica-admin [class*="hover:bg-[#"]:hover { background-color: var(--admin-soft) !important; }
+.amica-admin [class*="hover:text-[#FFEAA7]"]:hover,
+.amica-admin [class*="hover:text-[#DFBE7B]"]:hover { color: var(--admin-wine) !important; }
+.amica-admin [class*="hover:border-[#DFBE7B]"]:hover { border-color: #c8a9a0 !important; }
+
+.amica-admin [class*="bg-emerald-950"],
+.amica-admin [class*="bg-emerald-900"] { background-color: #e6f2eb !important; }
+.amica-admin [class*="text-emerald-300"],
+.amica-admin [class*="text-emerald-400"] { color: #24734d !important; }
+.amica-admin [class*="border-emerald-500"] { border-color: #c1dfcd !important; }
+.amica-admin [class*="bg-red-950"],
+.amica-admin [class*="bg-red-900"] { background-color: #f8e8e8 !important; }
+.amica-admin [class*="text-red-200"],
+.amica-admin [class*="text-red-300"],
+.amica-admin [class*="text-red-400"] { color: #9c3643 !important; }
+.amica-admin [class*="border-red-500"] { border-color: #e8c6c8 !important; }
+.amica-admin [class*="bg-blue-950"] { background-color: #e9f1f8 !important; }
+.amica-admin [class*="text-blue-400"] { color: #396c94 !important; }
+.amica-admin [class*="bg-zinc-800"] { background-color: #efede9 !important; }
+.amica-admin [class*="text-zinc-300"],
+.amica-admin [class*="text-zinc-500"] { color: #756e68 !important; }
+
+.amica-admin input:not([type="checkbox"]),
+.amica-admin select,
+.amica-admin textarea {
+  min-height: 44px;
+  color: var(--admin-ink) !important;
+  background-color: #fff !important;
+  border-color: var(--admin-line) !important;
+}
+.amica-admin input::placeholder,
+.amica-admin textarea::placeholder { color: #8e8580 !important; }
+.amica-admin :focus-visible { outline: 2px solid #9b5360; outline-offset: 2px; }
+.amica-admin .admin-section-tabs { scrollbar-width: none; }
+.amica-admin .admin-section-tabs::-webkit-scrollbar { display: none; }
+.amica-admin .admin-date-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--admin-line);
+  border-radius: 14px;
+  background: var(--admin-card);
+}
+.amica-admin .admin-date-strip button {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 70px;
+  padding: 8px 4px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--admin-ink);
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+}
+.amica-admin .admin-date-strip button span { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.amica-admin .admin-date-strip button strong { font-size: 18px; line-height: 1.1; }
+.amica-admin .admin-date-strip button small { color: var(--admin-muted); font-size: 9px; }
+.amica-admin .admin-date-strip button.is-selected { border-color: #a35461; background: var(--admin-wine); color: #fff; }
+.amica-admin .admin-date-strip button.is-selected small { color: #f4dfe1; }
+.admin-mobile-nav { display: none; }
+
+@media (max-width: 640px) {
+  .amica-admin {
+    padding: 12px 12px calc(88px + env(safe-area-inset-bottom));
+    gap: 14px;
+  }
+  .amica-admin > div.max-w-7xl:first-of-type {
+    align-items: center;
+    padding-bottom: 12px;
+    gap: 10px;
+  }
+  .amica-admin .admin-top-actions { width: 100%; gap: 7px; }
+  .amica-admin .admin-top-actions button {
+    min-height: 42px;
+    padding: 9px 10px;
+    font-size: 10px;
+  }
+  .amica-admin .admin-top-actions button:nth-child(1) span,
+  .amica-admin .admin-top-actions button:nth-child(2) span,
+  .amica-admin .admin-top-actions button:nth-child(3) span,
+  .amica-admin .admin-top-actions button:nth-child(5) span { display: none; }
+  .amica-admin .admin-section-tabs { display: none; }
+  .amica-admin .admin-system-banner { padding: 9px 10px; gap: 8px; }
+  .amica-admin .admin-system-banner > div:first-child { align-items: center; gap: 8px; }
+  .amica-admin .admin-system-banner > div:first-child > div:first-child { width: 30px; height: 30px; }
+  .amica-admin .admin-system-banner p { display: none; }
+  .amica-admin .admin-system-banner button { min-height: 38px; padding: 7px 9px; font-size: 10px; }
+  .amica-admin .admin-direct-link { padding: 8px; }
+  .amica-admin .admin-direct-link > div:first-child { display: none; }
+  .amica-admin .admin-direct-link button { flex: 1; min-height: 38px; justify-content: center; }
+  .amica-admin .admin-date-strip { gap: 4px; padding: 5px; }
+  .amica-admin .admin-date-strip button { min-height: 64px; }
+  .amica-admin .admin-date-strip button strong { font-size: 17px; }
+  .amica-admin .admin-bookings-table-wrap { overflow: visible; }
+  .amica-admin .admin-bookings-table,
+  .amica-admin .admin-bookings-table tbody { display: block; width: 100%; }
+  .amica-admin .admin-bookings-table thead { display: none; }
+  .amica-admin .admin-bookings-table tbody { padding: 10px; }
+  .amica-admin .admin-bookings-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 8px;
+    margin-bottom: 9px;
+    padding: 10px;
+    border: 1px solid var(--admin-line);
+    border-radius: 13px;
+    background: var(--admin-card);
+    box-shadow: 0 2px 10px rgba(46, 28, 23, .045);
+  }
+  .amica-admin .admin-bookings-table tbody tr:last-child { margin-bottom: 0; }
+  .amica-admin .admin-bookings-table tbody td { min-width: 0; padding: 5px 3px; border: 0; }
+  .amica-admin .admin-bookings-table tbody td:nth-child(1) { grid-column: 1 / 2; grid-row: 3; }
+  .amica-admin .admin-bookings-table tbody td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  .amica-admin .admin-bookings-table tbody td:nth-child(3) { grid-column: 2; grid-row: 1; align-self: center; }
+  .amica-admin .admin-bookings-table tbody td:nth-child(4) { grid-column: 1; grid-row: 1; }
+  .amica-admin .admin-bookings-table tbody td:nth-child(4) > div:first-child { font-size: 14px; }
+  .amica-admin .admin-bookings-table tbody td:nth-child(5) { grid-column: 1 / -1; grid-row: 4; }
+  .amica-admin .admin-bookings-table tbody td:nth-child(6) { display: none; }
+  .amica-admin .admin-bookings-table tbody td:nth-child(7) { grid-column: 2; grid-row: 3 / 5; align-self: center; }
+  .amica-admin .admin-bookings-table tbody td:nth-child(7) > div { flex-direction: column; align-items: stretch; }
+  .amica-admin .admin-bookings-table tbody td:nth-child(7) select { max-width: 116px; }
+  .amica-admin .admin-bookings-table tbody tr td[colspan] { display: block; grid-column: 1 / -1; grid-row: auto; text-align: center; }
+  .admin-mobile-nav {
+    position: fixed;
+    z-index: 45;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 8px 8px max(8px, env(safe-area-inset-bottom));
+    border-top: 1px solid #e4dcd3;
+    background: rgba(255, 254, 250, .97);
+    box-shadow: 0 -5px 18px rgba(49, 32, 27, .08);
+    backdrop-filter: blur(12px);
+  }
+  .admin-mobile-nav button {
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+    min-height: 44px;
+    padding: 3px;
+    border: 0;
+    background: transparent;
+    color: #706963;
+    font: 500 9px/1.2 'Plus Jakarta Sans', system-ui, sans-serif;
+    cursor: pointer;
+  }
+  .admin-mobile-nav button[aria-current="page"] { color: #781827; font-weight: 700; }
+  .admin-mobile-nav button[aria-current="page"] svg { stroke-width: 2.4; }
+}
