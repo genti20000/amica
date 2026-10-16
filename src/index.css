@@ -540,3 +540,60 @@
   .admin-mobile-nav button[aria-current="page"] { color: #781827; font-weight: 700; }
   .admin-mobile-nav button[aria-current="page"] svg { stroke-width: 2.4; }
 }
+
+/* Vesper-inspired AMICA admin theme: charcoal surfaces, ember actions, warm neutrals. */
+.amica-admin {
+  --admin-paper: #0a0a0a;
+  --admin-card: #151413;
+  --admin-soft: #211e1c;
+  --admin-line: #38312d;
+  --admin-ink: #f2ece6;
+  --admin-muted: #b1a59b;
+  --admin-wine: #e5522d;
+  color: var(--admin-ink) !important;
+  background: var(--admin-paper) !important;
+}
+.amica-admin [class*="bg-[#"] { background-color: var(--admin-card) !important; background-image: none !important; }
+.amica-admin [class*="from-[#"], .amica-admin [class*="via-[#"], .amica-admin [class*="to-[#"] { background-image: none !important; }
+.amica-admin [class*="bg-[#DFBE7B]"], .amica-admin [class*="bg-[#C5A059]"],
+.amica-admin [class*="from-[#C5A059]"], .amica-admin [class*="to-[#DFBE7B]"] {
+  background-color: var(--admin-wine) !important; color: #fff !important;
+}
+.amica-admin [class*="bg-[#000000]"] { background-color: var(--admin-paper) !important; }
+.amica-admin [class*="text-[#FDFBF7]"], .amica-admin [class*="text-[#E8CCA0]"],
+.amica-admin [class*="text-[#FFEAA7]"] { color: var(--admin-ink) !important; }
+.amica-admin [class*="text-[#DFBE7B]"] { color: #d1c7bd !important; }
+.amica-admin [class*="text-[#120205]"] { color: #fff !important; }
+.amica-admin [class*="border-[#DFBE7B]"], .amica-admin [class*="border-[#C5A059]"] { border-color: var(--admin-line) !important; }
+.amica-admin [class*="hover:bg-[#"]:hover { background-color: var(--admin-soft) !important; }
+.amica-admin [class*="hover:text-[#FFEAA7]"]:hover, .amica-admin [class*="hover:text-[#DFBE7B]"]:hover { color: #ff825f !important; }
+.amica-admin [class*="hover:border-[#DFBE7B]"]:hover { border-color: #e5522d !important; }
+.amica-admin [class*="bg-emerald-950"], .amica-admin [class*="bg-emerald-900"] { background-color: #173329 !important; }
+.amica-admin [class*="text-emerald-300"], .amica-admin [class*="text-emerald-400"] { color: #77cba0 !important; }
+.amica-admin [class*="border-emerald-500"] { border-color: #386c52 !important; }
+.amica-admin [class*="bg-red-950"], .amica-admin [class*="bg-red-900"] { background-color: #351b1b !important; }
+.amica-admin [class*="text-red-200"], .amica-admin [class*="text-red-300"], .amica-admin [class*="text-red-400"] { color: #f18a7f !important; }
+.amica-admin [class*="border-red-500"] { border-color: #74413b !important; }
+.amica-admin [class*="bg-blue-950"] { background-color: #1c2931 !important; }
+.amica-admin [class*="text-blue-400"] { color: #8ab5cf !important; }
+.amica-admin [class*="bg-zinc-800"] { background-color: #242321 !important; }
+.amica-admin [class*="text-zinc-300"], .amica-admin [class*="text-zinc-500"] { color: #a99f97 !important; }
+.amica-admin input:not([type="checkbox"]), .amica-admin select, .amica-admin textarea {
+  color: var(--admin-ink) !important; background-color: #11100f !important; border-color: var(--admin-line) !important;
+}
+.amica-admin input::placeholder, .amica-admin textarea::placeholder { color: #8c8178 !important; }
+.amica-admin :focus-visible { outline: 2px solid #ff704b; outline-offset: 2px; }
+.amica-admin h1, .amica-admin h2, .amica-admin h3, .amica-admin h4,
+.amica-admin [class*="font-['Cinzel"] { font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important; letter-spacing: .01em !important; }
+.amica-admin .admin-date-strip { background: #11100f; border-color: var(--admin-line); }
+.amica-admin .admin-date-strip button.is-selected { border-color: #e5522d; background: #e5522d; color: #fff; }
+.amica-admin .admin-date-strip button.is-selected small { color: #fff0eb; }
+.amica-admin .admin-mobile-nav { border-top-color: #38312d; background: rgba(15,14,13,.97); box-shadow: 0 -5px 18px rgba(0,0,0,.28); }
+.amica-admin .admin-mobile-nav button { color: #b1a59b; }
+.amica-admin .admin-mobile-nav button[aria-current="page"] { color: #ff704b; }
+@media (max-width: 640px) {
+  .amica-admin .admin-toast { right: 12px; bottom: calc(92px + env(safe-area-inset-bottom)); left: 12px; width: auto; justify-content: space-between; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .amica-admin *, .amica-admin *::before, .amica-admin *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}

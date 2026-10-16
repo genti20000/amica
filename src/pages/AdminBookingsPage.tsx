@@ -84,6 +84,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
   const [copiedLink, setCopiedLink] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [undoStatus, setUndoStatus] = useState<{ bookingId: string; previousStatus: string; nextStatus: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dbStats, setDbStats] = useState<any>(null);
 
@@ -114,6 +115,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   });
 
   const showToast = (msg: string) => {
+    if (!msg.startsWith('Status changed:')) setUndoStatus(null);
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
@@ -182,16 +184,34 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {
+    const previousStatus = bookings.find((booking) => booking.bookingId === bookingId)?.status || 'Auto-Confirmed';
     const updated = await updateBookingStatus(bookingId, newStatus, 'MAÎTRE_D_ADMIN', `Status switched to ${newStatus}`);
     setBookings(updated);
+    setUndoStatus({ bookingId, previousStatus, nextStatus: newStatus });
     if (selectedBooking && selectedBooking.bookingId === bookingId) {
       setSelectedBooking({ ...selectedBooking, status: newStatus });
       const logs = await fetchBookingAuditLogs(bookingId);
       setAuditLogs(logs);
     }
-    showToast(`Reservation #${bookingId} status recorded as ${newStatus}`);
+    showToast(`Status changed: ${previousStatus} → ${newStatus}`);
 
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
+  };
+
+  const handleUndoStatusChange = async () => {
+    if (!undoStatus) return;
+    const action = undoStatus;
+    try {
+      const updated = await updateBookingStatus(action.bookingId, action.previousStatus, 'MAÎTRE_D_ADMIN', `Undid status change from ${action.nextStatus}`);
+      setBookings(updated);
+      if (selectedBooking?.bookingId === action.bookingId) {
+        setSelectedBooking({ ...selectedBooking, status: action.previousStatus });
+      }
+      setUndoStatus(null);
+      showToast(`Status restored to ${action.previousStatus}`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Could not undo the status change.');
+    }
   };
 
   const handleDelete = async (bookingId: string) => {
@@ -374,9 +394,10 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#1A0509] border border-[#DFBE7B] text-[#FFEAA7] px-4 py-2.5 rounded-lg shadow-2xl flex items-center gap-2 text-xs font-sans tracking-wide animate-fadeIn">
+        <div className="admin-toast fixed bottom-6 right-6 z-50 bg-[#1A0509] border border-[#DFBE7B] text-[#FFEAA7] px-4 py-2.5 rounded-lg shadow-2xl flex items-center gap-2 text-xs font-sans tracking-wide animate-fadeIn">
           <Sparkles className="w-4 h-4 text-[#DFBE7B]" />
           <span>{toastMessage}</span>
+          {undoStatus && <button type="button" onClick={handleUndoStatusChange} className="ml-2 min-h-9 rounded-md border border-[#DFBE7B]/50 px-3 font-bold uppercase text-[10px]">Undo</button>}
         </div>
       )}
 
@@ -1383,10 +1404,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                 <div className="bg-[#140306] border border-[#DFBE7B]/30 rounded-lg p-5 space-y-3.5 text-xs">
                   <div className="grid grid-cols-2 gap-3 pb-3 border-b border-[#DFBE7B]/20">
                     <div>
-                      <span className="text-[10px] text-[#DFBE7B]/70 uppercase block">Party Size</span>
-                      <p className="text-sm font-bold text-[#FFEAA7] mt-0.5">
-                        {selectedBooking.formData.guests} Guests (Pax)
-                      </p>
+                      <span className="text-[10px] text-[#DFBE7B]/70 uppercase block">Seating Area</span>
+                      <p className="text-sm font-bold text-[#FFEAA7] mt-0.5">{selectedBooking.formData.seatingArea}</p>
                     </div>
                     <div>
                       <span className="text-[10px] text-[#DFBE7B]/70 uppercase block">Date & Time</span>
