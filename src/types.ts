@@ -1,4 +1,4 @@
-export type PageId = 'coming-soon' | 'home' | 'drinks-food' | 'venue' | 'private-hire' | 'whats-on' | 'visit' | 'book' | 'admin-bookings';
+export type PageId = 'coming-soon' | 'home' | 'drinks-food' | 'venue' | 'private-hire' | 'whats-on' | 'visit' | 'book' | 'admin-bookings' | 'vesper';
 
 export interface MenuItem {
   id: string;

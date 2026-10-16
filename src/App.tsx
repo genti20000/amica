@@ -20,6 +20,7 @@ import { WhatsOnPage } from './pages/WhatsOnPage';
 import { VisitPage } from './pages/VisitPage';
 import { BookPage } from './pages/BookPage';
 import { AdminBookingsPage } from './pages/AdminBookingsPage';
+import { VesperPage } from './pages/VesperPage';
 
 export default function App() {
   // Lock the site: always default to locked (false)
@@ -38,6 +39,7 @@ export default function App() {
     try {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
+      if (window.location.pathname.replace(/\/$/, '') === '/vesper') return 'vesper';
       if (params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve') {
         return 'book';
       }
@@ -69,6 +71,10 @@ export default function App() {
 
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
+      if (window.location.pathname.replace(/\/$/, '') === '/vesper') {
+        setCurrentPage('vesper');
+        return;
+      }
 
       const isDirectBook = params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve';
       if (isDirectBook) {
@@ -87,7 +93,7 @@ export default function App() {
   }, []);
 
   const handleNavigate = (page: PageId) => {
-    if (page === 'coming-soon' || page === 'book' || page === 'drinks-food') {
+    if (page === 'coming-soon' || page === 'book' || page === 'drinks-food' || page === 'vesper') {
       setCurrentPage(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -139,7 +145,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#000000] text-[#FDFBF7] font-sans selection:bg-[#C5A059] selection:text-[#150306] flex flex-col items-center justify-start overflow-x-hidden">
       {/* Header Bar (hidden only if on dedicated full-screen admin bookings page) */}
-      {currentPage !== 'admin-bookings' && (
+      {currentPage !== 'admin-bookings' && currentPage !== 'vesper' && (
         <Header
           currentPage={currentPage}
           onNavigate={handleNavigate}
@@ -155,6 +161,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="w-full flex-1 bg-[#000000]">
+        {currentPage === 'vesper' && <VesperPage />}
         {currentPage === 'coming-soon' && (
           <ComingSoonPage
             onNavigate={handleNavigate}
@@ -213,7 +220,7 @@ export default function App() {
       </main>
 
       {/* Show full footer when on unlocked main site pages or booking page */}
-      {isUnlocked && !['coming-soon', 'book', 'drinks-food', 'admin-bookings'].includes(currentPage) && (
+      {isUnlocked && !['coming-soon', 'book', 'drinks-food', 'admin-bookings', 'vesper'].includes(currentPage) && (
         <Footer onNavigate={handleNavigate} />
       )}
 
