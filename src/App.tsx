@@ -60,6 +60,7 @@ export default function App() {
   const [savedPairings, setSavedPairings] = useState<string[]>([]);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [bookingConfirmation, setBookingConfirmation] = useState<BookingConfirmation | null>(null);
+  const [bookingFormRevision, setBookingFormRevision] = useState(0);
 
   // Direct URL support for ?book=true, #book, ?admin=true, or #admin
   useEffect(() => {
@@ -201,6 +202,7 @@ export default function App() {
 
         {currentPage === 'book' && (
           <BookPage
+            key={bookingFormRevision}
             onNavigate={handleNavigate}
             onBookingComplete={(confirmation) => setBookingConfirmation(confirmation)}
             savedPairingsCount={savedPairings.length}
@@ -238,7 +240,7 @@ export default function App() {
       {/* Booking Confirmation Pass Modal */}
       <BookingConfirmationModal
         confirmation={bookingConfirmation}
-        onClose={() => setBookingConfirmation(null)}
+        onClose={() => { setBookingConfirmation(null); setBookingFormRevision((revision) => revision + 1); }}
       />
     </div>
   );

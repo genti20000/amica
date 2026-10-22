@@ -180,7 +180,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
     if (isSubmitting) return;
     setErrorMessage(null);
 
-    if (!formData.name || !formData.email || !formData.phone) return;
+    if (!formData.name.trim() || !formData.phone.trim()) return;
 
     if (isClosedDay) {
       setErrorMessage('AMICA SOHO is closed on the selected date. Opening times are Wednesday to Saturday from 5:00 PM to 3:00 AM.');
@@ -553,15 +553,14 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
             <div>
               <label className="block text-xs font-sans text-[#DFBE7B] uppercase tracking-wider mb-1 font-semibold">
-                Email Address *
+                Email Address (optional)
               </label>
               <input
                 type="email"
                 autoComplete="email"
                 name="email"
                 inputMode="email"
-                aria-label="Email address"
-                required
+                aria-label="Email address (optional)"
                 placeholder="sofia@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}

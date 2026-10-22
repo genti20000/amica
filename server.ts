@@ -184,7 +184,7 @@ async function configureServer() {
   app.post('/api/bookings', async (req, res) => {
     try {
       const { formData, actor, bookingId } = req.body;
-      if (!formData || !formData.name || !formData.email || !formData.phone) {
+      if (!formData || !formData.name || !formData.phone) {
         return res.status(400).json({ success: false, error: 'Missing required guest contact information' });
       }
 
@@ -194,12 +194,12 @@ async function configureServer() {
       }
 
       if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date || '') || !/^\d{2}:\d{2}$/.test(formData.timeSlot || '') ||
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) ||
+          (!!formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) ||
           typeof formData.name !== 'string' || formData.name.trim().length === 0 || formData.name.length > 100 ||
           typeof formData.dietaryNotes !== 'undefined' && (typeof formData.dietaryNotes !== 'string' || formData.dietaryNotes.length > 2000) ||
           typeof formData.specialOccasion !== 'undefined' && (typeof formData.specialOccasion !== 'string' || formData.specialOccasion.length > 150) ||
           typeof formData.seatingArea !== 'undefined' && (typeof formData.seatingArea !== 'string' || formData.seatingArea.length > 100) ||
-          typeof formData.phone !== 'string' || formData.phone.length > 30 || formData.email.length > 128) {
+          typeof formData.phone !== 'string' || formData.phone.length > 30 || (formData.email || '').length > 128) {
         return res.status(400).json({ success: false, error: 'Please enter valid reservation details.' });
       }
       const date = new Date(formData.date + 'T12:00:00Z');
@@ -222,7 +222,7 @@ async function configureServer() {
       const created = await createReservation({
         booking_id: typeof bookingId === 'string' && /^[A-Za-z0-9-]{6,80}$/.test(bookingId) ? bookingId : undefined,
         guest_name: formData.name,
-        email: formData.email,
+        email: formData.email || '',
         phone: formData.phone,
         guests: guests,
         reservation_date: formData.date,
@@ -254,7 +254,7 @@ async function configureServer() {
       };
 
       // Trigger email dispatch asynchronously
-      const email = created.status==='Confirmed' ? await sendReservationEmail(created) : {success:false};
+      const email = created.status==='Confirmed' && created.email ? await sendReservationEmail(created) : {success:false};
       res.setHeader('X-Amica-Email-Delivery', email.success ? 'sent' : 'unavailable');
 
       res.status(201).json({ success: true, booking: confirmation, emailSent: email.success });
