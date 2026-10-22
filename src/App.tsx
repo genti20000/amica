@@ -240,7 +240,13 @@ export default function App() {
       {/* Booking Confirmation Pass Modal */}
       <BookingConfirmationModal
         confirmation={bookingConfirmation}
-        onClose={() => { setBookingConfirmation(null); setBookingFormRevision((revision) => revision + 1); }}
+        onClose={() => {
+          setBookingConfirmation(null);
+          setBookingFormRevision((revision) => revision + 1);
+          setCurrentPage(isUnlocked ? 'home' : 'coming-soon');
+          window.history.replaceState(null, '', '/');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
     </div>
   );
