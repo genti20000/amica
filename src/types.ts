@@ -51,6 +51,7 @@ export interface MockEmailNotification {
 }
 
 export interface BookingConfirmation {
+  emailSent?: boolean;
   bookingId: string;
   formData: BookingFormData;
   createdAt: string;

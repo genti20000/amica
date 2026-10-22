@@ -35,7 +35,8 @@ async function configureServer() {
   app.post('/api/admin/logout', (req, res) => { res.clearCookie('amica_admin', {path:'/api'}); res.json({success:true}); });
 
   // Admin authorization is enforced on the server, independent of the preview lock.
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminPasswords = [process.env.ADMIN_PASSWORD, process.env.ADMIN_PASSWORD_EXTRA]
+    .filter((password): password is string => typeof password === 'string' && password.length > 0);
   const sessionKey = process.env.ADMIN_SESSION_SECRET || randomBytes(32).toString('hex');
   const sign = (value: string) => createHmac('sha256', sessionKey).update(value).digest('hex');
   const equal = (a: string, b: string) => {
@@ -43,8 +44,11 @@ async function configureServer() {
     return aa.length === bb.length && timingSafeEqual(aa, bb);
   };
   app.post('/api/admin/login', async (req, res) => {
-    if (!adminPassword) return res.status(503).json({ success: false, error: 'Admin access needs to be configured.' });
-    if (!equal(String(req.body.password || ''), adminPassword)) return res.status(401).json({ success: false, error: 'Incorrect admin password.' });
+    if (adminPasswords.length === 0) return res.status(503).json({ success: false, error: 'Admin access needs to be configured.' });
+    const submittedPassword = String(req.body.password || '');
+    if (!adminPasswords.some((candidate) => equal(submittedPassword, candidate))) {
+      return res.status(401).json({ success: false, error: 'Incorrect admin password.' });
+    }
     const expires = String(Date.now() + 8 * 60 * 60 * 1000);
     res.cookie('amica_admin', `${expires}.${sign(expires)}`, {
       httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 8 * 60 * 60 * 1000, path: '/api'
@@ -57,7 +61,7 @@ async function configureServer() {
     if (publicRead || (req.method === 'POST' && req.path === '/bookings')) return next();
     const cookie = (req.headers.cookie || '').split(';').map(v => v.trim()).find(v => v.startsWith('amica_admin='))?.slice(12) || '';
     const [expires, signature] = cookie.split('.');
-    if (!adminPassword || !expires || !signature || Number(expires) < Date.now() || !equal(signature, sign(expires))) {
+    if (adminPasswords.length === 0 || !expires || !signature || Number(expires) < Date.now() || !equal(signature, sign(expires))) {
       return res.status(401).json({ success: false, error: 'Admin sign-in is required.' });
     }
     if (!['GET', 'HEAD'].includes(req.method) && req.headers.origin) {
@@ -180,7 +184,7 @@ async function configureServer() {
   app.post('/api/bookings', async (req, res) => {
     try {
       const { formData, actor, bookingId } = req.body;
-      if (!formData || !formData.name || !formData.email || !formData.phone) {
+      if (!formData || !formData.name || !formData.phone) {
         return res.status(400).json({ success: false, error: 'Missing required guest contact information' });
       }
 
@@ -190,12 +194,12 @@ async function configureServer() {
       }
 
       if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date || '') || !/^\d{2}:\d{2}$/.test(formData.timeSlot || '') ||
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) ||
+          (!!formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) ||
           typeof formData.name !== 'string' || formData.name.trim().length === 0 || formData.name.length > 100 ||
           typeof formData.dietaryNotes !== 'undefined' && (typeof formData.dietaryNotes !== 'string' || formData.dietaryNotes.length > 2000) ||
           typeof formData.specialOccasion !== 'undefined' && (typeof formData.specialOccasion !== 'string' || formData.specialOccasion.length > 150) ||
           typeof formData.seatingArea !== 'undefined' && (typeof formData.seatingArea !== 'string' || formData.seatingArea.length > 100) ||
-          typeof formData.phone !== 'string' || formData.phone.length > 30 || formData.email.length > 128) {
+          typeof formData.phone !== 'string' || formData.phone.length > 30 || (formData.email || '').length > 128) {
         return res.status(400).json({ success: false, error: 'Please enter valid reservation details.' });
       }
       const date = new Date(formData.date + 'T12:00:00Z');
@@ -218,7 +222,7 @@ async function configureServer() {
       const created = await createReservation({
         booking_id: typeof bookingId === 'string' && /^[A-Za-z0-9-]{6,80}$/.test(bookingId) ? bookingId : undefined,
         guest_name: formData.name,
-        email: formData.email,
+        email: formData.email || '',
         phone: formData.phone,
         guests: guests,
         reservation_date: formData.date,
@@ -250,7 +254,7 @@ async function configureServer() {
       };
 
       // Trigger email dispatch asynchronously
-      const email = created.status==='Confirmed' ? await sendReservationEmail(created) : {success:false};
+      const email = created.status==='Confirmed' && created.email ? await sendReservationEmail(created) : {success:false};
       res.setHeader('X-Amica-Email-Delivery', email.success ? 'sent' : 'unavailable');
 
       res.status(201).json({ success: true, booking: confirmation, emailSent: email.success });
