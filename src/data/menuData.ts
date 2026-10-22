@@ -140,7 +140,7 @@ const MENU_BASE: MenuItem[] = [
   },
   {
     "id": "olives",
-    "name": "Olives, Darling",
+    "name": "Mixed olives",
     "category": "small-plates",
     "price": "4",
     "description": "Mixed olives",
@@ -148,170 +148,154 @@ const MENU_BASE: MenuItem[] = [
   },
   {
     "id": "bruschetta-classic",
-    "name": "Bruschetta al Fresco",
+    "name": "Classic bruschetta",
     "category": "small-plates",
     "price": "4",
-    "description": "Tomato & basil on classic bruschetta",
+    "description": "With tomato and basil",
     "tastingNotes": ""
   },
   {
     "id": "bruschetta-mushroom",
-    "name": "Woodland Bruschetta",
+    "name": "Mushroom and goat’s cheese bruschetta",
     "category": "small-plates",
     "price": "5",
-    "description": "Mushrooms & goat's cheese",
+    "description": "Mushroom and goat’s cheese",
     "tastingNotes": ""
   },
   {
     "id": "bresaola-affair",
-    "name": "The Bresaola Affair",
+    "name": "Bruschetta",
     "category": "small-plates",
     "price": "5",
-    "description": "Bruschetta with rocket, stracciatella & bresaola",
+    "description": "Rocket, stracciatella cheese & bresaola (cured beef)",
     "tastingNotes": ""
   },
   {
     "id": "zucchini-fritte",
-    "name": "Golden Zucchine Fritte",
+    "name": "Zucchini fritti",
     "category": "small-plates",
     "price": "5",
     "description": "Courgette tempura with aioli sauce",
     "tastingNotes": ""
   },
   {
-    "id": "fried-mozzarella",
-    "name": "Little Mozzarella Kisses",
-    "category": "small-plates",
-    "price": "4",
-    "description": "Fried baby mozzarella",
-    "tastingNotes": ""
-  },
-  {
     "id": "fries-benefits",
-    "name": "Fries with Benefits",
+    "name": "Fries",
     "category": "small-plates",
     "price": "4",
-    "description": "Classic fries · Add truffle paste & Parmesan +1",
+    "description": "Add truffle paste and Parmesan +1",
     "tastingNotes": ""
   },
   {
     "id": "tenderstem-broccoli",
-    "name": "Broccoli with a Kick",
+    "name": "Tenderstem broccoli",
     "category": "small-plates",
     "price": "4",
-    "description": "Tenderstem broccoli with chilli & white wine",
+    "description": "With chilli and white wine",
     "tastingNotes": ""
   },
   {
     "id": "penne-arrabbiata",
-    "name": "Penne with Attitude",
+    "name": "Penne arrabbiata",
     "category": "small-plates",
     "price": "5",
-    "description": "Penne arrabbiata",
-    "tastingNotes": ""
-  },
-  {
-    "id": "pan-fried-brie",
-    "name": "Brie Mine",
-    "category": "small-plates",
-    "price": "5",
-    "description": "Pan-fried brie with slow-cooked pear & homemade jam",
+    "description": "Penne pasta cooked in tomato, chilli and garlic sauce",
     "tastingNotes": ""
   },
   {
     "id": "pan-fried-mushrooms",
-    "name": "Midnight Mushrooms",
+    "name": "Pan-seared mushrooms",
     "category": "small-plates",
     "price": "4",
-    "description": "Pan-fried mushrooms with chilli, garlic, white wine & Parmesan",
+    "description": "In garlic, chilli and white wine sauce",
+    "tastingNotes": ""
+  },
+  {
+    "id": "pan-fried-brie",
+    "name": "Pan-fried brie",
+    "category": "small-plates",
+    "price": "5",
+    "description": "Served with slow-cooked pear and homemade jam",
     "tastingNotes": ""
   },
   {
     "id": "goats-cheese",
-    "name": "Goat's Cheese, Please",
+    "name": "Goat’s cheese",
     "category": "small-plates",
     "price": "5",
-    "description": "Toasted ciabatta, mixed salad & red onion caramel",
+    "description": "Served with toasted ciabatta, mixed salad and red onion caramel",
     "tastingNotes": ""
   },
   {
     "id": "gnocchi",
-    "name": "Saucy Little Gnocchi",
+    "name": "Gnocchi",
     "category": "small-plates",
     "price": "5",
-    "description": "Gnocchi in chilli, garlic, tomato & creamy white wine sauce",
+    "description": "Cooked in chilli, garlic, tomato and creamy white wine sauce",
     "tastingNotes": ""
   },
   {
     "id": "ravioli",
-    "name": "Ravioli Romance",
+    "name": "Spinach and ricotta ravioli",
     "category": "small-plates",
     "price": "5",
-    "description": "Spinach & ricotta ravioli in creamy tomato sauce",
+    "description": "Served in creamy tomato sauce",
+    "tastingNotes": ""
+  },
+  {
+    "id": "calamari",
+    "name": "Calamari fritti",
+    "category": "small-plates",
+    "price": "6",
+    "description": "Served with homemade tartare sauce",
     "tastingNotes": ""
   },
   {
     "id": "king-prawns",
-    "name": "King Prawns After Dark",
+    "name": "Butterflied king prawns",
     "category": "small-plates",
     "price": "6",
-    "description": "Butterflied king prawns with garlic, chilli & white wine",
+    "description": "In garlic, chilli and white wine sauce",
     "tastingNotes": ""
   },
   {
     "id": "chicken-popcorn",
-    "name": "Popcorn Chicken Crush",
+    "name": "Chicken popcorn",
     "category": "small-plates",
     "price": "5",
-    "description": "Chicken popcorn with homemade vegetable sauce",
+    "description": "Served with homemade vegetable sauce",
     "tastingNotes": ""
   },
   {
     "id": "chicken-satay",
-    "name": "Skewered & Smitten",
+    "name": "Chicken skewers",
     "category": "small-plates",
     "price": "5",
-    "description": "Chicken skewers with dipping sauce",
-    "tastingNotes": ""
-  },
-  {
-    "id": "sicilian-arancini",
-    "name": "Golden Sicilian Arancini",
-    "category": "small-plates",
-    "price": "4",
-    "description": "Rice balls filled with beef ragù",
+    "description": "Served with dipping sauce",
     "tastingNotes": ""
   },
   {
     "id": "bresaola",
-    "name": "The Bresaola Trio",
+    "name": "Cheese & meat platter",
     "category": "small-plates",
-    "price": "6",
-    "description": "Bresaola, Grana Padano, goat's cheese & fruit jam",
+    "price": "8",
+    "description": "Bresaola, Gorgonzola, goat’s cheese and Grana Padano, served with toasted ciabatta and rocket",
     "tastingNotes": ""
   },
   {
     "id": "affogato",
-    "name": "Affogato Amore",
+    "name": "Affogato",
     "category": "desserts",
     "price": "5",
-    "description": "Fior di latte gelato & espresso",
-    "tastingNotes": ""
-  },
-  {
-    "id": "cannolo",
-    "name": "Cannoli Kisses",
-    "category": "desserts",
-    "price": "5",
-    "description": "Sicilian cannoli with ricotta, pistachio & chocolate",
+    "description": "Fior di latte gelato, espresso",
     "tastingNotes": ""
   },
   {
     "id": "tiramisu",
-    "name": "Tiramisu Temptation",
+    "name": "Classic tiramisu",
     "category": "desserts",
     "price": "5",
-    "description": "Classic tiramisu with espresso-soaked ladyfingers, mascarpone & cocoa",
+    "description": "Espresso-soaked ladyfingers, creamy mascarpone and a dusting of cocoa",
     "tastingNotes": ""
   }
 ];
