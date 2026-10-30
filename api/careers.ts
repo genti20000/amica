@@ -56,7 +56,7 @@ export default async function careers(req: Request, res: Response) {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       console.error('Careers applications: RESEND_API_KEY missing');
-      return res.status(503).json({ success: false, error: 'Applications are temporarily unavailable. Please contact info@amicasoho.com.' });
+      return res.status(503).json({ success: false, error: 'Applications are temporarily unavailable. Please contact info@amocasoho.com.' });
     }
     const from = process.env.FROM_EMAIL || 'AMICA SOHO <noreply@amicasoho.com>';
     const subject = 'AMICA SOHO · ' + role + ' application · ' + first + ' ' + last;
@@ -76,14 +76,14 @@ export default async function careers(req: Request, res: Response) {
       headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(15000),
       body: JSON.stringify({
-        from, to: ['info@amicasoho.com', 'reservations@amicasoho.com'],
+        from, to: ['info@amocasoho.com'],
         reply_to: email, subject, html, text, ...(attachments.length ? { attachments } : {})
       })
     });
     if (!sent.ok) {
       const issue = await sent.text();
       console.error('Careers email dispatch failed:', sent.status, issue.slice(0, 250));
-      return res.status(503).json({ success: false, error: 'We could not send your application. Please try again or email info@amicasoho.com.' });
+      return res.status(503).json({ success: false, error: 'We could not send your application. Please try again or email info@amocasoho.com.' });
     }
     return res.status(200).json({ success: true, message: 'Your application has been sent to the Amica Soho team.' });
   } catch (error) {
