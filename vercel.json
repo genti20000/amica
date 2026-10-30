@@ -7,6 +7,18 @@
   ],
   "rewrites": [
     {
+      "source": "/api/careers/apply",
+      "destination": "/api/careers"
+    },
+    {
+      "source": "/careers",
+      "destination": "/careers/index.html"
+    },
+    {
+      "source": "/careers/",
+      "destination": "/careers/index.html"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api"
     },
