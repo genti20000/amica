@@ -49,6 +49,7 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ onNavigate }) =>
       </div>
       <footer className="bg-[#080505] px-4 py-5 text-center">
         <a href="mailto:info@amicasoho.com" className="text-xs text-[#E9D6B6] hover:underline">info@amicasoho.com</a>
+        <span className="mx-3 text-[#D4B887]/50">·</span><a href="/membership" className="text-xs text-[#E9D6B6] hover:underline">Apply for Membership</a>
         <p className="mt-2 text-[9px] tracking-widest text-[#B29678]">© {new Date().getFullYear()} AMICA SOHO</p>
       </footer>
     </div>
