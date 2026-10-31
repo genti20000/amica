@@ -114,10 +114,10 @@ async function configureServer() {
       return res.status(400).json({success:false,error:'Invalid application or review status.'});
     try {
       const result=await db.query(
-        'UPDATE membership_applications SET status=$1,review_note=$2,reviewed_at=now(),updated_at=now() WHERE id=$3 RETURNING id,status',
+        "UPDATE membership_applications SET status=$1,review_note=$2,reviewed_at=now(),updated_at=now() WHERE id=$3 AND status IN ('pending','reviewed') RETURNING id,status",
         [status,reviewNote,id]
       );
-      if(!result.rows.length)return res.status(404).json({success:false,error:'Application not found.'});
+      if(!result.rows.length)return res.status(409).json({success:false,error:'Application not found or already finalised.'});
       return res.json({success:true,application:result.rows[0],
         notice:'A review status is not a membership pass or admission approval.'});
     } catch(error){
