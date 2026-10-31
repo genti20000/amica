@@ -1,4 +1,5 @@
-import type { Express, Request, Response } from 'express';
+import type { Express, Response } from 'express';
+import type { PoolClient } from 'pg';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { db, transaction } from './db.js';
 
@@ -29,7 +30,7 @@ function idValid(id: string) { return /^[a-f0-9]{8}-[a-f0-9-]{27,}$/i.test(id); 
 function clean(v: unknown, max:number) {return typeof v==='string'?v.trim().slice(0,max):'';}
 const MAX_CUSTOMERS=80; // Operational ceiling from existing venue setup; verify against current licence.
 const MAX_GUESTS_PER_MEMBER=2; // Conservative current policy; verify against current licence.
-async function audit(client: {query:typeof db.query}, action:string, id:string, details='') {
+async function audit(client: PoolClient, action:string, id:string, details='') {
   await client.query('INSERT INTO membership_audit_events(id,action,subject_id,details) VALUES ($1,$2,$3,$4)',[randomUUID(),action,id,details]);
 }
 export function installMemberOperations(app:Express) {
@@ -90,7 +91,7 @@ export function installMemberOperations(app:Express) {
         await audit(client,'MEMBER_APPROVED',memberId,'Declarations reviewed; membership active after 48-hour policy.');
         return {member:created};
       });
-      if('error' in member)return res.status(member.status).json({success:false,error:member.error});
+      if('error' in member && member.error)return res.status(member.status || 409).json({success:false,error:member.error});
       return res.status(201).json({success:true,...member,notice:'Membership active. Digital QR passes are not enabled until server verification and credential delivery are complete.'});
     }catch(e){return respondErr(res,e);}
   });
@@ -152,7 +153,7 @@ export function installMemberOperations(app:Express) {
         await audit(client,kind==='guest'?'GUEST_CHECK_IN':'MEMBER_CHECK_IN',visit.id,m.member_number);
         return {visit};
       });
-      if('error' in out)return res.status(out.status).json({success:false,error:out.error});
+      if('error' in out && out.error)return res.status(out.status || 409).json({success:false,error:out.error});
       return res.status(201).json({success:true,...out});
     }catch(e){return respondErr(res,e);}
   });
