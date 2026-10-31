@@ -27,7 +27,6 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
     { id: 'spritz', label: 'Amica’s Spritz' },
     { id: 'zero', label: 'Amica’s Zero (Non-Alcoholic)' },
     { id: 'small-plates', label: 'Cicchetti & Small Plates' },
-    { id: 'complimentary', label: 'Complimentary' },
     { id: 'desserts', label: 'Desserts' },
     { id: 'wines', label: 'Wine List' },
 
@@ -71,11 +70,11 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
         </p>
 
         <div className="flex flex-wrap justify-center gap-3 pt-2">
-          {[['Cocktail Menu (PDF)', '/menus/amica-drinks-menu.pdf'], ['Wine List (PDF)', '/menus/amica-wine-list.pdf'], ['Food Menu', '/menus/amica-food-menu.jpg'], ['Dessert Menu', '/menus/amica-dessert-menu.jpg']].map(([label, href]) => (
+          {[['Cocktail Menu (PDF)', '/menus/amica-drinks-menu.pdf'], ['Wine List (PDF)', '/menus/amica-wine-list.pdf'], ['Food Menu (PDF)', '/menus/amica-food-menu.pdf']].map(([label, href]) => (
             <a key={href} href={href} target="_blank" rel="noopener noreferrer" className="btn-brass-outline px-4 py-2 rounded text-xs uppercase tracking-wider">{label}</a>
           ))}
         </div>
-        <p className="text-xs text-[#DFBE7B]/80">Small plates: 3 for £10 · 25ml available on request. Please ask our team for wine and dessert prices and allergen information.</p>
+        <p className="text-xs text-[#DFBE7B]/80">Small plates: 3 for 11 · 6 for 20 · 25ml available on request. Please ask our team about allergens.</p>
         {/* Quiz Banner */}
         <div className="pt-2">
           <button

@@ -179,11 +179,19 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
 
   // Sender address: reservations@amicasoho.com
   const fromEmail = process.env.FROM_EMAIL || 'AMICA SOHO <reservations@amicasoho.com>';
+  const notificationEmail = process.env.BOOKING_NOTIFICATION_EMAIL || 'reservations@amicasoho.com';
+  const venueCopy = notificationEmail.toLowerCase() === reservation.email.toLowerCase() ? [] : [notificationEmail];
 
   // Create mailto fallback URL
   const mailtoSubject = encodeURIComponent(subject);
   const mailtoBody = encodeURIComponent(textBody);
   const mailtoUrl = `mailto:${encodeURIComponent(reservation.email)}?subject=${mailtoSubject}&body=${mailtoBody}`;
+
+  if (!['Confirmed', 'Auto-Confirmed'].includes(reservation.status)) {
+    return { success: false, mode: 'simulated', provider: 'Not dispatched', bookingId: reservation.booking_id,
+      recipient: reservation.email, sender: fromEmail, subject, previewHtml, textBody, mailtoUrl,
+      message: 'A confirmation email can only be sent for a confirmed reservation.', dispatchedAt };
+  }
 
   const resendApiKey = process.env.RESEND_API_KEY;
   const sendgridApiKey = process.env.SENDGRID_API_KEY;
@@ -207,9 +215,12 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
           'Authorization': `Bearer ${resendApiKey}`,
           'Content-Type': 'application/json'
         },
+        signal: AbortSignal.timeout(15000),
         body: JSON.stringify({
           from: activeSender,
           to: [reservation.email],
+          ...(venueCopy.length ? { bcc: venueCopy } : {}),
+          reply_to: notificationEmail,
           subject,
           html: previewHtml,
           text: textBody
@@ -217,27 +228,6 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
       });
 
       let resendData = await resendRes.json();
-
-      // If custom domain is not yet verified on Resend, retry with onboarding@resend.dev
-      if (!resendRes.ok && typeof resendData.message === 'string' && resendData.message.includes('not verified')) {
-        console.warn('amicasoho.com domain not verified on Resend. Trying fallback to onboarding@resend.dev...');
-        activeSender = 'AMICA SOHO <onboarding@resend.dev>';
-        resendRes = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: activeSender,
-            to: [reservation.email],
-            subject,
-            html: previewHtml,
-            text: textBody
-          })
-        });
-        resendData = await resendRes.json();
-      }
 
       if (!resendRes.ok) {
         throw new Error(resendData.message || JSON.stringify(resendData));
@@ -264,7 +254,8 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          personalizations: [{ to: [{ email: reservation.email }] }],
+          personalizations: [{ to: [{ email: reservation.email }], ...(venueCopy.length ? { bcc: venueCopy.map(email => ({ email })) } : {}) }],
+          reply_to: { email: notificationEmail },
           from: { email: 'reservations@amicasoho.com', name: 'AMICA SOHO' },
           subject,
           content: [
@@ -305,6 +296,8 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
       const info = await transporter.sendMail({
         from: fromEmail,
         to: reservation.email,
+        bcc: venueCopy,
+        replyTo: notificationEmail,
         subject,
         text: textBody,
         html: previewHtml
@@ -330,7 +323,7 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
 
   // Record dispatch log in database
   try {
-    await logAudit(reservation.booking_id, mode === 'simulated' ? 'EMAIL_NOT_SENT' : 'EMAIL_CONFIRMATION_DISPATCHED', 'EMAIL_SERVICE', JSON.stringify({mode,provider,externalId:externalId||null}));
+    await logAudit(reservation.booking_id, mode === 'simulated' ? 'EMAIL_NOT_SENT' : 'EMAIL_CONFIRMATION_DISPATCHED', 'EMAIL_SERVICE', JSON.stringify({mode,provider,externalId:externalId||null,notificationEmail}));
   } catch (e) {
     console.error('Failed to log email dispatch audit:', e);
   }
@@ -359,14 +352,12 @@ export function checkEmailServiceStatus() {
   const fromEmail = process.env.FROM_EMAIL || 'AMICA SOHO <reservations@amicasoho.com>';
 
   if (resendApiKey) {
-    const masked = resendApiKey.length > 8 ? `${resendApiKey.substring(0, 5)}...${resendApiKey.substring(resendApiKey.length - 4)}` : '***';
     return {
       ready: true,
       provider: 'Resend',
       fromEmail,
       apiKeyConfigured: true,
-      apiKeyMasked: masked,
-      status: 'Resend API Key is active and ready to dispatch live emails to guests!'
+      status: 'Resend API key configured. Delivery requires a verified sender domain.'
     };
   }
 
@@ -380,7 +371,7 @@ export function checkEmailServiceStatus() {
     };
   }
 
-  if (smtpHost) {
+  if (smtpHost && process.env.SMTP_USER && process.env.SMTP_PASS) {
     return {
       ready: true,
       provider: 'SMTP',

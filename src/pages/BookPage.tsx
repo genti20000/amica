@@ -180,7 +180,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
     if (isSubmitting) return;
     setErrorMessage(null);
 
-    if (!formData.name || !formData.email || !formData.phone) return;
+    if (!formData.name.trim() || !formData.phone.trim()) return;
 
     if (isClosedDay) {
       setErrorMessage('AMICA SOHO is closed on the selected date. Opening times are Wednesday to Saturday from 5:00 PM to 3:00 AM.');
@@ -215,7 +215,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5">
+    <div className="booking-page max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5">
       
       {/* Compact Header with H1 Fade-In */}
       <div className="text-center space-y-1">
@@ -241,7 +241,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
         {/* Global Error Banner */}
         {errorMessage && (
-          <div className="bg-red-950/90 border-2 border-red-500 text-red-200 p-3.5 rounded-xl text-xs flex items-center gap-2.5 animate-fadeIn">
+          <div role="alert" className="bg-red-950/90 border-2 border-red-500 text-red-200 p-3.5 rounded-xl text-xs flex items-center gap-2.5 animate-fadeIn">
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
             <span>{errorMessage}</span>
           </div>
@@ -276,7 +276,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                 <CalendarIcon className="w-4 h-4 text-[#DFBE7B]" />
                 <span>{formattedSelectedDate}</span>
               </div>
-              <span className="text-[10px] font-sans px-2.5 py-1 rounded bg-[#200A0E] border border-[#DFBE7B]/30 text-[#DFBE7B] uppercase tracking-wider font-bold">
+              <span className="booking-date-change text-[10px] font-sans px-2.5 py-1 rounded bg-[#200A0E] border border-[#DFBE7B]/30 text-[#DFBE7B] uppercase tracking-wider font-bold">
                 Change Date ▾
               </span>
             </button>
@@ -318,12 +318,12 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
            ========================================================================= */}
         {isDatePickerOpen && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
+            className="booking-calendar-overlay fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
             onClick={(e) => {
               if (e.target === e.currentTarget) setIsDatePickerOpen(false);
             }}
           >
-            <div className="relative w-full max-w-md bg-gradient-to-b from-[#1C0409] via-[#120205] to-[#0A0103] border-2 border-[#DFBE7B] rounded-2xl p-5 text-[#FDFBF7] shadow-2xl space-y-4">
+            <div role="dialog" aria-modal="true" aria-label="Select reservation date" className="booking-calendar relative w-full max-w-md bg-gradient-to-b from-[#1C0409] via-[#120205] to-[#0A0103] border-2 border-[#DFBE7B] rounded-2xl p-5 text-[#FDFBF7] shadow-2xl space-y-4">
               
               {/* Top Accent Line */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#DFBE7B] via-[#C5A059] to-[#DFBE7B] rounded-t-2xl" />
@@ -540,6 +540,9 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
               </label>
               <input
                 type="text"
+                autoComplete="name"
+                name="name"
+                aria-label="Lead guest full name"
                 required
                 placeholder="Sofia Loren"
                 value={formData.name}
@@ -550,11 +553,14 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
             <div>
               <label className="block text-xs font-sans text-[#DFBE7B] uppercase tracking-wider mb-1 font-semibold">
-                Email Address *
+                Email Address (optional)
               </label>
               <input
                 type="email"
-                required
+                autoComplete="email"
+                name="email"
+                inputMode="email"
+                aria-label="Email address (optional)"
                 placeholder="sofia@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -570,6 +576,10 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
               </label>
               <input
                 type="tel"
+                autoComplete="tel"
+                name="phone"
+                inputMode="tel"
+                aria-label="Mobile phone"
                 required
                 placeholder="+44 7987 654321"
                 value={formData.phone}

@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,follow">
+<meta name="theme-color" content="#070406">
+<title>Membership Application | AMICA SOHO</title>
+<meta name="description" content="Apply for AMICA SOHO private membership at 23 Frith Street, London.">
+<link rel="canonical" href="https://members.amicasoho.com/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#faf7f2;background:#070406;font-synthesis:none}
+*,*::before,*::after{box-sizing:border-box}body{min-height:100vh;margin:0;background:#070406;color:#faf7f2;-webkit-font-smoothing:antialiased}button,input{font:inherit}button{cursor:pointer}a{color:inherit}
+.page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 12px}
+.outer{width:100%;max-width:460px;padding:12px}
+.card{border:1.5px solid #d8aa4e;border-radius:30px;padding:24px;position:relative;overflow:hidden;background:radial-gradient(125% 100% at 50% 12%,#4a0916 0%,#29040c 58%,#140206 100%);box-shadow:0 25px 60px rgba(0,0,0,.9)}
+.emblem{display:flex;justify-content:center;margin-bottom:12px}.emblem svg{width:64px;height:64px;filter:drop-shadow(0 2px 6px #0005)}
+.brand{margin:0;text-align:center;font:700 20px/1.4 Cinzel,Georgia,serif;letter-spacing:.24em;text-transform:uppercase;color:#e5c378}
+.address{font-size:9px;line-height:1.6;font-weight:500;letter-spacing:.2em;text-transform:uppercase;text-align:center;color:#e5c378;margin:4px 0 0}
+.gold-rule{height:1.5px;width:208px;max-width:80%;margin:16px auto;background:rgba(229,195,120,.7)}
+.heading{font:400 28px/1.12 "Cormorant Garamond",Georgia,serif;letter-spacing:.025em;color:#fff7ec;text-align:center;margin:0 0 23px}
+.form{display:flex;flex-direction:column;gap:17px}.field{min-width:0}.field>label,.legend{font-size:11px;line-height:1.4;letter-spacing:.14em;font-weight:700;color:#fff7ec;text-transform:uppercase;display:block;margin-bottom:8px}
+.field input{width:100%;border:0;outline:0;padding:13px 16px;background:#f9f4eb;color:#21191d;border-radius:13px;min-height:48px;box-shadow:inset 0 1px 2px #00000015;font-size:16px;font-weight:500}
+.field input::placeholder{color:#aaa29c}.field input:focus-visible{outline:2px solid #e5c378;outline-offset:2px}
+.methods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.method{display:flex;align-items:center;justify-content:center;gap:9px;padding:12px 9px;border:2px solid transparent;border-radius:13px;background:#f9f4eb;color:#292427;font-size:12px;font-weight:600;min-height:48px;transition:background .15s ease,border-color .15s ease}
+.method[aria-pressed=true]{background:#3d0813;border-color:#e5c378;color:#fff;box-shadow:0 4px 12px #0005}.method:hover:not([aria-pressed=true]){background:#f3ece0}
+.dot{width:16px;height:16px;border:2px solid #8d857c;border-radius:50%;display:grid;place-items:center;flex-shrink:0}.method[aria-pressed=true] .dot{border-color:#e5c378}.dot::after{content:"";width:7px;height:7px;border-radius:50%;background:transparent}.method[aria-pressed=true] .dot::after{background:#e5c378}
+.method svg{width:17px;height:17px;flex-shrink:0}
+.contact{margin-top:12px}
+.checks{display:flex;flex-direction:column;gap:18px;padding-top:2px}
+.check-label{display:flex;gap:12px;align-items:flex-start;cursor:pointer;font-size:12px;line-height:1.45;color:#fff7ec;font-weight:400;position:relative}
+.check-label input{position:absolute;width:20px;height:20px;opacity:0;top:0;left:0;margin:0}
+.custom-check{width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(216,170,78,.9);border-radius:5px;flex:0 0 auto;margin-top:1px;color:#e5c378;background:transparent;transition:background .14s ease}
+.custom-check svg{width:14px;height:14px;display:none;stroke-width:3}
+.check-label input:checked+.custom-check{background:#3d0813;border-color:#e5c378}
+.check-label input:checked+.custom-check svg{display:block}
+.check-label input:focus-visible+.custom-check{outline:2px solid #fff;outline-offset:3px}
+.check-label a,.rules-trigger{color:#e5c378;text-decoration:underline;text-underline-offset:3px;font-weight:700}
+.rules-trigger{border:0;padding:0;margin:0;background:transparent;font:inherit;font-weight:700;cursor:pointer}.rules-trigger:hover,.check-label a:hover{color:#fff7ec}
+.apply-button{display:block;width:100%;min-height:53px;border:0;border-radius:13px;background:linear-gradient(180deg,#f5d386 0%,#dfb04f 50%,#b8852b 100%);color:#1a1005;font-weight:800;text-transform:uppercase;letter-spacing:.14em;font-size:12px;box-shadow:0 4px 24px rgba(222,174,78,.35);padding:15px 12px;margin-top:3px;transition:filter .15s ease,transform .15s ease}
+.apply-button:hover{filter:brightness(1.07)}.apply-button:active{transform:scale(.99)}.apply-button:disabled{opacity:.55;cursor:wait}
+.feedback{display:none;background:#1c0c12;border:1px solid #e5c378a0;color:#fff7ec;border-radius:11px;padding:13px;font-size:12px;line-height:1.65}.feedback.show{display:block}.feedback.error{background:#3c101a;border-color:#e58080;color:#ffe1e1}
+.staff{border-top:1px solid #dfbe7b33;margin-top:22px;padding-top:15px;text-align:center;font:400 10px/1.5 "JetBrains Mono",monospace}
+.staff a{color:#e5c378b3;text-decoration:underline;text-underline-offset:3px}.staff a:hover{color:#e5c378}
+.success{display:none;text-align:center}.success.show{display:block}.success h2{font:400 31px/1.18 "Cormorant Garamond",Georgia,serif;margin:20px 0 12px}.success p{font-size:13px;color:#eddcc9;line-height:1.8}.success-badge{font-size:10px;letter-spacing:.18em;color:#e5c378;text-transform:uppercase;border:1px solid #e5c37888;padding:11px 12px;border-radius:12px;margin:24px 0}.second-button{border:1px solid #e5c37866;color:#e5c378;background:transparent;padding:12px 18px;border-radius:12px;font-weight:700;font-size:12px;margin-top:15px;cursor:pointer}
+.modal{position:fixed;inset:0;z-index:10;display:none;justify-content:center;align-items:center;padding:16px;background:#000d;backdrop-filter:blur(5px)}.modal.show{display:flex}.modal-inner{background:#1a050a;border:1.5px solid #dfbe7b;border-radius:22px;max-width:470px;width:100%;max-height:90vh;overflow:auto;padding:24px;box-shadow:0 25px 70px #000e}.modal-head{display:flex;justify-content:space-between;gap:15px;align-items:center;border-bottom:1px solid #dfbe7b44;padding-bottom:15px}.modal-head h3{font:700 15px Cinzel,serif;letter-spacing:.08em;color:#e5c378;margin:0}.modal-close{border:0;background:transparent;color:#e5c378;font-size:28px;padding:0 4px;line-height:1}.modal-copy{font-size:13px;color:#ddd0c4;line-height:1.75;margin:22px 0}.modal-copy a{color:#e5c378}.modal-copy p{margin:0 0 14px}.modal-actions{border-top:1px solid #dfbe7b44;padding-top:17px;text-align:right}.modal-actions button{background:linear-gradient(180deg,#f5d386,#dfb04f,#b8852b);border:0;color:#1a1005;font-size:12px;font-weight:800;border-radius:10px;padding:12px 22px}
+@media(min-width:640px){.page{padding:24px}.outer{padding:20px}.card{padding:32px;border-radius:36px}.emblem svg{width:72px;height:72px}.brand{font-size:23px}.address{font-size:10px}.gold-rule{width:240px}.heading{font-size:32px;margin-bottom:26px}.method{border-radius:16px;font-size:13px}.field input{border-radius:16px;min-height:50px}.apply-button{border-radius:16px;font-size:13px}.check-label{font-size:13px}}
+@media(max-width:359px){.card{padding:21px 17px}.method{gap:5px;padding:11px 5px;font-size:11px}.address{font-size:8px}.brand{font-size:18px}.heading{font-size:26px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main class="page">
+<div class="outer">
+<section class="card" aria-labelledby="membership-heading">
+  <div class="emblem" aria-hidden="true">
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M26 106 V54 C26 35.2 41.2 20 60 20 C78.8 20 94 35.2 94 54 V106" stroke="#E5C378" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M32 106 V54 C32 38.5 44.5 26 60 26 C75.5 26 88 38.5 88 54 V106" stroke="#E5C378" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="20" y1="106" x2="100" y2="106" stroke="#E5C378" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M44 48 L60 69 L76 48 Z" stroke="#E5C378" stroke-width="2" stroke-linejoin="round"/>
+      <line x1="48" y1="53" x2="72" y2="53" stroke="#E5C378" stroke-width="1.2"/>
+      <line x1="60" y1="69" x2="60" y2="92" stroke="#E5C378" stroke-width="2"/>
+      <line x1="48" y1="92" x2="72" y2="92" stroke="#E5C378" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <h1 class="brand">AMICA SOHO</h1>
+  <p class="address">23 FRITH STREET · SOHO · LONDON W1D 4RR</p>
+  <div class="gold-rule" aria-hidden="true"></div>
+  <div id="form-screen">
+    <h2 class="heading" id="membership-heading">Membership Application</h2>
+    <form class="form" id="application">
+      <div hidden aria-hidden="true"><label for="website">Website</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+      <div class="field">
+        <label for="fullName">FULL NAME *</label>
+        <input id="fullName" name="fullName" type="text" placeholder="Enter your full name" autocomplete="name" maxlength="120" required/>
+      </div>
+      <div class="field">
+        <span class="legend" id="method-label">CONTACT METHOD *</span>
+        <div class="methods" role="group" aria-labelledby="method-label">
+          <button class="method" id="email-pill" type="button" aria-pressed="true" data-method="email">
+            <span class="dot"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            Email
+          </button>
+          <button class="method" id="phone-pill" type="button" aria-pressed="false" data-method="phone">
+            <span class="dot"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 0 1-12.5 7.4L3 20l1.1-4.5A8.5 8.5 0 1 1 20 11.5Z"/><path d="M9 9c.2 3 3 5.5 6 6l1.5-1.5"/></svg>
+            WhatsApp / Mobile
+          </button>
+        </div>
+        <div class="contact"><label for="contactValue" class="legend" id="contact-label">EMAIL ADDRESS *</label>
+          <input id="contactValue" name="contactValue" type="email" placeholder="Enter your email address" autocomplete="email" maxlength="160" required/>
+        </div>
+      </div>
+      <div class="field">
+        <label for="hospitalityRole">HOSPITALITY ROLE / EMPLOYER *</label>
+        <input id="hospitalityRole" name="hospitalityRole" type="text" placeholder="e.g. Bar staff · AMICA / Your employer" autocomplete="organization-title" maxlength="160" required/>
+        <div style="font-size:11px;line-height:1.6;color:#ddc29e;margin-top:8px">Membership is available only to those working in hospitality at the time of application. Eligibility is checked by management.</div>
+      </div>
+      <div class="checks">
+        <label class="check-label">
+          <input id="acceptRules" type="checkbox" required/>
+          <span class="custom-check"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span>
+          <span>I have read and agree to the <button class="rules-trigger" id="rules-trigger" type="button">Club Rules.</button> *</span>
+        </label>
+        <label class="check-label">
+          <input id="confirmAdult" type="checkbox" required/>
+          <span class="custom-check"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span>
+          <span>I confirm that I am aged 18 or over. *</span>
+        </label>
+        <label class="check-label">
+          <input id="acceptPrivacy" type="checkbox" required/>
+          <span class="custom-check"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span>
+          <span>I agree to my details being used to review my application, as explained in the <a href="/membership/privacy" target="_blank" rel="noopener noreferrer">privacy notice</a>. *</span>
+        </label>
+      </div>
+      <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+      <button class="apply-button" id="submit" type="submit">SUBMIT MEMBERSHIP APPLICATION</button>
+    </form>
+  </div>
+  <div class="success" id="success" aria-live="polite" tabindex="-1">
+    <h2>Application Received</h2>
+    <p>Thank you. Your application has been received by AMICA SOHO for management review.</p>
+    <div class="success-badge">APPLICATION PENDING REVIEW</div>
+    <p>Applying does not grant active membership or entry rights. The team will contact you about the next steps.</p>
+    <button type="button" class="second-button" id="again">Submit Another Application</button>
+  </div>
+  <div class="staff"><a href="/membership/admin">Door Staff &amp; Reception Login</a></div>
+</section>
+</div>
+</main>
+<div class="modal" id="rules-modal" role="dialog" aria-modal="true" aria-labelledby="rules-title" aria-hidden="true">
+  <div class="modal-inner">
+    <div class="modal-head"><h3 id="rules-title">Amica Soho Club Rules</h3><button class="modal-close" id="rules-close" type="button" aria-label="Close club rules">×</button></div>
+    <div class="modal-copy">
+      <p>Membership applications are reviewed by AMICA SOHO. An application does not grant membership or permission to enter the venue.</p>
+      <p>Applicants must be aged 18 or over, comply with the club's rules and be approved by management before receiving membership credentials.</p>
+      <p>Please read the <a href="/membership/rules" target="_blank" rel="noopener noreferrer">full membership rules and terms</a> before agreeing. Entry remains subject to the venue's applicable licence conditions.</p>
+    </div>
+    <div class="modal-actions"><button id="rules-agree" type="button">I Agree &amp; Accept</button></div>
+  </div>
+</div>
+<script>
+(()=>{
+ const form=document.getElementById('application');
+ const contact=document.getElementById('contactValue');
+ const label=document.getElementById('contact-label');
+ const feedback=document.getElementById('feedback');
+ const submit=document.getElementById('submit');
+ const modal=document.getElementById('rules-modal');
+ const rulesTrigger=document.getElementById('rules-trigger');
+ const rulesClose=document.getElementById('rules-close');
+ const rulesAgree=document.getElementById('rules-agree');
+ let method='email';
+ function selectMethod(value){
+   method=value;
+   for(const pill of document.querySelectorAll('.method')) pill.setAttribute('aria-pressed',String(pill.dataset.method===value));
+   const email=value==='email';
+   contact.type=email?'email':'tel';
+   contact.placeholder=email?'Enter your email address':'Enter your mobile or WhatsApp number';
+   contact.autocomplete=email?'email':'tel';
+   label.textContent=email?'EMAIL ADDRESS *':'WHATSAPP / MOBILE NUMBER *';
+   contact.value='';
+   feedback.className='feedback';
+ }
+ for(const pill of document.querySelectorAll('.method')) pill.addEventListener('click',()=>selectMethod(pill.dataset.method));
+ const openRules=(event)=>{event?.preventDefault();event?.stopPropagation();modal.classList.add('show');modal.setAttribute('aria-hidden','false');rulesClose.focus()};
+ const closeRules=()=>{modal.classList.remove('show');modal.setAttribute('aria-hidden','true');rulesTrigger.focus()};
+ rulesTrigger.addEventListener('click',openRules);
+ rulesClose.addEventListener('click',closeRules);
+ rulesAgree.addEventListener('click',()=>{document.getElementById('acceptRules').checked=true;closeRules()});
+ modal.addEventListener('click',event=>{if(event.target===modal)closeRules()});
+ document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal.classList.contains('show'))closeRules()});
+ function showError(message){feedback.textContent=message;feedback.className='feedback show error';feedback.scrollIntoView({block:'nearest',behavior:'smooth'})}
+ form.addEventListener('submit',async event=>{
+   event.preventDefault();
+   if(!form.reportValidity())return;
+   submit.disabled=true;
+   submit.textContent='SUBMITTING…';
+   feedback.className='feedback';
+   try{
+     const payload={
+       fullName:document.getElementById('fullName').value.trim(),
+       contactMethod:method,
+       contactValue:contact.value.trim(),
+       hospitalityRole:document.getElementById('hospitalityRole').value.trim(),
+       acceptRules:document.getElementById('acceptRules').checked,
+       confirmAdult:document.getElementById('confirmAdult').checked,
+       acceptPrivacy:document.getElementById('acceptPrivacy').checked,
+       website:document.getElementById('website').value
+     };
+     const response=await fetch('/api/membership/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+     const data=await response.json().catch(()=>({}));
+     if(!response.ok||!data.success)throw new Error(data.error||'We could not submit your application. Please try again.');
+     form.reset();selectMethod('email');
+     document.getElementById('form-screen').hidden=true;
+     const success=document.getElementById('success');
+     success.classList.add('show');
+     success.focus();
+   }catch(error){showError(error instanceof Error?error.message:'We could not submit your application.')}
+   finally{submit.disabled=false;submit.textContent='SUBMIT MEMBERSHIP APPLICATION'}
+ });
+ document.getElementById('again').addEventListener('click',()=>{
+   document.getElementById('success').classList.remove('show');
+   document.getElementById('form-screen').hidden=false;
+   document.getElementById('fullName').focus()
+ });
+})();
+</script>
+</body></html>
