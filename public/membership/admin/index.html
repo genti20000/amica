@@ -9,6 +9,15 @@
 .btn{border:1px solid #8e6d66;padding:10px 16px;background:#2a1d25;color:var(--light);font-weight:700;font-size:12px;letter-spacing:.02em;border-radius:6px;min-height:42px}.btn:hover{background:#49303b}.btn.primary{background:var(--wine);border-color:#aa6e6f;color:#fff}.btn.primary:hover{background:#864158}.btn.ghost{background:transparent;border-color:#715158;color:var(--gold)}.btn.danger{background:#42202a;border-color:#935c66;color:#f6c5c6}.btn.sm{padding:7px 11px;min-height:35px;font-size:11px}.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .panel{padding:25px;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:18px}.panel.login{max-width:560px;margin:32px auto;padding:34px}.panel.login h2{margin-bottom:7px}.loginrow{display:flex;gap:10px;margin-top:23px}.field{display:flex;flex-direction:column;gap:7px;min-width:0}.field label,.field>span{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.08em;text-transform:uppercase}.input,.select,.textarea{border:1px solid #826965;background:#100b10;color:#fff;padding:11px 12px;border-radius:6px;min-height:43px;width:100%}.input::placeholder,.textarea::placeholder{color:#958380}.textarea{min-height:95px;resize:vertical}.loginrow input{flex:1;min-width:50px}.hidden{display:none!important}
 .tabs{display:flex;overflow-x:auto;gap:7px;padding:0 0 13px;margin-bottom:20px;border-bottom:1px solid var(--line)}.tabs button{flex:0 0 auto;padding:10px 14px;border:1px solid #654650;color:#d0b9b9;background:#191018;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap}.tabs button.active{color:#1e1113;background:var(--gold);border-color:var(--gold)}.tabs button:hover:not(.active){background:#36202b}
+.quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:24px}
+.quick-action{display:flex;text-align:left;flex-direction:column;gap:7px;align-items:flex-start;border:1px solid #8e6762;padding:17px;background:linear-gradient(135deg,#32202b,#20131a);border-radius:11px;color:var(--light);min-height:100px}
+.quick-action:hover,.quick-action:focus-visible{border-color:var(--gold);background:#432a36;outline-offset:3px}
+.quick-action strong{font-size:14px;color:var(--gold)}.quick-action span{font-size:12px;color:#d9c4ba}
+.waiting{color:#f1cb92;font-weight:700}.ready{color:#bde1bb;font-weight:700}
+.section-subtitle{font-size:12px;color:#bda9a6;line-height:1.65;margin-bottom:12px}
+.tabs{position:sticky;top:0;z-index:5;padding:13px 0;background:var(--bg);scrollbar-width:thin}
+@media(max-width:900px){.quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.quick-action{min-height:85px;padding:13px}.quick-action strong{font-size:12px}.quick-action span{font-size:11px}}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.stat{background:#20151b;border:1px solid var(--line);padding:22px;border-radius:8px}.stat b{display:block;font:400 37px Georgia,serif;color:var(--gold);line-height:1.2;margin:7px 0}.stat span{font-size:11px;color:#d3bbb4;letter-spacing:.08em;text-transform:uppercase;font-weight:700}.contenthead{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:17px}.cards{display:grid;gap:12px}.card{padding:20px;border:1px solid #75515e;background:var(--raised);border-radius:8px}.cardtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}.cardname{font:400 21px Georgia,serif;color:#f8eddf}.meta{font-size:12px;color:#d0b5ac;line-height:1.8;margin-top:7px;overflow-wrap:anywhere}.row{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.row.space{justify-content:space-between}.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:15px}.chip{font-size:10px;text-transform:uppercase;letter-spacing:.12em;padding:6px 9px;border:1px solid #a58a72;color:#f1cf94;border-radius:99px}.chip.active,.chip.approved{color:var(--good);border-color:#6f996f}.chip.suspended,.chip.declined,.chip.revoked{color:#e7abab;border-color:#a66a77}.notice{border-left:3px solid var(--gold);padding:14px 17px;background:#31202b;color:#d7c5bc;font-size:12px;line-height:1.85;margin:20px 0}.notice strong{color:#efd19a}.empty{padding:27px;color:#d2bdba;border:1px dashed #806260;text-align:center;border-radius:6px}.error{color:var(--error);font-size:13px}.good{color:var(--good);font-size:13px}.message{min-height:18px;font-size:13px;margin:9px 0}
 .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.formgrid .wide{grid-column:1/-1}.section{padding:4px 0}.tablewrap{overflow-x:auto}.table{width:100%;border-collapse:collapse;font-size:12px}.table th{text-align:left;font-size:10px;text-transform:uppercase;color:var(--gold);letter-spacing:.12em;padding:12px;border-bottom:1px solid #684e50}.table td{padding:12px;border-bottom:1px solid #684e5066;vertical-align:middle}.table tr:hover{background:#2b1a24}.inlinebtn{border:1px solid #977977;color:#f0d8b6;background:#382630;padding:7px 12px;border-radius:5px}.toolcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.toolcard{display:block;background:#27181f;padding:18px;border:1px solid #8b6e5e;border-radius:9px}.toolcard strong{display:block;font-size:15px;color:var(--gold)}.toolcard span{display:block;color:#d5c1b6;font-size:12px;margin-top:5px}.toolcard:hover{border-color:var(--gold);background:#35202b}
 .private-link{width:100%;margin:14px 0;background:#120d12;border:1px solid #b18b65;color:#fff;padding:12px;font:12px monospace;border-radius:6px}.qr-scan{display:flex;flex-wrap:wrap;gap:10px;align-items:end}.qr-scan .field{flex:1;min-width:180px}.scan-result{background:#102519;border:1px solid #52855d;border-radius:8px;padding:16px;margin-top:14px}.camera{max-width:390px;width:100%;border:1px solid #b3925a;border-radius:10px;margin:15px auto;display:block}.dialog{position:fixed;inset:0;background:#000c;display:none;justify-content:center;align-items:center;padding:17px;z-index:25;backdrop-filter:blur(4px)}.dialog.open{display:flex}.dialogbox{width:100%;max-width:530px;max-height:90vh;overflow:auto;padding:26px;background:#20141b;border:1.5px solid var(--gold);border-radius:13px;box-shadow:0 20px 90px #000d}.dialogbox h2{font-size:27px}.approvalcheck{display:flex;gap:10px;align-items:start;margin:16px 0;font-size:13px;color:#e6d2cb;cursor:pointer}.approvalcheck input{width:18px;height:18px;margin-top:3px;flex:none;accent-color:#d7ad6d}.footer{font-size:11px;color:#ad9995;margin-top:50px;padding-top:20px;border-top:1px solid #674e54}
@@ -19,6 +28,12 @@
 <div class="hero"><div><div class="smallcaps">23 FRITH STREET · MANAGEMENT</div><h1>Membership control</h1><p class="sub">One secure register for applications, approved members, arrivals, guests and incidents.</p></div><div class="hero-actions hidden" id="authenticated-actions"><button class="btn ghost" id="refresh" type="button">Refresh</button><button class="btn" id="logout" type="button">Sign out</button></div></div>
 <section class="panel login" id="login"><div class="smallcaps">STAFF AUTHORISATION</div><h2>Admin sign-in</h2><p class="sub">Sign in with the existing AMICA bookings administration password. All personal information and operational records remain behind this secure session.</p><form id="login-form"><div class="loginrow"><input class="input" id="password" type="password" required autocomplete="current-password" placeholder="Admin password" aria-label="Admin password"><button class="btn primary" type="submit">SIGN IN</button></div></form><p class="message error" id="login-message" role="status"></p></section>
 <div id="app" class="hidden">
+<div class="quick-actions" aria-label="Frequently used membership tasks">
+  <button type="button" class="quick-action" data-jump="door"><strong>Door &amp; QR scanner</strong><span>Verify a member and record entry</span></button>
+  <button type="button" class="quick-action" data-jump="applications"><strong>Review applications</strong><span>Eligibility, 48-hour clock and decisions</span></button>
+  <button type="button" class="quick-action" data-jump="members"><strong>Members &amp; passes</strong><span>Manage membership and digital passes</span></button>
+  <button type="button" class="quick-action" data-jump="proprietor"><strong>Guest &amp; occupancy</strong><span>Proprietor guests and compliance records</span></button>
+</div>
 <nav class="tabs" id="tabs" aria-label="Member operations sections">
   <button type="button" class="active" data-tab="overview">Overview</button>
   <button type="button" data-tab="applications">Applications</button>
@@ -34,6 +49,7 @@
 <p class="message" id="status-message" role="status" aria-live="polite"></p>
 <section id="view-overview" class="section">
 <div class="stats" id="metrics"></div>
+<div class="panel" style="margin-top:18px"><div class="contenthead"><h2>Priority applications</h2><button type="button" class="btn sm primary" data-jump="applications">Review all</button></div><div id="priority-applications" class="cards"></div></div>
 <div class="notice"><strong>Live record scope:</strong> These totals count only entries recorded in this membership system. Restaurant customers and any earlier Firebase records are not automatically included. Reconcile physical occupancy at the door and verify licence conditions before admitting guests.</div>
 <div class="panel">
 <div class="contenthead"><h2>Hourly licensed headcount</h2></div>
@@ -43,7 +59,7 @@
 </div>
 <div class="panel"><div class="contenthead"><h2>Recent activity</h2><button type="button" class="btn sm" data-jump="applications">Review applications</button></div><div id="activity"></div></div>
 </section>
-<section id="view-applications" class="section hidden"><div class="contenthead"><div><h2>Applications</h2><p class="sub">Licence 37(a): applicants must work in hospitality when applying. Wait at least 48 hours before activation.</p></div><button class="btn sm" data-reload="applications">Refresh</button></div><div id="applications"></div></section>
+<section id="view-applications" class="section hidden"><div class="contenthead"><div><h2>Applications</h2><p class="sub">Licence 37(a): applicants must work in hospitality when applying. Wait at least 48 hours before activation.</p></div><div class="row"><input class="input" type="search" id="application-search" placeholder="Search applicants" aria-label="Search applications" style="max-width:230px"><button class="btn sm" data-reload="applications">Refresh</button></div></div><div id="applications"></div></section>
 <section id="view-members" class="section hidden"><div class="contenthead"><div><h2>Members</h2><p class="sub">Approved records from this system. Member numbers are references, not QR credentials.</p></div><input class="input" id="member-search" style="max-width:260px" placeholder="Search name or member number" aria-label="Search members"></div><div id="members"></div></section>
 <section id="view-door" class="section hidden">
 <div class="contenthead"><div><h2>Door &amp; arrivals</h2><p class="sub">Verify identity, then record arrival. No unverified QR entry is accepted.</p></div><button class="btn sm" data-reload="door">Refresh arrivals</button></div>
@@ -97,6 +113,24 @@
 <label class="approvalcheck"><input type="checkbox" id="verify-hospitality"><span>I have verified the applicant was working in the hospitality industry when they applied, in accordance with licence condition 37(a).</span></label>
 <label class="approvalcheck"><input type="checkbox" id="verify-licence"><span>I have checked the applicable licence conditions, waiting period and any required manager approvals.</span></label>
 <p class="message error" id="approval-message"></p><div class="actions"><button class="btn primary" id="confirm-approval" type="button">Confirm approval</button><button class="btn" id="cancel-approval" type="button">Cancel</button></div></div></div>
+<div class="dialog" id="prior-date-modal" role="dialog" aria-modal="true" aria-labelledby="prior-title" aria-hidden="true">
+<div class="dialogbox"><div class="smallcaps">MANAGER DOCUMENT VERIFICATION</div>
+<h2 id="prior-title">Verify an earlier application</h2>
+<p class="sub" id="prior-applicant"></p>
+<div class="notice"><strong>No 48-hour bypass.</strong> Use only when a genuine paper or offline application was received earlier than the online record. The actual application must already be at least 48 hours old. The original online timestamp cannot be changed.</div>
+<form id="prior-form" class="formgrid">
+<div class="field wide"><label for="prior-datetime">Original application date and time (London)</label>
+<input class="input" type="datetime-local" id="prior-datetime" required></div>
+<div class="field wide"><label for="prior-offset">London UTC offset on that date</label>
+<select id="prior-offset" class="select" required><option value="+00:00">GMT (winter, UTC+00)</option><option value="+01:00">BST (summer, UTC+01)</option></select></div>
+<div class="field wide"><label for="prior-evidence">Evidence reference / original record ID</label><input class="input" id="prior-evidence" maxlength="300" minlength="12" required placeholder="Reference to retained dated paper form or email"></div>
+<div class="field wide"><label for="prior-reason">Reason for the online date discrepancy</label><textarea class="textarea" id="prior-reason" maxlength="600" minlength="20" required placeholder="Describe when and how the original application was received and verified"></textarea></div>
+<div class="field wide"><label for="prior-manager-password">Primary manager password (not the staff password)</label><input class="input" id="prior-manager-password" type="password" autocomplete="off" required></div>
+<label class="approvalcheck wide"><input type="checkbox" id="prior-confirm-evidence" required><span>I checked dated evidence of an earlier genuine application and will retain the source record.</span></label>
+<label class="approvalcheck wide"><input type="checkbox" id="prior-confirm-law" required><span>I confirm at least 48 full hours have elapsed from the proven original application. This is not a waiver.</span></label>
+<p class="message error wide" id="prior-error" aria-live="polite"></p>
+<div class="wide actions"><button class="btn primary" type="submit" id="prior-submit">Save verified earlier date</button><button class="btn" type="button" id="prior-cancel">Cancel</button></div>
+</form></div></div>
 <div class="dialog" id="pass-link-modal" role="dialog" aria-modal="true" aria-labelledby="pass-link-title" aria-hidden="true">
 <div class="dialogbox"><div class="smallcaps">CONFIDENTIAL MEMBER CREDENTIAL</div><h2 id="pass-link-title">Private digital pass</h2>
 <p class="sub">A new pass was issued and any previous pass is now invalid. Share this link only with the named member through a private channel.</p>
@@ -107,7 +141,7 @@
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
-let tab='overview',pendingApproval=null;
+let tab='overview',pendingApproval=null,pendingEarlierApplication=null;
 let data={overview:null,applications:[],members:[],attendance:[],incidents:[],activity:[],capacity:[],proprietor:[],rules:[]};
 const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=String(txt);return x};
 const date=x=>x?new Date(x).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}):'—';
@@ -171,13 +205,31 @@ function renderCapacity(){
   $('capacity-records').append(c);
  }
 }
+function renderPriorityApplications(){
+ clear('priority-applications');
+ const queue=(data.applications||[]).filter(a=>['pending','reviewed'].includes(a.status));
+ if(!queue.length){$('priority-applications').append(el('p','empty','No applications need a decision.'));return}
+ for(const a of queue.slice(0,5)){
+  const when=new Date(a.verified_original_applied_at||a.created_at).getTime();
+  const hours=Math.max(0,48-(Date.now()-when)/3600000);
+  const c=el('div','card');const top=cardHeader(a.full_name,hours<=0?'ready for review':'waiting');
+  c.append(top,el('div',hours<=0?'ready':'waiting',hours<=0?'48-hour period completed':Math.ceil(hours)+' hours remaining before approval'));
+  const row=el('div','actions');row.append(action('Review application',()=>nav('applications'),'btn sm primary'));c.append(row);$('priority-applications').append(c);
+ }
+}
 function renderApplications(){
- clear('applications');const list=data.applications||[];
+ clear('applications');
+ const query=$('application-search').value.trim().toLowerCase();
+ const list=(data.applications||[]).filter(a=>!query||[a.full_name,a.contact_value,a.hospitality_role,a.status].some(v=>String(v||'').toLowerCase().includes(query)));
  if(!list.length){$('applications').append(el('p','empty','No membership applications recorded yet.'));return}
  const cards=el('div','cards');
  for(const a of list){
    const c=el('div','card');c.append(cardHeader(a.full_name,a.status));
    addMeta(c,[['Contact',a.contact_value+' ('+a.contact_method+')'],['Hospitality job/employer',a.hospitality_role||'NOT RECORDED: update before approval'],['Applied',date(a.created_at)],['Reviewed',date(a.reviewed_at)]]);
+   const effective=a.verified_original_applied_at||a.created_at;
+   const remaining=Math.max(0,48-(Date.now()-new Date(effective).getTime())/3600000);
+   c.append(el('div',remaining<=0?'ready':'waiting',remaining<=0?'48 hours completed · ready for eligibility review':Math.ceil(remaining)+' hours left in mandatory waiting period'));
+   if(a.verified_original_applied_at)c.append(kv('Earlier application verified',date(a.verified_original_applied_at)+' · evidence '+(a.original_evidence_reference||'')));
    if(a.review_note)c.append(kv('Review note',a.review_note));
    const row=el('div','actions');
    if(['pending','reviewed'].includes(a.status)){
@@ -187,7 +239,11 @@ function renderApplications(){
        const role=value.trim();if(role.length<3){msg('Enter the applicant occupation or employer.',true);return}
        await api('applications/'+encodeURIComponent(a.id)+'/hospitality','POST',{hospitalityRole:role});await refresh('applications');
      }));
-     row.append(action('Approve membership',()=>openApproval(a),'btn sm primary'));
+     const approve=action('Approve membership',()=>openApproval(a),'btn sm primary');
+     approve.disabled=remaining>0;
+     approve.title=remaining>0?'Cannot approve before the full 48-hour waiting period.':'Review identity, hospitality and club rules before approval.';
+     row.append(approve);
+     if(remaining>0&&!a.verified_original_applied_at)row.append(action('Record prior paper application',()=>openPriorVerification(a),'btn sm'));
      row.append(action('Mark reviewed',()=>changeApplication(a.id,'reviewed')));
      row.append(action('Decline',()=>changeApplication(a.id,'declined'),'btn sm danger'));
    }
@@ -199,6 +255,17 @@ function renderApplications(){
 async function changeApplication(id,status){
  if(status==='declined'&&!confirm('Decline this application?'))return;
  await api('applications/'+encodeURIComponent(id)+'/review','POST',{status,note:''});await refresh('applications');
+}
+function openPriorVerification(a){
+ pendingEarlierApplication=a;
+ $('prior-applicant').textContent=a.full_name+' · Online application '+date(a.created_at);
+ $('prior-form').reset();$('prior-error').textContent='';
+ $('prior-date-modal').classList.add('open');$('prior-date-modal').setAttribute('aria-hidden','false');$('prior-datetime').focus();
+}
+function closePriorVerification(){
+ pendingEarlierApplication=null;
+ $('prior-form').reset();
+ $('prior-date-modal').classList.remove('open');$('prior-date-modal').setAttribute('aria-hidden','true');
 }
 function openApproval(a){pendingApproval=a;$('approval-name').textContent=a.full_name+' · Applied '+date(a.created_at);
  for(const id of ['verify-age','verify-eligibility','verify-hospitality','verify-licence'])$(id).checked=false;
@@ -306,7 +373,7 @@ function renderAudit(){
   $('full-audit').append(c);
  }
 }
-function renderAll(){renderOverview();renderApplications();renderMembers();renderDoor();renderLedger();renderIncidents();renderCapacity();renderProprietor();renderRules();renderAudit()}
+function renderAll(){renderOverview();renderPriorityApplications();renderApplications();renderMembers();renderDoor();renderLedger();renderIncidents();renderCapacity();renderProprietor();renderRules();renderAudit()}
 $('login-form').addEventListener('submit',async e=>{
  e.preventDefault();$('login-message').textContent='';
  const password=$('password').value;
@@ -323,6 +390,33 @@ for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click
 for(const b of document.querySelectorAll('[data-jump]'))b.addEventListener('click',()=>nav(b.dataset.jump));
 for(const b of document.querySelectorAll('[data-reload]'))b.addEventListener('click',()=>refresh(b.dataset.reload));
 $('member-search').addEventListener('input',renderMembers);
+$('application-search').addEventListener('input',renderApplications);
+$('prior-form').addEventListener('submit',async e=>{
+ e.preventDefault();
+ if(!pendingEarlierApplication||!$('prior-form').reportValidity())return;
+ const value=$('prior-datetime').value;
+ const offset=$('prior-offset').value;
+ const originalAppliedAt=new Date(value+offset);
+ if(!Number.isFinite(originalAppliedAt.getTime())){$('prior-error').textContent='Enter a valid London application date and offset.';return}
+ const source=pendingEarlierApplication;
+ $('prior-submit').disabled=true;$('prior-error').textContent='';
+ try{
+  await api('applications/'+encodeURIComponent(source.id)+'/verify-original-date','POST',{
+   originalAppliedAt:originalAppliedAt.toISOString(),
+   evidenceReference:$('prior-evidence').value.trim(),
+   reason:$('prior-reason').value.trim(),
+   managerPassword:$('prior-manager-password').value,
+   confirmEvidence:$('prior-confirm-evidence').checked,
+   confirmNoBypass:$('prior-confirm-law').checked
+  });
+  closePriorVerification();await refresh('applications');
+  msg('Earlier application recorded with evidence and manager audit. The full 48-hour rule remains enforced.');
+ }catch(error){$('prior-error').textContent=error.message||'Verification failed.'}
+ finally{$('prior-submit').disabled=false}
+});
+$('prior-cancel').addEventListener('click',closePriorVerification);
+$('prior-date-modal').addEventListener('click',e=>{if(e.target===$('prior-date-modal'))closePriorVerification()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('prior-date-modal').classList.contains('open'))closePriorVerification()});
 $('proprietor-form').addEventListener('submit',async e=>{
  e.preventDefault();if(!$('proprietor-form').reportValidity())return;
  if(!confirm('Have you verified identity, authorised this entry and checked total venue occupancy?'))return;
