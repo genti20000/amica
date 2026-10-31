@@ -118,7 +118,7 @@ async function configureServer() {
     try {
       await initMemberApplications();
       const rows = await membershipDb.query(
-        "SELECT id,full_name,contact_method,contact_value,hospitality_role,is_adult,rules_accepted_at,status,created_at,reviewed_at,review_note " +
+        "SELECT id,full_name,contact_method,contact_value,hospitality_role,is_adult,rules_accepted_at,status,created_at,reviewed_at,review_note,verified_original_applied_at,original_evidence_reference,original_verification_reason,original_verified_at " +
         "FROM membership_applications ORDER BY created_at DESC LIMIT 200"
       );
       return res.json({ success:true, applications:rows.rows });
