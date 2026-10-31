@@ -1,12 +1,13 @@
 import type { Express, Response } from 'express';
 import type { PoolClient } from 'pg';
 import { randomUUID, randomBytes, createHash } from 'node:crypto';
-import { db, transaction } from './db.js';
+import { membershipDb as db, membershipTransaction as transaction, requireMembershipDatabase } from './membershipDb.js';
 
 // These routes are mounted AFTER the signed HTTP-only admin session middleware.
 // There are no public reads/writes, client Firebase credentials or browser-side admin secrets.
 let initializing: Promise<void> | null = null;
 async function ensureOps() {
+  requireMembershipDatabase();
   if (!initializing) initializing = (async () => {
     await db.query("CREATE TABLE IF NOT EXISTS membership_applications (id uuid PRIMARY KEY, full_name varchar(120) NOT NULL, contact_method varchar(12) NOT NULL, contact_value varchar(160) NOT NULL, rules_accepted_at timestamptz NOT NULL, is_adult boolean NOT NULL, status varchar(24) NOT NULL DEFAULT 'pending', created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), reviewed_at timestamptz, review_note varchar(600))");
     await db.query("CREATE TABLE IF NOT EXISTS membership_members (id uuid PRIMARY KEY, application_id uuid UNIQUE REFERENCES membership_applications(id), member_number varchar(32) NOT NULL UNIQUE, full_name varchar(120) NOT NULL, contact_method varchar(12) NOT NULL, contact_value varchar(160) NOT NULL, status varchar(24) NOT NULL DEFAULT 'active' CHECK (status IN ('active','suspended','revoked')), approved_at timestamptz NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())");
