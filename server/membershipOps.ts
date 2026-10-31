@@ -14,7 +14,10 @@ async function ensureOps() {
     await db.query("CREATE TABLE IF NOT EXISTS membership_incident_logs (id uuid PRIMARY KEY, category varchar(60) NOT NULL, description varchar(3000) NOT NULL, occurred_at timestamptz NOT NULL DEFAULT now(), recorded_at timestamptz NOT NULL DEFAULT now())");
     await db.query("CREATE TABLE IF NOT EXISTS membership_audit_events (id uuid PRIMARY KEY, action varchar(60) NOT NULL, subject_id varchar(64), details varchar(500) NOT NULL DEFAULT '', occurred_at timestamptz NOT NULL DEFAULT now())");
     await db.query("CREATE TABLE IF NOT EXISTS membership_pass_credentials (id uuid PRIMARY KEY, member_id uuid NOT NULL UNIQUE REFERENCES membership_members(id), token_hash varchar(64) NOT NULL UNIQUE, issued_at timestamptz NOT NULL DEFAULT now(), expires_at timestamptz NOT NULL, revoked_at timestamptz, last_verified_at timestamptz)");
-    for (const table of ['membership_applications','membership_members','membership_attendance','membership_incident_logs','membership_audit_events','membership_pass_credentials']) {
+    await db.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS hospitality_role varchar(160)');
+    await db.query('ALTER TABLE public.membership_attendance ADD COLUMN IF NOT EXISTS smoking_started_at timestamptz');
+    await db.query("CREATE TABLE IF NOT EXISTS membership_capacity_log (id uuid PRIMARY KEY, hour_start timestamptz NOT NULL, recorded_at timestamptz NOT NULL DEFAULT now(), customers_inside integer NOT NULL CHECK(customers_inside BETWEEN 0 AND 80), member_count integer NOT NULL, guest_count integer NOT NULL, notes varchar(500) NOT NULL DEFAULT '', UNIQUE(hour_start))");
+    for (const table of ['membership_applications','membership_members','membership_attendance','membership_incident_logs','membership_audit_events','membership_pass_credentials','membership_capacity_log']) {
       await db.query('ALTER TABLE public.' + table + ' ENABLE ROW LEVEL SECURITY');
       await db.query('REVOKE ALL ON TABLE public.' + table + ' FROM anon, authenticated');
     }
@@ -45,7 +48,14 @@ function normalizePassToken(value:unknown):string|null{
 }
 
 const MAX_CUSTOMERS=80; // Operational ceiling from existing venue setup; verify against current licence.
-const MAX_GUESTS_PER_MEMBER=2; // Conservative current policy; verify against current licence.
+const MAX_GUESTS_PER_MEMBER=2;
+// Hard stop for NEW admission after 01:30 local time. Smoking return uses a separate logged transition.
+function lateAdmissionClosed():boolean{
+ const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+ const h=Number(parts.find(p=>p.type==='hour')?.value||0),m=Number(parts.find(p=>p.type==='minute')?.value||0);
+ return (h===1&&m>=30)||(h>=2&&h<6);
+}
+ // Conservative current policy; verify against current licence.
 async function audit(client: PoolClient, action:string, id:string, details='') {
   await client.query('INSERT INTO membership_audit_events(id,action,subject_id,details) VALUES ($1,$2,$3,$4)',[randomUUID(),action,id,details]);
 }
@@ -56,7 +66,7 @@ export function installMemberOperations(app:Express) {
       const [apps,members,visits,incidents]=await Promise.all([
         db.query("SELECT status,count(*)::int AS count FROM membership_applications GROUP BY status"),
         db.query("SELECT status,count(*)::int AS count FROM membership_members GROUP BY status"),
-        db.query("SELECT kind,count(*)::int AS count FROM membership_attendance WHERE checked_out IS NULL GROUP BY kind"),
+        db.query("SELECT kind,count(*)::int AS count FROM membership_attendance WHERE checked_out IS NULL AND smoking_started_at IS NULL GROUP BY kind"),
         db.query("SELECT count(*)::int AS count FROM membership_incident_logs WHERE occurred_at::date = (now() AT TIME ZONE 'Europe/London')::date")
       ]);
       const byStatus=(rows:Array<{status:string,count:number}>,name:string)=>rows.find(x=>x.status===name)?.count||0;
@@ -83,7 +93,7 @@ export function installMemberOperations(app:Express) {
   });
   app.post('/api/membership/members/approve',async(req,res)=>{
     const applicationId=clean(req.body?.applicationId,64);
-    if(!idValid(applicationId)||req.body?.confirmAge!==true||req.body?.confirmEligibility!==true||req.body?.confirmLicence!==true)
+    if(!idValid(applicationId)||req.body?.confirmAge!==true||req.body?.confirmEligibility!==true||req.body?.confirmHospitality!==true||req.body?.confirmLicence!==true)
       return res.status(400).json({success:false,error:'Confirm age/identity, eligibility and the applicable licence conditions before approval.'});
     try{
       await ensureOps();
@@ -93,6 +103,7 @@ export function installMemberOperations(app:Express) {
         if(!a)return {error:'Application not found.',status:404};
         if(a.status==='declined')return {error:'Declined application cannot be activated.',status:409};
         if(!a.is_adult||!a.rules_accepted_at)return {error:'Required application declarations are missing.',status:409};
+        if(!a.hospitality_role||String(a.hospitality_role).trim().length<3)return {error:'Applicant hospitality occupation or employer must be recorded and verified before approval.',status:409};
         const ageHours=(Date.now()-new Date(a.created_at).getTime())/3600000;
         if(ageHours<48)return {error:'The current membership policy requires at least 48 hours after application before activation.',status:409};
         const prior=await client.query('SELECT id FROM membership_members WHERE application_id=$1',[applicationId]);
@@ -216,14 +227,15 @@ export function installMemberOperations(app:Express) {
     try{
       await ensureOps();
       const rows=await db.query(
-        "SELECT v.id,v.member_id,v.kind,v.guest_name,v.checked_in,v.checked_out,m.member_number,m.full_name AS member_name "+
+        "SELECT v.id,v.member_id,v.kind,v.guest_name,v.checked_in,v.checked_out,v.smoking_started_at,m.member_number,m.full_name AS member_name "+
         "FROM membership_attendance v JOIN membership_members m ON m.id=v.member_id "+
-        "ORDER BY v.checked_in DESC LIMIT 250"
+        "ORDER BY v.checked_in DESC LIMIT 2000"
       );
       return res.json({success:true,attendance:rows.rows});
     }catch(e){return respondErr(res,e);}
   });
   app.post('/api/membership/attendance/check-in',async(req,res)=>{
+    if(lateAdmissionClosed())return res.status(409).json({success:false,error:'No new entry or re-entry after 01:30. Only logged temporary smoking returns can re-enter.'});
     const memberId=clean(req.body?.memberId,64),kind=clean(req.body?.kind,15);
     const guestName=clean(req.body?.guestName,120);
     if(!idValid(memberId)||!['member','guest'].includes(kind)||(kind==='guest'&&guestName.length<2))
@@ -234,7 +246,7 @@ export function installMemberOperations(app:Express) {
         await client.query('SELECT pg_advisory_xact_lock(230042)');
         const m=(await client.query('SELECT id,status,member_number FROM membership_members WHERE id=$1',[memberId])).rows[0];
         if(!m||m.status!=='active')return {error:'Member is not active. Check approval and ID.',status:409};
-        const occupancy=Number((await client.query("SELECT count(*)::int AS n FROM membership_attendance WHERE checked_out IS NULL")).rows[0].n);
+        const occupancy=Number((await client.query("SELECT count(*)::int AS n FROM membership_attendance WHERE checked_out IS NULL AND smoking_started_at IS NULL")).rows[0].n);
         if(occupancy>=MAX_CUSTOMERS)return {error:'Working occupancy ceiling reached. Reconcile total venue count before admitting anyone.',status:409};
         const active=(await client.query("SELECT kind,count(*)::int AS n FROM membership_attendance WHERE member_id=$1 AND checked_out IS NULL GROUP BY kind",[memberId])).rows;
         const hasMember=active.some(x=>x.kind==='member'&&x.n>0);
