@@ -34,7 +34,7 @@
 <div class="notice"><strong>Live record scope:</strong> These totals count only entries recorded in this membership system. Restaurant customers and any earlier Firebase records are not automatically included. Reconcile physical occupancy at the door and verify licence conditions before admitting guests.</div>
 <div class="panel"><div class="contenthead"><h2>Recent activity</h2><button type="button" class="btn sm" data-jump="applications">Review applications</button></div><div id="activity"></div></div>
 </section>
-<section id="view-applications" class="section hidden"><div class="contenthead"><div><h2>Applications</h2><p class="sub">Review applicants, decline requests or approve eligible applications after the waiting policy.</p></div><button class="btn sm" data-reload="applications">Refresh</button></div><div id="applications"></div></section>
+<section id="view-applications" class="section hidden"><div class="contenthead"><div><h2>Applications</h2><p class="sub">Licence 37(a): applicants must work in hospitality when applying. Wait at least 48 hours before activation.</p></div><button class="btn sm" data-reload="applications">Refresh</button></div><div id="applications"></div></section>
 <section id="view-members" class="section hidden"><div class="contenthead"><div><h2>Members</h2><p class="sub">Approved records from this system. Member numbers are references, not QR credentials.</p></div><input class="input" id="member-search" style="max-width:260px" placeholder="Search name or member number" aria-label="Search members"></div><div id="members"></div></section>
 <section id="view-door" class="section hidden">
 <div class="contenthead"><div><h2>Door &amp; arrivals</h2><p class="sub">Verify identity, then record arrival. No unverified QR entry is accepted.</p></div><button class="btn sm" data-reload="door">Refresh arrivals</button></div>
@@ -69,6 +69,7 @@
 <div class="dialog" id="approval-modal" role="dialog" aria-modal="true" aria-labelledby="approval-title" aria-hidden="true"><div class="dialogbox"><div class="smallcaps">VERIFY BEFORE ACTIVATION</div><h2 id="approval-title">Approve membership</h2><p class="sub" id="approval-name"></p><div class="notice">Membership can be activated only after at least 48 hours under the current operating policy. Do not approve before confirming the premises licence and applicant eligibility.</div>
 <label class="approvalcheck"><input type="checkbox" id="verify-age"><span>I have checked government-issued ID and verified this applicant is 18 or older.</span></label>
 <label class="approvalcheck"><input type="checkbox" id="verify-eligibility"><span>I have reviewed eligibility under the current AMICA membership rules.</span></label>
+<label class="approvalcheck"><input type="checkbox" id="verify-hospitality"><span>I have verified the applicant was working in the hospitality industry when they applied, in accordance with licence condition 37(a).</span></label>
 <label class="approvalcheck"><input type="checkbox" id="verify-licence"><span>I have checked the applicable licence conditions, waiting period and any required manager approvals.</span></label>
 <p class="message error" id="approval-message"></p><div class="actions"><button class="btn primary" id="confirm-approval" type="button">Confirm approval</button><button class="btn" id="cancel-approval" type="button">Cancel</button></div></div></div>
 <div class="dialog" id="pass-link-modal" role="dialog" aria-modal="true" aria-labelledby="pass-link-title" aria-hidden="true">
@@ -138,10 +139,16 @@ function renderApplications(){
  const cards=el('div','cards');
  for(const a of list){
    const c=el('div','card');c.append(cardHeader(a.full_name,a.status));
-   addMeta(c,[['Contact',a.contact_value+' ('+a.contact_method+')'],['Applied',date(a.created_at)],['Reviewed',date(a.reviewed_at)]]);
+   addMeta(c,[['Contact',a.contact_value+' ('+a.contact_method+')'],['Hospitality job/employer',a.hospitality_role||'NOT RECORDED: update before approval'],['Applied',date(a.created_at)],['Reviewed',date(a.reviewed_at)]]);
    if(a.review_note)c.append(kv('Review note',a.review_note));
    const row=el('div','actions');
    if(['pending','reviewed'].includes(a.status)){
+     row.append(action('Edit hospitality role',async()=>{
+       const value=prompt('Hospitality role / employer for '+a.full_name+' (verify evidence before approval):',a.hospitality_role||'');
+       if(value===null)return;
+       const role=value.trim();if(role.length<3){msg('Enter the applicant occupation or employer.',true);return}
+       await api('applications/'+encodeURIComponent(a.id)+'/hospitality','POST',{hospitalityRole:role});await refresh('applications');
+     }));
      row.append(action('Approve membership',()=>openApproval(a),'btn sm primary'));
      row.append(action('Mark reviewed',()=>changeApplication(a.id,'reviewed')));
      row.append(action('Decline',()=>changeApplication(a.id,'declined'),'btn sm danger'));
@@ -156,7 +163,7 @@ async function changeApplication(id,status){
  await api('applications/'+encodeURIComponent(id)+'/review','POST',{status,note:''});await refresh('applications');
 }
 function openApproval(a){pendingApproval=a;$('approval-name').textContent=a.full_name+' · Applied '+date(a.created_at);
- for(const id of ['verify-age','verify-eligibility','verify-licence'])$(id).checked=false;
+ for(const id of ['verify-age','verify-eligibility','verify-hospitality','verify-licence'])$(id).checked=false;
  $('approval-message').textContent='';$('approval-modal').classList.add('open');$('approval-modal').setAttribute('aria-hidden','false');$('verify-age').focus();
 }
 function closeApproval(){pendingApproval=null;$('approval-modal').classList.remove('open');$('approval-modal').setAttribute('aria-hidden','true')}
@@ -315,10 +322,10 @@ $('incident-form').addEventListener('submit',async e=>{
 $('confirm-approval').addEventListener('click',async()=>{
  if(!pendingApproval)return;
  const a=pendingApproval;
- const confirmAge=$('verify-age').checked,confirmEligibility=$('verify-eligibility').checked,confirmLicence=$('verify-licence').checked;
- if(!confirmAge||!confirmEligibility||!confirmLicence){$('approval-message').textContent='Complete all checks before approval.';return}
+ const confirmAge=$('verify-age').checked,confirmEligibility=$('verify-eligibility').checked,confirmHospitality=$('verify-hospitality').checked,confirmLicence=$('verify-licence').checked;
+ if(!confirmAge||!confirmEligibility||!confirmHospitality||!confirmLicence){$('approval-message').textContent='Complete all checks before approval.';return}
  $('confirm-approval').disabled=true;
- try{const j=await api('members/approve','POST',{applicationId:a.id,confirmAge,confirmEligibility,confirmLicence});
+ try{const j=await api('members/approve','POST',{applicationId:a.id,confirmAge,confirmEligibility,confirmHospitality,confirmLicence});
  closeApproval();await refresh('all');nav('members');msg('Member '+j.member.member_number+' approved and added to the live member register.')}
  catch(e){$('approval-message').textContent=e.message}finally{$('confirm-approval').disabled=false}
 });
