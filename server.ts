@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto';
 import express from 'express';
+import { installMemberOperations } from './server/membershipOps.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {
@@ -78,6 +79,9 @@ async function configureServer() {
     next();
   });
 
+
+  // All membership operations inherit the server-side admin auth above.
+  installMemberOperations(app);
 
   // Membership review is intentionally separate from booking records.
   // This route is behind the existing signed, httpOnly admin session middleware above.
