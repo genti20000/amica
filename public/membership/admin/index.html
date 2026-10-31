@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="same-origin"><title>Member Applications · AMICA SOHO Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0e0a0d;color:#f8f1e8;font-family:Inter,Arial,sans-serif}header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:25px 5%;border-bottom:1px solid #b7966544;background:#1c0c13}h1,h2{font-family:Georgia,serif;font-weight:400}h1{font-size:clamp(30px,5vw,48px);margin:15px 0}.subtitle{color:#d0bcae;font-size:13px;line-height:1.7}a{color:#d9b87e;text-decoration:none}.brand{font:400 24px Georgia,serif;letter-spacing:.16em}main{max-width:1100px;margin:0 auto;padding:40px 18px 70px}.eyebrow{color:#d9b87e;font-size:11px;letter-spacing:.2em;text-transform:uppercase}input,button,select,textarea{font:inherit}button{border:0;padding:12px 17px;cursor:pointer;font-weight:700}button:disabled{opacity:.5;cursor:wait}.primary{background:#703143;color:#fff}.secondary{background:#30212a;color:#f3ded4;border:1px solid #936b69}.panel{border:1px solid #75545a;background:#1d1217;padding:25px;margin:30px 0;border-radius:6px}.login{max-width:520px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.login input{min-height:44px;padding:10px;border:1px solid #a58a7b;background:#fff;color:#231722;flex:1;min-width:200px}.message{font-size:13px;line-height:1.7;color:#e7cfba;min-height:18px}.hidden{display:none!important}.cards{display:grid;gap:12px;margin-top:25px}.card{padding:18px 22px;border:1px solid #644654;background:#20151c;border-radius:5px}.cardhead{display:flex;justify-content:space-between;gap:10px;align-items:start;flex-wrap:wrap}.name{font:400 22px Georgia,serif}.meta{font-size:13px;color:#cfb9af;margin-top:8px;line-height:1.8}.status{display:inline-flex;padding:6px 10px;border:1px solid #baa28366;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#e2c49f}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.actions button{font-size:12px;padding:10px 14px}.note{background:#140e12;color:#f9f0e7;border:1px solid #7a5963;min-height:39px;padding:8px;width:100%;margin-top:12px;resize:vertical}.safety{border-left:3px solid #c5a372;background:#2a1d1f;padding:15px 17px;font-size:12px;line-height:1.7;color:#decabb;margin:24px 0}.count{font-size:13px;color:#d5bda5}@media(max-width:600px){header{padding:17px}main{padding:24px 14px}.panel{padding:17px}.card{padding:16px}.name{font-size:19px}}
+</style></head><body>
+<header><div class="brand">AMICA SOHO</div><a href="/membership">PUBLIC APPLICATION ↗</a></header>
+<main><div class="eyebrow">RESTRICTED MANAGEMENT · MEMBERSHIP</div><h1>Membership applications</h1>
+<p class="subtitle">Manage new applications separately from table bookings. This review register does <strong>not</strong> issue a digital pass or automatically activate membership.</p>
+<section class="panel login" id="login"><h2>Authorised staff sign-in</h2><p class="subtitle">Use the existing AMICA bookings administration password. Your session is stored in a secure HTTP-only cookie.</p><form id="loginForm" class="row"><input id="password" type="password" autocomplete="current-password" aria-label="Admin password" placeholder="Admin password" required><button class="primary" type="submit">SIGN IN</button></form><p id="loginMessage" class="message"></p></section>
+<section class="hidden" id="dashboard">
+<div class="row" style="justify-content:space-between"><span class="count" id="count">Applications</span><div class="row"><button class="secondary" type="button" id="reload">Refresh</button><button class="secondary" type="button" id="logout">Sign out</button></div></div>
+<div class="safety"><strong>Staff notice:</strong> Marking a form reviewed is not an admission decision. Confirm eligibility, the current licence conditions and any required waiting period before issuing any membership. Door passes remain in the restricted legacy tool until secured and integrated.</div>
+<p id="feedback" class="message" aria-live="polite"></p><div class="cards" id="cards"></div>
+</section></main>
+<script>
+const login=document.getElementById('login'),dashboard=document.getElementById('dashboard'),cards=document.getElementById('cards');
+const feedback=document.getElementById('feedback');
+function el(tag,css,text){const e=document.createElement(tag);if(css)e.className=css;if(text!==undefined)e.textContent=String(text);return e}
+function showError(txt){feedback.textContent=txt}
+async function load(){
+ const r=await fetch('/api/membership/applications',{credentials:'same-origin',headers:{Accept:'application/json'}});
+ if(r.status===401){login.classList.remove('hidden');dashboard.classList.add('hidden');return}
+ const data=await r.json().catch(()=>({}));
+ if(!r.ok||!data.success)throw Error(data.error||'Unable to load applications.');
+ login.classList.add('hidden');dashboard.classList.remove('hidden');cards.replaceChildren();
+ document.getElementById('count').textContent=data.applications.length+' most recent applications';
+ if(!data.applications.length){cards.append(el('p','subtitle','No membership applications received yet.'));return}
+ for(const item of data.applications){
+ const card=el('article','card'),top=el('div','cardhead');
+ top.append(el('div','name',item.full_name),el('span','status',item.status));
+ card.append(top,el('div','meta',item.contact_method==='email'?'Email: '+item.contact_value:'Mobile: '+item.contact_value));
+ card.append(el('div','meta','Received: '+new Date(item.created_at).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'})));
+ if(item.reviewed_at)card.append(el('div','meta','Reviewed: '+new Date(item.reviewed_at).toLocaleString('en-GB')));
+ const note=el('textarea','note');note.maxLength=600;note.placeholder='Internal review note (optional)';note.value=item.review_note||'';card.append(note);
+ const actions=el('div','actions');
+ for(const [text,status] of [['Mark reviewed','reviewed'],['Decline','declined'],['Reset pending','pending']]){
+ const button=el('button',status==='reviewed'?'primary':'secondary',text);
+ button.type='button';button.disabled=item.status===status;
+ button.addEventListener('click',async()=>{
+  button.disabled=true;showError('');
+  try{
+   const r=await fetch('/api/membership/applications/'+encodeURIComponent(item.id)+'/review',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({status,note:note.value})});
+   const j=await r.json().catch(()=>({}));if(!r.ok||!j.success)throw Error(j.error||'Could not update status.');
+   await load();
+  }catch(e){showError(e.message||'Could not save review.');button.disabled=false}
+ });
+ actions.append(button);
+ }
+ card.append(actions);cards.append(card);
+ }
+}
+document.getElementById('loginForm').addEventListener('submit',async(e)=>{
+ e.preventDefault();const password=document.getElementById('password').value;
+ const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({password})});
+ document.getElementById('password').value='';
+ const j=await r.json().catch(()=>({}));if(!r.ok||!j.success){document.getElementById('loginMessage').textContent=j.error||'Could not sign in.';return}
+ try{await load()}catch(e){document.getElementById('loginMessage').textContent=e.message}
+});
+document.getElementById('reload').addEventListener('click',()=>load().catch(e=>showError(e.message)));
+document.getElementById('logout').addEventListener('click',async()=>{await fetch('/api/admin/logout',{method:'POST',credentials:'same-origin'}).catch(()=>{});location.reload()});
+load().catch(e=>{if(e.message!=='Unauthorized')showError(e.message)});
+</script></body></html>
