@@ -25,7 +25,10 @@
   <button type="button" data-tab="members">Members</button>
   <button type="button" data-tab="door">Door &amp; Arrivals</button>
   <button type="button" data-tab="ledger">Guest Register</button>
+  <button type="button" data-tab="proprietor">Proprietor Guests</button>
   <button type="button" data-tab="incidents">Incidents</button>
+  <button type="button" data-tab="rules">Club Rules</button>
+  <button type="button" data-tab="audit">Audit Log</button>
   <button type="button" data-tab="legacy">Legacy Tools</button>
 </nav>
 <p class="message" id="status-message" role="status" aria-live="polite"></p>
@@ -61,6 +64,22 @@
 </section>
 <section id="view-ledger" class="section hidden"><div class="contenthead"><div><h2>Guest &amp; attendance register</h2><p class="sub">Condition 37(e): a legible 31-day record must be available at reception.</p></div><div class="row"><a class="btn primary" href="/api/membership/attendance/export-31-days">Download 31-day CSV</a><button class="btn sm" data-reload="ledger">Refresh</button></div></div><div class="panel"><div class="tablewrap"><table class="table"><thead><tr><th>Person</th><th>Host</th><th>Entry</th><th>Exit</th><th>Type</th></tr></thead><tbody id="ledger"></tbody></table></div></div></section>
 <section id="view-incidents" class="section hidden"><div class="contenthead"><div><h2>Incident register</h2><p class="sub">Licence condition 9: record relevant incidents within 24 hours and make the log available to authorised officers.</p></div><button class="btn sm" data-reload="incidents">Refresh</button></div><div class="panel"><form id="incident-form" class="formgrid"><div class="field"><label for="incident-category">Category</label><select id="incident-category" class="select"><option>Crime reported</option><option>Ejection</option><option>Crime or disorder complaint</option><option>Disorder</option><option>Drug or weapon seizure</option><option>CCTV/search/scanner fault</option><option>Alcohol sale refusal</option><option>Authority/emergency visit</option><option>Other</option></select></div><div class="field wide"><label for="incident-description">Description</label><textarea id="incident-description" class="textarea" maxlength="3000" required minlength="10" placeholder="What happened, actions taken and any relevant details. Avoid unnecessary sensitive information."></textarea></div><div class="wide"><button class="btn primary" type="submit">Save incident</button></div></form></div><div id="incidents"></div></section>
+
+<section id="view-proprietor" class="section hidden"><div class="contenthead"><div><h2>Proprietor guests</h2><p class="sub">Licensed late-night guest register. Record ID and management authorisation.</p></div><button class="btn sm" data-reload="proprietor">Refresh</button></div>
+<div class="panel"><form id="proprietor-form" class="formgrid">
+<div class="field"><label for="proprietor-name">Guest full name</label><input class="input" id="proprietor-name" maxlength="120" required></div>
+<div class="field"><label for="proprietor-manager">Authorised by manager</label><input class="input" id="proprietor-manager" maxlength="120" required></div>
+<div class="field wide"><label for="proprietor-reason">Reason / association</label><input class="input" id="proprietor-reason" maxlength="500" required></div>
+<div class="field wide"><label><input id="proprietor-id" type="checkbox" required> I have verified the guest's identity and authorisation.</label></div>
+<div class="wide"><button class="btn primary" type="submit">Record arrival</button></div></form></div><div id="proprietor-guests" class="cards"></div></section>
+<section id="view-rules" class="section hidden"><div class="contenthead"><div><h2>Club rules and versions</h2><p class="sub">Draft revisions only. Council approval must be independently verified.</p></div><button class="btn sm" data-reload="rules">Refresh</button></div>
+<div class="notice">Saving a draft does not establish Westminster Council approval.</div>
+<div class="panel"><form id="rules-form" class="formgrid">
+<div class="field"><label for="rules-version">Version ID</label><input id="rules-version" class="input" maxlength="40" required></div>
+<div class="field"><label for="rules-title">Title</label><input id="rules-title" class="input" maxlength="160" required></div>
+<div class="field wide"><label for="rules-body">Full draft rules</label><textarea id="rules-body" class="textarea" minlength="20" maxlength="15000" required rows="8"></textarea></div>
+<div class="wide"><button class="btn primary" type="submit">Save draft rules</button></div></form></div><div id="rules-list" class="cards"></div></section>
+<section id="view-audit" class="section hidden"><div class="contenthead"><div><h2>Membership audit log</h2></div><button class="btn sm" data-reload="audit">Refresh</button></div><div id="full-audit" class="cards"></div></section>
 <section id="view-legacy" class="section hidden"><div class="contenthead"><h2>Legacy operations dashboard</h2></div><div class="notice"><strong>Restricted archive/tool:</strong> The original Firebase-based dashboard remains behind Vercel sign-in but its underlying Firebase rules and client-generated QR passes are not trusted for live admission. Do not enter new personal data or issue live passes there. Historical data has not yet been migrated or reconciled.</div><div class="toolcards">
 <a class="toolcard" href="https://mem-eight-lemon.vercel.app/door" target="_blank" rel="noopener"><strong>Original Door Dashboard</strong><span>Vercel sign-in required ↗</span></a>
 <a class="toolcard" href="https://mem-eight-lemon.vercel.app/cards" target="_blank" rel="noopener"><strong>Original Member Passes</strong><span>Legacy interface only ↗</span></a>
@@ -89,7 +108,7 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 let tab='overview',pendingApproval=null;
-let data={overview:null,applications:[],members:[],attendance:[],incidents:[],activity:[],capacity:[]};
+let data={overview:null,applications:[],members:[],attendance:[],incidents:[],activity:[],capacity:[],proprietor:[],rules:[]};
 const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=String(txt);return x};
 const date=x=>x?new Date(x).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}):'—';
 const msg=(text,error=false)=>{const x=$('status-message');x.textContent=text||'';x.className='message '+(error?'error':'good')};
@@ -115,15 +134,16 @@ function addMeta(container,items){for(const [key,value] of items)container.appen
 async function refresh(wanted){
  try{
   msg('Loading…');
-  const requests=wanted==='all'?['overview','applications','members','attendance','incidents','activity','capacity'] :
+  const requests=wanted==='all'?['overview','applications','members','attendance','incidents','activity','capacity','proprietor','rules'] :
   wanted==='door'||wanted==='ledger'?['members','attendance','overview']:
   wanted==='applications'?['applications','overview']:
   wanted==='members'?['members','overview']:
+  wanted==='audit'?['activity']:
   [wanted];
   const results=await Promise.all(requests.map(async name=>{
-    const endpoint={applications:'applications',overview:'overview',members:'members',attendance:'attendance',incidents:'incidents',activity:'activity',capacity:'capacity'}[name];
+    const endpoint={applications:'applications',overview:'overview',members:'members',attendance:'attendance',incidents:'incidents',activity:'activity',capacity:'capacity',proprietor:'proprietor-guests',rules:'rule-versions'}[name];
     const j=await api(endpoint);
-    return [name,j[name]??j];
+    return [name,name==='proprietor'?j.guests:name==='rules'?j.rules:(j[name]??j)];
   }));
   for(const [name,result] of results)data[name]=result;
   showApp();renderAll();msg('Last updated '+new Date().toLocaleTimeString('en-GB'));
@@ -361,6 +381,6 @@ $('confirm-approval').addEventListener('click',async()=>{
 $('cancel-approval').addEventListener('click',closeApproval);
 $('approval-modal').addEventListener('click',e=>{if(e.target===$('approval-modal'))closeApproval()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('approval-modal').classList.contains('open'))closeApproval()});
-refresh('all').then(()=>{const t=location.hash.slice(1);if(['overview','applications','members','door','ledger','incidents','legacy'].includes(t))nav(t)}).catch(()=>{});
+refresh('all').then(()=>{const t=location.hash.slice(1);if(['overview','applications','members','door','ledger','proprietor','incidents','rules','audit','legacy'].includes(t))nav(t)}).catch(()=>{});
 })();
 </script></body></html>
