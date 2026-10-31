@@ -44,7 +44,7 @@
   <button type="button" data-tab="incidents">Incidents</button>
   <button type="button" data-tab="rules">Club Rules</button>
   <button type="button" data-tab="audit">Audit Log</button>
-  <button type="button" data-tab="legacy">Legacy Tools</button>
+  
 </nav>
 <p class="message" id="status-message" role="status" aria-live="polite"></p>
 <section id="view-overview" class="section">
@@ -96,14 +96,7 @@
 <div class="field wide"><label for="rules-body">Full draft rules</label><textarea id="rules-body" class="textarea" minlength="20" maxlength="15000" required rows="8"></textarea></div>
 <div class="wide"><button class="btn primary" type="submit">Save draft rules</button></div></form></div><div id="rules-list" class="cards"></div></section>
 <section id="view-audit" class="section hidden"><div class="contenthead"><div><h2>Membership audit log</h2></div><button class="btn sm" data-reload="audit">Refresh</button></div><div id="full-audit" class="cards"></div></section>
-<section id="view-legacy" class="section hidden"><div class="contenthead"><h2>Legacy operations dashboard</h2></div><div class="notice"><strong>Restricted archive/tool:</strong> The original Firebase-based dashboard remains behind Vercel sign-in but its underlying Firebase rules and client-generated QR passes are not trusted for live admission. Do not enter new personal data or issue live passes there. Historical data has not yet been migrated or reconciled.</div><div class="toolcards">
-<a class="toolcard" href="https://mem-eight-lemon.vercel.app/door" target="_blank" rel="noopener"><strong>Original Door Dashboard</strong><span>Vercel sign-in required ↗</span></a>
-<a class="toolcard" href="https://mem-eight-lemon.vercel.app/cards" target="_blank" rel="noopener"><strong>Original Member Passes</strong><span>Legacy interface only ↗</span></a>
-<a class="toolcard" href="https://mem-eight-lemon.vercel.app/ledger" target="_blank" rel="noopener"><strong>Original Guest Ledger</strong><span>Legacy interface only ↗</span></a>
-<a class="toolcard" href="https://mem-eight-lemon.vercel.app/occupancy" target="_blank" rel="noopener"><strong>Original Occupancy</strong><span>Legacy interface only ↗</span></a>
-<a class="toolcard" href="https://mem-eight-lemon.vercel.app/incidents" target="_blank" rel="noopener"><strong>Original Incidents</strong><span>Legacy interface only ↗</span></a>
-<a class="toolcard" href="https://mem-eight-lemon.vercel.app/admin" target="_blank" rel="noopener"><strong>Original Membership Admin</strong><span>Legacy interface only ↗</span></a>
-</div></section>
+
 </div>
 <footer class="footer">AMICA SOHO · Restricted member management · 23 Frith Street, Soho · <a href="mailto:info@amicasoho.com">info@amicasoho.com</a></footer>
 </main>
@@ -524,6 +517,6 @@ $('confirm-approval').addEventListener('click',async()=>{
 $('cancel-approval').addEventListener('click',closeApproval);
 $('approval-modal').addEventListener('click',e=>{if(e.target===$('approval-modal'))closeApproval()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('approval-modal').classList.contains('open'))closeApproval()});
-refresh('all').then(()=>{const t=location.hash.slice(1);if(['overview','applications','members','door','ledger','proprietor','incidents','rules','audit','legacy'].includes(t))nav(t)}).catch(()=>{});
+refresh('all').then(()=>{const t=location.hash.slice(1);if(['overview','applications','members','door','ledger','proprietor','incidents','rules','audit'].includes(t))nav(t)}).catch(()=>{});
 })();
 </script></body></html>
