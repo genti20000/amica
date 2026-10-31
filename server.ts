@@ -85,19 +85,35 @@ async function configureServer() {
 
   // Membership review is intentionally separate from booking records.
   // This route is behind the existing signed, httpOnly admin session middleware above.
-  const initMemberApplications = () => db.query(
+  const initMemberApplications = async () => {
+    await db.query(
     "CREATE TABLE IF NOT EXISTS membership_applications (" +
     "id uuid PRIMARY KEY, full_name varchar(120) NOT NULL, contact_method varchar(12) NOT NULL," +
     " contact_value varchar(160) NOT NULL, rules_accepted_at timestamptz NOT NULL," +
     " is_adult boolean NOT NULL, status varchar(24) NOT NULL DEFAULT 'pending'," +
     " created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()," +
     " reviewed_at timestamptz, review_note varchar(600))"
-  );
+    );
+    await db.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS hospitality_role varchar(160)');
+    await db.query('ALTER TABLE public.membership_applications ENABLE ROW LEVEL SECURITY');
+    await db.query('REVOKE ALL ON TABLE public.membership_applications FROM anon, authenticated');
+  };
+  // Licence 19/00938/LIPDPS condition 37(a): all members must work in hospitality on application.
+  app.post('/api/membership/applications/:id/hospitality', async (req,res) => {
+    const id=String(req.params.id||''),role=typeof req.body?.hospitalityRole==='string'?req.body.hospitalityRole.trim().slice(0,160):'';
+    if(!/^[a-f0-9-]{36}$/i.test(id)||role.length<3)
+      return res.status(400).json({success:false,error:'Provide the applicant hospitality role or employer.'});
+    try{
+      await db.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS hospitality_role varchar(160)');
+      const out=await db.query("UPDATE membership_applications SET hospitality_role=$1,updated_at=now() WHERE id=$2 AND status IN ('pending','reviewed') RETURNING id,hospitality_role",[role,id]);
+      return out.rows.length?res.json({success:true,application:out.rows[0]}):res.status(409).json({success:false,error:'Application already finalised or not found.'});
+    }catch(e){console.error('Hospitality verification update failed:',e instanceof Error?e.message:'Unknown');return res.status(503).json({success:false,error:'Unable to update application.'});}
+  });
   app.get('/api/membership/applications', async (_req, res) => {
     try {
       await initMemberApplications();
       const rows = await db.query(
-        "SELECT id,full_name,contact_method,contact_value,is_adult,rules_accepted_at,status,created_at,reviewed_at,review_note " +
+        "SELECT id,full_name,contact_method,contact_value,hospitality_role,is_adult,rules_accepted_at,status,created_at,reviewed_at,review_note " +
         "FROM membership_applications ORDER BY created_at DESC LIMIT 200"
       );
       return res.json({ success:true, applications:rows.rows });
