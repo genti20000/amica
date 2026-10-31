@@ -8,6 +8,10 @@ CREATE TABLE IF NOT EXISTS public.membership_applications (
  contact_method varchar(12) NOT NULL CHECK(contact_method IN ('email','phone')),
  contact_value varchar(160) NOT NULL,
  hospitality_role varchar(160),
+ verified_original_applied_at timestamptz,
+ original_evidence_reference varchar(300),
+ original_verification_reason varchar(600),
+ original_verified_at timestamptz,
  rules_accepted_at timestamptz NOT NULL,
  is_adult boolean NOT NULL,
  status varchar(24) NOT NULL DEFAULT 'pending'
