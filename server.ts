@@ -78,6 +78,50 @@ async function configureServer() {
     next();
   });
 
+
+  // Membership review is intentionally separate from booking records.
+  // This route is behind the existing signed, httpOnly admin session middleware above.
+  const initMemberApplications = () => db.query(
+    "CREATE TABLE IF NOT EXISTS membership_applications (" +
+    "id uuid PRIMARY KEY, full_name varchar(120) NOT NULL, contact_method varchar(12) NOT NULL," +
+    " contact_value varchar(160) NOT NULL, rules_accepted_at timestamptz NOT NULL," +
+    " is_adult boolean NOT NULL, status varchar(24) NOT NULL DEFAULT 'pending'," +
+    " created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()," +
+    " reviewed_at timestamptz, review_note varchar(600))"
+  );
+  app.get('/api/membership/applications', async (_req, res) => {
+    try {
+      await initMemberApplications();
+      const rows = await db.query(
+        "SELECT id,full_name,contact_method,contact_value,is_adult,rules_accepted_at,status,created_at,reviewed_at,review_note " +
+        "FROM membership_applications ORDER BY created_at DESC LIMIT 200"
+      );
+      return res.json({ success:true, applications:rows.rows });
+    } catch (error) {
+      console.error('Member application list unavailable:', error instanceof Error ? error.message : 'Unknown');
+      return res.status(503).json({success:false,error:'Membership applications unavailable.'});
+    }
+  });
+  app.post('/api/membership/applications/:id/review', async (req, res) => {
+    const id=String(req.params.id||'');
+    const status=String(req.body?.status||'');
+    const reviewNote=typeof req.body?.note==='string'?req.body.note.trim().slice(0,600):'';
+    if(!/^[a-f0-9-]{36}$/i.test(id) || !['pending','reviewed','declined'].includes(status))
+      return res.status(400).json({success:false,error:'Invalid application or review status.'});
+    try {
+      const result=await db.query(
+        'UPDATE membership_applications SET status=$1,review_note=$2,reviewed_at=now(),updated_at=now() WHERE id=$3 RETURNING id,status',
+        [status,reviewNote,id]
+      );
+      if(!result.rows.length)return res.status(404).json({success:false,error:'Application not found.'});
+      return res.json({success:true,application:result.rows[0],
+        notice:'A review status is not a membership pass or admission approval.'});
+    } catch(error){
+      console.error('Membership review error:',error instanceof Error?error.message:'Unknown');
+      return res.status(503).json({success:false,error:'Review could not be saved.'});
+    }
+  });
+
   // =========================================================================
   // API ROUTES
   // =========================================================================
