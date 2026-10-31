@@ -19,6 +19,7 @@ async function ensureTable() {
   // Never expose application records to Supabase public API roles.
   await db.query('ALTER TABLE public.membership_applications ENABLE ROW LEVEL SECURITY');
   await db.query('REVOKE ALL ON TABLE public.membership_applications FROM anon, authenticated');
+  await db.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS hospitality_role varchar(160)');
 }
 
 export default async function membership(req: Request, res: Response) {
@@ -31,10 +32,11 @@ export default async function membership(req: Request, res: Response) {
     const name=clean(b.fullName,120), method=clean(b.contactMethod,12);
     const contact=clean(b.contactValue,160), rules=b.acceptRules === true, adult=b.confirmAdult === true;
     const privacy=b.acceptPrivacy === true;
+    const hospitalityRole=clean(b.hospitalityRole,160);
     const validContact=method==='email' ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact) :
       method==='phone' && /^\+?[0-9\s()-]{8,25}$/.test(contact);
     if(name.length<2 || name.length>120 || !['email','phone'].includes(method) ||
-       !validContact || !rules || !adult || !privacy) {
+       !validContact || hospitalityRole.length < 3 || !rules || !adult || !privacy) {
       return res.status(400).json({success:false,error:'Please complete the required details and confirm the declarations.'});
     }
     if(req.headers.origin) {
@@ -50,9 +52,9 @@ export default async function membership(req: Request, res: Response) {
     );
     if(existing.rows.length) return res.json({success:true,message:'Your application has been received for review.'});
     await db.query(
-      "INSERT INTO membership_applications (id,full_name,contact_method,contact_value,rules_accepted_at,is_adult,status,created_at,updated_at) " +
-      "VALUES ($1,$2,$3,$4,$5,true,'pending',$5,$5)",
-      [id,name,method,contact,now]
+      "INSERT INTO membership_applications (id,full_name,contact_method,contact_value,hospitality_role,rules_accepted_at,is_adult,status,created_at,updated_at) " +
+      "VALUES ($1,$2,$3,$4,$6,$5,true,'pending',$5,$5)",
+      [id,name,method,contact,now,hospitalityRole]
     );
     // Notification failure must not lose an already-saved application.
     if(process.env.RESEND_API_KEY) {
