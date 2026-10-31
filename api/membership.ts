@@ -1,12 +1,13 @@
 import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
-import { db } from '../server/db.js';
+import { membershipDb as db, requireMembershipDatabase } from '../server/membershipDb.js';
 
 const EMAIL = 'info@amicasoho.com';
 const clean = (v: unknown, max: number) => typeof v === 'string' ? v.trim().slice(0, max) : '';
 const escapeHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
 async function ensureTable() {
+  requireMembershipDatabase();
   await db.query(
     "CREATE TABLE IF NOT EXISTS membership_applications (" +
     "id uuid PRIMARY KEY, full_name varchar(120) NOT NULL, contact_method varchar(12) NOT NULL, " +
