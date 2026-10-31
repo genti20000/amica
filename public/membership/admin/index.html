@@ -1,82 +1,232 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="same-origin"><title>Membership Admin & Door Operations | AMICA SOHO</title>
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="same-origin"><meta name="theme-color" content="#130a0f">
+<title>Membership Operations · AMICA SOHO</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#0e0a0d;color:#f8f1e8;font-family:Inter,Arial,sans-serif}header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:25px 5%;border-bottom:1px solid #b7966544;background:#1c0c13}h1,h2{font-family:Georgia,serif;font-weight:400}h1{font-size:clamp(30px,5vw,48px);margin:15px 0}.subtitle{color:#d0bcae;font-size:13px;line-height:1.7}a{color:#d9b87e;text-decoration:none}.brand{font:400 24px Georgia,serif;letter-spacing:.16em}main{max-width:1100px;margin:0 auto;padding:40px 18px 70px}.eyebrow{color:#d9b87e;font-size:11px;letter-spacing:.2em;text-transform:uppercase}input,button,select,textarea{font:inherit}button{border:0;padding:12px 17px;cursor:pointer;font-weight:700}button:disabled{opacity:.5;cursor:wait}.primary{background:#703143;color:#fff}.secondary{background:#30212a;color:#f3ded4;border:1px solid #936b69}.panel{border:1px solid #75545a;background:#1d1217;padding:25px;margin:30px 0;border-radius:6px}.login{max-width:520px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.login input{min-height:44px;padding:10px;border:1px solid #a58a7b;background:#fff;color:#231722;flex:1;min-width:200px}.message{font-size:13px;line-height:1.7;color:#e7cfba;min-height:18px}.hidden{display:none!important}.cards{display:grid;gap:12px;margin-top:25px}.card{padding:18px 22px;border:1px solid #644654;background:#20151c;border-radius:5px}.cardhead{display:flex;justify-content:space-between;gap:10px;align-items:start;flex-wrap:wrap}.name{font:400 22px Georgia,serif}.meta{font-size:13px;color:#cfb9af;margin-top:8px;line-height:1.8}.status{display:inline-flex;padding:6px 10px;border:1px solid #baa28366;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#e2c49f}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.actions button{font-size:12px;padding:10px 14px}.note{background:#140e12;color:#f9f0e7;border:1px solid #7a5963;min-height:39px;padding:8px;width:100%;margin-top:12px;resize:vertical}.safety{border-left:3px solid #c5a372;background:#2a1d1f;padding:15px 17px;font-size:12px;line-height:1.7;color:#decabb;margin:24px 0}.count{font-size:13px;color:#d5bda5}.operations{margin:27px 0 31px}.operations h2{margin:0 0 14px;font-size:26px}.operations-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.operation{display:block;padding:17px;background:#261820;border:1px solid #87644f66;border-radius:8px;color:#f9ede1;transition:border-color .2s,background .2s}.operation:hover,.operation:focus-visible{border-color:#e0be80;background:#342029}.operation strong{display:block;color:#e1bd83;font-size:14px;margin-bottom:7px}.operation small{display:block;font-size:12px;line-height:1.5;color:#d2bfc0}.operation .open{display:block;color:#f4d398;font-size:11px;margin-top:12px}.primary-link{display:inline-flex;gap:8px;align-items:center;min-height:45px;padding:12px 17px;background:#703143;color:#fff;border-radius:5px;text-decoration:none;font-weight:700;font-size:13px}.primary-link:hover{background:#8d415b}.legacy-notice{font-size:12px;line-height:1.8;color:#dfc9c1;border-left:3px solid #bf9b65;padding:11px 15px;background:#2b1d23;margin-top:18px}.review-head{display:flex;align-items:center;flex-wrap:wrap;gap:15px;justify-content:space-between;margin-top:30px}.review-head h2{margin:0}.operations a:focus-visible{outline:2px solid #f5d698;outline-offset:3px}@media(max-width:850px){.operations-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.operations-grid{grid-template-columns:1fr}}@media(max-width:600px){header{padding:17px}main{padding:24px 14px}.panel{padding:17px}.card{padding:16px}.name{font-size:19px}}
+:root{--bg:#0e090d;--surface:#1c1218;--raised:#24171d;--wine:#6d3042;--gold:#e6c58c;--light:#f7ede3;--muted:#bba9a5;--line:#81625875;--error:#eaa7a7;--good:#b5dfba}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--light);font:14px/1.65 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}a{color:var(--gold);text-decoration:none}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}h1,h2,h3{font-family:Georgia,serif;font-weight:400}h1{font-size:clamp(32px,4vw,50px);line-height:1.12;margin:11px 0}h2{font-size:28px;margin:0}h3{font-size:20px;margin:0}.smallcaps{font-size:10px;text-transform:uppercase;letter-spacing:.17em;font-weight:700;color:var(--gold)}.sub{font-size:13px;color:var(--muted);margin:9px 0 0;line-height:1.7}
+.topbar{background:#160b12;border-bottom:1px solid var(--line)}.topinside{max-width:1280px;margin:auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:15px}.brand{font:700 19px Cinzel,Georgia,serif;color:var(--gold);letter-spacing:.18em}.toplinks{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px}.toplinks a{color:#dfc6a4}.toplinks a:hover{text-decoration:underline}.page{max-width:1280px;padding:35px 24px 90px;margin:auto}.hero{display:flex;justify-content:space-between;align-items:start;gap:15px;flex-wrap:wrap;margin-bottom:27px}.hero-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid #8e6d66;padding:10px 16px;background:#2a1d25;color:var(--light);font-weight:700;font-size:12px;letter-spacing:.02em;border-radius:6px;min-height:42px}.btn:hover{background:#49303b}.btn.primary{background:var(--wine);border-color:#aa6e6f;color:#fff}.btn.primary:hover{background:#864158}.btn.ghost{background:transparent;border-color:#715158;color:var(--gold)}.btn.danger{background:#42202a;border-color:#935c66;color:#f6c5c6}.btn.sm{padding:7px 11px;min-height:35px;font-size:11px}.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.panel{padding:25px;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:18px}.panel.login{max-width:560px;margin:32px auto;padding:34px}.panel.login h2{margin-bottom:7px}.loginrow{display:flex;gap:10px;margin-top:23px}.field{display:flex;flex-direction:column;gap:7px;min-width:0}.field label,.field>span{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.08em;text-transform:uppercase}.input,.select,.textarea{border:1px solid #826965;background:#100b10;color:#fff;padding:11px 12px;border-radius:6px;min-height:43px;width:100%}.input::placeholder,.textarea::placeholder{color:#958380}.textarea{min-height:95px;resize:vertical}.loginrow input{flex:1;min-width:50px}.hidden{display:none!important}
+.tabs{display:flex;overflow-x:auto;gap:7px;padding:0 0 13px;margin-bottom:20px;border-bottom:1px solid var(--line)}.tabs button{flex:0 0 auto;padding:10px 14px;border:1px solid #654650;color:#d0b9b9;background:#191018;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap}.tabs button.active{color:#1e1113;background:var(--gold);border-color:var(--gold)}.tabs button:hover:not(.active){background:#36202b}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.stat{background:#20151b;border:1px solid var(--line);padding:22px;border-radius:8px}.stat b{display:block;font:400 37px Georgia,serif;color:var(--gold);line-height:1.2;margin:7px 0}.stat span{font-size:11px;color:#d3bbb4;letter-spacing:.08em;text-transform:uppercase;font-weight:700}.contenthead{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:17px}.cards{display:grid;gap:12px}.card{padding:20px;border:1px solid #75515e;background:var(--raised);border-radius:8px}.cardtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}.cardname{font:400 21px Georgia,serif;color:#f8eddf}.meta{font-size:12px;color:#d0b5ac;line-height:1.8;margin-top:7px;overflow-wrap:anywhere}.row{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.row.space{justify-content:space-between}.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:15px}.chip{font-size:10px;text-transform:uppercase;letter-spacing:.12em;padding:6px 9px;border:1px solid #a58a72;color:#f1cf94;border-radius:99px}.chip.active,.chip.approved{color:var(--good);border-color:#6f996f}.chip.suspended,.chip.declined,.chip.revoked{color:#e7abab;border-color:#a66a77}.notice{border-left:3px solid var(--gold);padding:14px 17px;background:#31202b;color:#d7c5bc;font-size:12px;line-height:1.85;margin:20px 0}.notice strong{color:#efd19a}.empty{padding:27px;color:#d2bdba;border:1px dashed #806260;text-align:center;border-radius:6px}.error{color:var(--error);font-size:13px}.good{color:var(--good);font-size:13px}.message{min-height:18px;font-size:13px;margin:9px 0}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.formgrid .wide{grid-column:1/-1}.section{padding:4px 0}.tablewrap{overflow-x:auto}.table{width:100%;border-collapse:collapse;font-size:12px}.table th{text-align:left;font-size:10px;text-transform:uppercase;color:var(--gold);letter-spacing:.12em;padding:12px;border-bottom:1px solid #684e50}.table td{padding:12px;border-bottom:1px solid #684e5066;vertical-align:middle}.table tr:hover{background:#2b1a24}.inlinebtn{border:1px solid #977977;color:#f0d8b6;background:#382630;padding:7px 12px;border-radius:5px}.toolcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.toolcard{display:block;background:#27181f;padding:18px;border:1px solid #8b6e5e;border-radius:9px}.toolcard strong{display:block;font-size:15px;color:var(--gold)}.toolcard span{display:block;color:#d5c1b6;font-size:12px;margin-top:5px}.toolcard:hover{border-color:var(--gold);background:#35202b}
+.dialog{position:fixed;inset:0;background:#000c;display:none;justify-content:center;align-items:center;padding:17px;z-index:25;backdrop-filter:blur(4px)}.dialog.open{display:flex}.dialogbox{width:100%;max-width:530px;max-height:90vh;overflow:auto;padding:26px;background:#20141b;border:1.5px solid var(--gold);border-radius:13px;box-shadow:0 20px 90px #000d}.dialogbox h2{font-size:27px}.approvalcheck{display:flex;gap:10px;align-items:start;margin:16px 0;font-size:13px;color:#e6d2cb;cursor:pointer}.approvalcheck input{width:18px;height:18px;margin-top:3px;flex:none;accent-color:#d7ad6d}.footer{font-size:11px;color:#ad9995;margin-top:50px;padding-top:20px;border-top:1px solid #674e54}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.toolcards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.page{padding:25px 14px 70px}.topinside{padding:15px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.stat{padding:14px}.stat b{font-size:28px}.toolcards{grid-template-columns:1fr}.panel{padding:18px}.panel.login{padding:24px 18px}.formgrid{grid-template-columns:1fr}.loginrow{flex-direction:column}.hero{margin-bottom:20px}.brand{font-size:16px}}
 </style></head><body>
-<header><div class="brand">AMICA SOHO</div><a href="/membership">PUBLIC APPLICATION ↗</a></header>
-<main><div class="eyebrow">RESTRICTED MANAGEMENT · MEMBERSHIP</div><h1>Membership administration</h1>
-<p class="subtitle">Access the original door and club operations dashboard, or review membership applications submitted through the new AMICA website. These systems are currently separate.</p>
-
-<section class="operations" aria-labelledby="full-operations">
-  <div class="review-head">
-    <h2 id="full-operations">Original full admin</h2>
-    <a class="primary-link" href="https://mem-eight-lemon.vercel.app/door" target="_blank" rel="noopener noreferrer">OPEN FULL DASHBOARD ↗</a>
-  </div>
-  <p class="subtitle">The original AMICA member operations application is still available with its door, member card, guest and compliance modules. Staff must sign in through Vercel to access it.</p>
-  <div class="operations-grid">
-    <a class="operation" href="https://mem-eight-lemon.vercel.app/door" target="_blank" rel="noopener noreferrer"><strong>Door Control</strong><small>Scanning, arrivals and entry register</small><span class="open">OPEN ↗</span></a>
-    <a class="operation" href="https://mem-eight-lemon.vercel.app/cards" target="_blank" rel="noopener noreferrer"><strong>Member Passes</strong><small>Existing cards and pass functions</small><span class="open">OPEN ↗</span></a>
-    <a class="operation" href="https://mem-eight-lemon.vercel.app/ledger" target="_blank" rel="noopener noreferrer"><strong>Guest Register</strong><small>Guests, arrivals and departures</small><span class="open">OPEN ↗</span></a>
-    <a class="operation" href="https://mem-eight-lemon.vercel.app/occupancy" target="_blank" rel="noopener noreferrer"><strong>Occupancy & Queue</strong><small>Venue counts, smoking and access tracking</small><span class="open">OPEN ↗</span></a>
-    <a class="operation" href="https://mem-eight-lemon.vercel.app/incidents" target="_blank" rel="noopener noreferrer"><strong>Incident Log</strong><small>Existing incident reporting module</small><span class="open">OPEN ↗</span></a>
-    <a class="operation" href="https://mem-eight-lemon.vercel.app/admin" target="_blank" rel="noopener noreferrer"><strong>Admissions & Old Admin</strong><small>Original membership management functions</small><span class="open">OPEN ↗</span></a>
-  </div>
-  <div class="legacy-notice"><strong>Important:</strong> The original operations app is protected by Vercel login and still uses a separate membership register. It is not yet integrated with applications submitted through this site. Its underlying Firebase permissions and QR authentication must be secured before relying on it for live entry decisions.</div>
+<header class="topbar"><div class="topinside"><a class="brand" href="/membership">AMICA SOHO</a><div class="toplinks"><span class="smallcaps">MEMBERSHIP OPERATIONS</span><a href="/membership">Registration ↗</a><a href="https://www.amicasoho.com/">Main website ↗</a></div></div></header>
+<main class="page">
+<div class="hero"><div><div class="smallcaps">23 FRITH STREET · MANAGEMENT</div><h1>Membership control</h1><p class="sub">One secure register for applications, approved members, arrivals, guests and incidents.</p></div><div class="hero-actions hidden" id="authenticated-actions"><button class="btn ghost" id="refresh" type="button">Refresh</button><button class="btn" id="logout" type="button">Sign out</button></div></div>
+<section class="panel login" id="login"><div class="smallcaps">STAFF AUTHORISATION</div><h2>Admin sign-in</h2><p class="sub">Sign in with the existing AMICA bookings administration password. All personal information and operational records remain behind this secure session.</p><form id="login-form"><div class="loginrow"><input class="input" id="password" type="password" required autocomplete="current-password" placeholder="Admin password" aria-label="Admin password"><button class="btn primary" type="submit">SIGN IN</button></div></form><p class="message error" id="login-message" role="status"></p></section>
+<div id="app" class="hidden">
+<nav class="tabs" id="tabs" aria-label="Member operations sections">
+  <button type="button" class="active" data-tab="overview">Overview</button>
+  <button type="button" data-tab="applications">Applications</button>
+  <button type="button" data-tab="members">Members</button>
+  <button type="button" data-tab="door">Door &amp; Arrivals</button>
+  <button type="button" data-tab="ledger">Guest Register</button>
+  <button type="button" data-tab="incidents">Incidents</button>
+  <button type="button" data-tab="legacy">Legacy Tools</button>
+</nav>
+<p class="message" id="status-message" role="status" aria-live="polite"></p>
+<section id="view-overview" class="section">
+<div class="stats" id="metrics"></div>
+<div class="notice"><strong>Live record scope:</strong> These totals count only entries recorded in this membership system. Restaurant customers and any earlier Firebase records are not automatically included. Reconcile physical occupancy at the door and verify licence conditions before admitting guests.</div>
+<div class="panel"><div class="contenthead"><h2>Recent activity</h2><button type="button" class="btn sm" data-jump="applications">Review applications</button></div><div id="activity"></div></div>
 </section>
-<div class="review-head"><h2 id="new-applications">New membership applications</h2><span class="status">SECURE REVIEW</span></div>
-<p class="subtitle">These are applications sent through <a href="/membership">members.amicasoho.com</a>. Sign in below with the AMICA booking admin password to review them.</p>
-<section class="panel login" id="login"><h2>Authorised staff sign-in</h2><p class="subtitle">Use the existing AMICA bookings administration password. Your session is stored in a secure HTTP-only cookie.</p><form id="loginForm" class="row"><input id="password" type="password" autocomplete="current-password" aria-label="Admin password" placeholder="Admin password" required><button class="primary" type="submit">SIGN IN</button></form><p id="loginMessage" class="message"></p></section>
-<section class="hidden" id="dashboard">
-<div class="row" style="justify-content:space-between"><span class="count" id="count">Applications</span><div class="row"><button class="secondary" type="button" id="reload">Refresh</button><button class="secondary" type="button" id="logout">Sign out</button></div></div>
-<div class="safety"><strong>Staff notice:</strong> Marking a form reviewed is not an admission decision. Confirm eligibility, the current licence conditions and any required waiting period before issuing any membership. Door passes remain in the restricted legacy tool until secured and integrated.</div>
-<p id="feedback" class="message" aria-live="polite"></p><div class="cards" id="cards"></div>
-</section></main>
+<section id="view-applications" class="section hidden"><div class="contenthead"><div><h2>Applications</h2><p class="sub">Review applicants, decline requests or approve eligible applications after the waiting policy.</p></div><button class="btn sm" data-reload="applications">Refresh</button></div><div id="applications"></div></section>
+<section id="view-members" class="section hidden"><div class="contenthead"><div><h2>Members</h2><p class="sub">Approved records from this system. Member numbers are references, not QR credentials.</p></div><input class="input" id="member-search" style="max-width:260px" placeholder="Search name or member number" aria-label="Search members"></div><div id="members"></div></section>
+<section id="view-door" class="section hidden">
+<div class="contenthead"><div><h2>Door &amp; arrivals</h2><p class="sub">Verify identity, then record arrival. No unverified QR entry is accepted.</p></div><button class="btn sm" data-reload="door">Refresh arrivals</button></div>
+<div class="panel"><div class="formgrid"><div class="field"><label for="arrival-member">Active member</label><select class="select" id="arrival-member"></select></div><div class="field"><label for="arrival-kind">Person arriving</label><select class="select" id="arrival-kind"><option value="member">Member</option><option value="guest">Named guest</option></select></div><div class="field hidden" id="guest-name-wrap"><label for="arrival-guest">Guest full name</label><input class="input" id="arrival-guest" type="text" maxlength="120" placeholder="Guest full name"></div><div class="field"><label>&nbsp;</label><button class="btn primary" id="check-in" type="button">Record entry</button></div></div><p class="sub">Guest check-in requires the host to be inside. The working limit is two named guests per member and 80 recorded customers; these are subject to licence verification.</p></div>
+<div class="panel"><div class="contenthead"><h3>Currently inside</h3><span class="chip" id="inside-count">0 inside</span></div><div id="inside"></div></div>
+</section>
+<section id="view-ledger" class="section hidden"><div class="contenthead"><div><h2>Guest &amp; attendance register</h2><p class="sub">Recent member and named-guest entries, including departures.</p></div><button class="btn sm" data-reload="ledger">Refresh</button></div><div class="panel"><div class="tablewrap"><table class="table"><thead><tr><th>Person</th><th>Host</th><th>Entry</th><th>Exit</th><th>Type</th></tr></thead><tbody id="ledger"></tbody></table></div></div></section>
+<section id="view-incidents" class="section hidden"><div class="contenthead"><div><h2>Incident register</h2><p class="sub">Append-only event reporting, restricted to authorised staff.</p></div><button class="btn sm" data-reload="incidents">Refresh</button></div><div class="panel"><form id="incident-form" class="formgrid"><div class="field"><label for="incident-category">Category</label><select id="incident-category" class="select"><option>Entry refusal</option><option>Conduct</option><option>Safeguarding</option><option>Medical</option><option>Other</option></select></div><div class="field wide"><label for="incident-description">Description</label><textarea id="incident-description" class="textarea" maxlength="3000" required minlength="10" placeholder="What happened, actions taken and any relevant details. Avoid unnecessary sensitive information."></textarea></div><div class="wide"><button class="btn primary" type="submit">Save incident</button></div></form></div><div id="incidents"></div></section>
+<section id="view-legacy" class="section hidden"><div class="contenthead"><h2>Legacy operations dashboard</h2></div><div class="notice"><strong>Restricted archive/tool:</strong> The original Firebase-based dashboard remains behind Vercel sign-in but its underlying Firebase rules and client-generated QR passes are not trusted for live admission. Do not enter new personal data or issue live passes there. Historical data has not yet been migrated or reconciled.</div><div class="toolcards">
+<a class="toolcard" href="https://mem-eight-lemon.vercel.app/door" target="_blank" rel="noopener"><strong>Original Door Dashboard</strong><span>Vercel sign-in required ↗</span></a>
+<a class="toolcard" href="https://mem-eight-lemon.vercel.app/cards" target="_blank" rel="noopener"><strong>Original Member Passes</strong><span>Legacy interface only ↗</span></a>
+<a class="toolcard" href="https://mem-eight-lemon.vercel.app/ledger" target="_blank" rel="noopener"><strong>Original Guest Ledger</strong><span>Legacy interface only ↗</span></a>
+<a class="toolcard" href="https://mem-eight-lemon.vercel.app/occupancy" target="_blank" rel="noopener"><strong>Original Occupancy</strong><span>Legacy interface only ↗</span></a>
+<a class="toolcard" href="https://mem-eight-lemon.vercel.app/incidents" target="_blank" rel="noopener"><strong>Original Incidents</strong><span>Legacy interface only ↗</span></a>
+<a class="toolcard" href="https://mem-eight-lemon.vercel.app/admin" target="_blank" rel="noopener"><strong>Original Membership Admin</strong><span>Legacy interface only ↗</span></a>
+</div></section>
+</div>
+<footer class="footer">AMICA SOHO · Restricted member management · 23 Frith Street, Soho · <a href="mailto:info@amicasoho.com">info@amicasoho.com</a></footer>
+</main>
+<div class="dialog" id="approval-modal" role="dialog" aria-modal="true" aria-labelledby="approval-title" aria-hidden="true"><div class="dialogbox"><div class="smallcaps">VERIFY BEFORE ACTIVATION</div><h2 id="approval-title">Approve membership</h2><p class="sub" id="approval-name"></p><div class="notice">Membership can be activated only after at least 48 hours under the current operating policy. Do not approve before confirming the premises licence and applicant eligibility.</div>
+<label class="approvalcheck"><input type="checkbox" id="verify-age"><span>I have checked government-issued ID and verified this applicant is 18 or older.</span></label>
+<label class="approvalcheck"><input type="checkbox" id="verify-eligibility"><span>I have reviewed eligibility under the current AMICA membership rules.</span></label>
+<label class="approvalcheck"><input type="checkbox" id="verify-licence"><span>I have checked the applicable licence conditions, waiting period and any required manager approvals.</span></label>
+<p class="message error" id="approval-message"></p><div class="actions"><button class="btn primary" id="confirm-approval" type="button">Confirm approval</button><button class="btn" id="cancel-approval" type="button">Cancel</button></div></div></div>
 <script>
-const login=document.getElementById('login'),dashboard=document.getElementById('dashboard'),cards=document.getElementById('cards');
-const feedback=document.getElementById('feedback');
-function el(tag,css,text){const e=document.createElement(tag);if(css)e.className=css;if(text!==undefined)e.textContent=String(text);return e}
-function showError(txt){feedback.textContent=txt}
-async function load(){
- const r=await fetch('/api/membership/applications',{credentials:'same-origin',headers:{Accept:'application/json'}});
- if(r.status===401){login.classList.remove('hidden');dashboard.classList.add('hidden');return}
- const data=await r.json().catch(()=>({}));
- if(!r.ok||!data.success)throw Error(data.error||'Unable to load applications.');
- login.classList.add('hidden');dashboard.classList.remove('hidden');cards.replaceChildren();
- document.getElementById('count').textContent=data.applications.length+' most recent applications';
- if(!data.applications.length){cards.append(el('p','subtitle','No membership applications received yet.'));return}
- for(const item of data.applications){
- const card=el('article','card'),top=el('div','cardhead');
- top.append(el('div','name',item.full_name),el('span','status',item.status));
- card.append(top,el('div','meta',item.contact_method==='email'?'Email: '+item.contact_value:'Mobile: '+item.contact_value));
- card.append(el('div','meta','Received: '+new Date(item.created_at).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'})));
- if(item.reviewed_at)card.append(el('div','meta','Reviewed: '+new Date(item.reviewed_at).toLocaleString('en-GB')));
- const note=el('textarea','note');note.maxLength=600;note.placeholder='Internal review note (optional)';note.value=item.review_note||'';card.append(note);
- const actions=el('div','actions');
- for(const [text,status] of [['Mark reviewed','reviewed'],['Decline','declined'],['Reset pending','pending']]){
- const button=el('button',status==='reviewed'?'primary':'secondary',text);
- button.type='button';button.disabled=item.status===status;
- button.addEventListener('click',async()=>{
-  button.disabled=true;showError('');
-  try{
-   const r=await fetch('/api/membership/applications/'+encodeURIComponent(item.id)+'/review',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({status,note:note.value})});
-   const j=await r.json().catch(()=>({}));if(!r.ok||!j.success)throw Error(j.error||'Could not update status.');
-   await load();
-  }catch(e){showError(e.message||'Could not save review.');button.disabled=false}
- });
- actions.append(button);
- }
- card.append(actions);cards.append(card);
- }
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+let tab='overview',pendingApproval=null;
+let data={overview:null,applications:[],members:[],attendance:[],incidents:[],activity:[]};
+const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=String(txt);return x};
+const date=x=>x?new Date(x).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}):'—';
+const msg=(text,error=false)=>{const x=$('status-message');x.textContent=text||'';x.className='message '+(error?'error':'good')};
+async function api(path,method='GET',body){
+ const r=await fetch('/api/membership/'+path,{method,credentials:'same-origin',headers:{Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+ const j=await r.json().catch(()=>({}));if(r.status===401){showLogin();throw new Error('Admin sign-in required.');}
+ if(!r.ok||!j.success)throw new Error(j.error||'Request could not be completed.');
+ return j;
 }
-document.getElementById('loginForm').addEventListener('submit',async(e)=>{
- e.preventDefault();const password=document.getElementById('password').value;
- const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({password})});
- document.getElementById('password').value='';
- const j=await r.json().catch(()=>({}));if(!r.ok||!j.success){document.getElementById('loginMessage').textContent=j.error||'Could not sign in.';return}
- try{await load()}catch(e){document.getElementById('loginMessage').textContent=e.message}
+function showLogin(){ $('login').classList.remove('hidden');$('app').classList.add('hidden');$('authenticated-actions').classList.add('hidden');}
+function showApp(){ $('login').classList.add('hidden');$('app').classList.remove('hidden');$('authenticated-actions').classList.remove('hidden');}
+const nav=(t)=>{tab=t;for(const b of document.querySelectorAll('[data-tab]'))b.classList.toggle('active',b.dataset.tab===t);
+ for(const section of document.querySelectorAll('section[id^="view-"]'))section.classList.toggle('hidden',section.id!=='view-'+t);
+ history.replaceState(null,'',location.pathname+'#'+t);
+};
+function chip(s){return el('span','chip '+String(s).toLowerCase(),s)}
+function clear(id){$(id).replaceChildren()}
+function textCell(s){return el('td','',s===null||s===undefined?'':s)}
+function kv(label,val){return el('div','meta',label+': '+val)}
+function action(label,handler,cls='btn sm'){const b=el('button',cls,label);b.type='button';b.addEventListener('click',()=>Promise.resolve(handler(b)).catch(e=>msg(e.message,true)));return b;}
+function cardHeader(name,status){const top=el('div','cardtop');top.append(el('div','cardname',name),chip(status));return top}
+function addMeta(container,items){for(const [key,value] of items)container.append(kv(key,value))}
+async function refresh(wanted){
+ try{
+  msg('Loading…');
+  const requests=wanted==='all'?['overview','applications','members','attendance','incidents','activity'] :
+  wanted==='door'||wanted==='ledger'?['members','attendance','overview']:
+  wanted==='applications'?['applications','overview']:
+  wanted==='members'?['members','overview']:
+  [wanted];
+  const results=await Promise.all(requests.map(async name=>{
+    const endpoint={applications:'applications',overview:'overview',members:'members',attendance:'attendance',incidents:'incidents',activity:'activity'}[name];
+    const j=await api(endpoint);
+    return [name,j[name]??j];
+  }));
+  for(const [name,result] of results)data[name]=result;
+  showApp();renderAll();msg('Last updated '+new Date().toLocaleTimeString('en-GB'));
+ }catch(e){msg(e.message,true);if($('app').classList.contains('hidden'))$('login-message').textContent=e.message}
+}
+function renderOverview(){
+ clear('metrics');const x=data.overview||{};
+ for(const [label,v] of [['Pending applications',x.pending??0],['Active members',x.activeMembers??0],['Members inside',x.membersInside??0],['Named guests inside',x.guestsInside??0],['Recorded occupancy',x.occupancy??0],['Working capacity',x.workingCapacity??'—'],['Suspended members',x.suspendedMembers??0],['Incidents today',x.incidentsToday??0]]){
+   const item=el('div','stat');item.append(el('span','',label),el('b','',v));$('metrics').append(item);
+ }
+ clear('activity');if(!data.activity.length){$('activity').append(el('p','sub','No recorded events yet.'));return}
+ const list=el('div','cards');
+ for(const a of data.activity.slice(0,10)){const item=el('div','card');item.append(el('div','smallcaps',a.action),kv('When',date(a.occurred_at)));if(a.details)item.append(kv('Details',a.details));list.append(item)}
+ $('activity').append(list);
+}
+function renderApplications(){
+ clear('applications');const list=data.applications||[];
+ if(!list.length){$('applications').append(el('p','empty','No membership applications recorded yet.'));return}
+ const cards=el('div','cards');
+ for(const a of list){
+   const c=el('div','card');c.append(cardHeader(a.full_name,a.status));
+   addMeta(c,[['Contact',a.contact_value+' ('+a.contact_method+')'],['Applied',date(a.created_at)],['Reviewed',date(a.reviewed_at)]]);
+   if(a.review_note)c.append(kv('Review note',a.review_note));
+   const row=el('div','actions');
+   if(['pending','reviewed'].includes(a.status)){
+     row.append(action('Approve membership',()=>openApproval(a),'btn sm primary'));
+     row.append(action('Mark reviewed',()=>changeApplication(a.id,'reviewed')));
+     row.append(action('Decline',()=>changeApplication(a.id,'declined'),'btn sm danger'));
+   }
+   if(a.status==='approved')row.append(el('span','sub','Member record created and active.'));
+   c.append(row);cards.append(c);
+ }
+ $('applications').append(cards);
+}
+async function changeApplication(id,status){
+ if(status==='declined'&&!confirm('Decline this application?'))return;
+ await api('applications/'+encodeURIComponent(id)+'/review','POST',{status,note:''});await refresh('applications');
+}
+function openApproval(a){pendingApproval=a;$('approval-name').textContent=a.full_name+' · Applied '+date(a.created_at);
+ for(const id of ['verify-age','verify-eligibility','verify-licence'])$(id).checked=false;
+ $('approval-message').textContent='';$('approval-modal').classList.add('open');$('approval-modal').setAttribute('aria-hidden','false');$('verify-age').focus();
+}
+function closeApproval(){pendingApproval=null;$('approval-modal').classList.remove('open');$('approval-modal').setAttribute('aria-hidden','true')}
+function renderMembers(){
+ clear('members');const q=$('member-search').value.trim().toLowerCase();const members=data.members.filter(m=>!q||[m.full_name,m.member_number,m.contact_value].some(s=>String(s).toLowerCase().includes(q)));
+ if(!members.length){$('members').append(el('p','empty','No approved members match this search.'));return}
+ const root=el('div','cards');
+ for(const m of members){const c=el('article','card');c.append(cardHeader(m.full_name,m.status));
+ addMeta(c,[['Member number',m.member_number],['Contact',m.contact_value],['Approved',date(m.approved_at)]]);
+ const row=el('div','actions');
+ if(m.status==='active')row.append(action('Suspend',()=>changeMemberStatus(m,'suspended'),'btn sm danger'));
+ if(m.status==='suspended')row.append(action('Reactivate',()=>changeMemberStatus(m,'active'),'btn sm primary'));
+ if(m.status!=='revoked')row.append(action('Revoke',()=>changeMemberStatus(m,'revoked'),'btn sm danger'));
+ c.append(row);root.append(c)}
+ $('members').append(root);
+}
+async function changeMemberStatus(m,status){
+ if(!confirm('Change '+m.member_number+' to '+status+'? This is recorded in the audit log.'))return;
+ await api('members/'+encodeURIComponent(m.id)+'/status','POST',{status});await refresh('members');
+}
+function renderDoor(){
+ const select=$('arrival-member'),previous=select.value;select.replaceChildren();
+ if(!data.members.some(m=>m.status==='active')){select.append(new Option('No active approved members',''));select.disabled=true}else{
+  select.disabled=false;select.append(new Option('Select a member',''));
+  for(const m of data.members.filter(m=>m.status==='active'))select.append(new Option(m.full_name+' · '+m.member_number,m.id));
+  if([...select.options].some(x=>x.value===previous))select.value=previous;
+ }
+ clear('inside');const active=data.attendance.filter(x=>!x.checked_out);
+ $('inside-count').textContent=active.length+' recorded inside';
+ if(!active.length){$('inside').append(el('p','empty','No active membership arrivals yet.'));return}
+ const stack=el('div','cards');
+ for(const a of active){const item=el('div','card');item.append(cardHeader(a.kind==='guest'?a.guest_name:a.member_name,a.kind));addMeta(item,[['Host member',a.member_name+' ('+a.member_number+')'],['Checked in',date(a.checked_in)]]);
+ item.append(action('Record exit',async()=>{if(!confirm('Record this person as exited?'))return;await api('attendance/'+encodeURIComponent(a.id)+'/check-out','POST',{});await refresh('door')},'btn sm'));
+ stack.append(item)}
+ $('inside').append(stack);
+}
+function renderLedger(){
+ clear('ledger');
+ for(const a of data.attendance){const tr=el('tr');tr.append(textCell(a.kind==='guest'?a.guest_name:a.member_name),textCell(a.member_number),textCell(date(a.checked_in)),textCell(date(a.checked_out)),textCell(a.kind));$('ledger').append(tr)}
+ if(!data.attendance.length){const tr=el('tr'),td=el('td','', 'No attendance records yet.');td.colSpan=5;tr.append(td);$('ledger').append(tr)}
+}
+function renderIncidents(){
+ clear('incidents');if(!data.incidents.length){$('incidents').append(el('p','empty','No incidents recorded yet.'));return}
+ const root=el('div','cards');
+ for(const i of data.incidents){const card=el('div','card');card.append(cardHeader(i.category,'recorded'),kv('When',date(i.occurred_at)),kv('Details',i.description));root.append(card)}
+ $('incidents').append(root);
+}
+function renderAll(){renderOverview();renderApplications();renderMembers();renderDoor();renderLedger();renderIncidents()}
+$('login-form').addEventListener('submit',async e=>{
+ e.preventDefault();$('login-message').textContent='';
+ const password=$('password').value;
+ try{
+  const r=await fetch('/api/admin/login',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
+  $('password').value='';const j=await r.json().catch(()=>({}));
+  if(!r.ok||!j.success)throw new Error(j.error||'Unable to sign in.');
+  await refresh('all');
+ }catch(e){$('login-message').textContent=e.message;showLogin()}
 });
-document.getElementById('reload').addEventListener('click',()=>load().catch(e=>showError(e.message)));
-document.getElementById('logout').addEventListener('click',async()=>{await fetch('/api/admin/logout',{method:'POST',credentials:'same-origin'}).catch(()=>{});location.reload()});
-load().catch(e=>{if(e.message!=='Unauthorized')showError(e.message)});
+$('logout').addEventListener('click',async()=>{await fetch('/api/admin/logout',{method:'POST',credentials:'same-origin'}).catch(()=>{});showLogin();msg('Signed out.');});
+$('refresh').addEventListener('click',()=>refresh('all'));
+for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click',()=>nav(b.dataset.tab));
+for(const b of document.querySelectorAll('[data-jump]'))b.addEventListener('click',()=>nav(b.dataset.jump));
+for(const b of document.querySelectorAll('[data-reload]'))b.addEventListener('click',()=>refresh(b.dataset.reload));
+$('member-search').addEventListener('input',renderMembers);
+$('arrival-kind').addEventListener('change',()=>$('guest-name-wrap').classList.toggle('hidden',$('arrival-kind').value!=='guest'));
+$('check-in').addEventListener('click',async()=>{
+ const id=$('arrival-member').value,kind=$('arrival-kind').value,name=$('arrival-guest').value.trim();
+ if(!id){msg('Choose an approved member.',true);return}
+ if(kind==='guest'&&!name){msg('Enter the named guest.',true);return}
+ if(!confirm('Identity checked? Record '+(kind==='member'?'member arrival':'named guest arrival')+' now?'))return;
+ try{await api('attendance/check-in','POST',{memberId:id,kind,guestName:name});$('arrival-guest').value='';await refresh('door');msg('Entry recorded.')}catch(e){msg(e.message,true)}
+});
+$('incident-form').addEventListener('submit',async e=>{
+ e.preventDefault();const category=$('incident-category').value,description=$('incident-description').value.trim();
+ try{await api('incidents','POST',{category,description});$('incident-description').value='';await refresh('incidents');msg('Incident saved to the append-only register.')}catch(e){msg(e.message,true)}
+});
+$('confirm-approval').addEventListener('click',async()=>{
+ if(!pendingApproval)return;
+ const a=pendingApproval;
+ const confirmAge=$('verify-age').checked,confirmEligibility=$('verify-eligibility').checked,confirmLicence=$('verify-licence').checked;
+ if(!confirmAge||!confirmEligibility||!confirmLicence){$('approval-message').textContent='Complete all checks before approval.';return}
+ $('confirm-approval').disabled=true;
+ try{const j=await api('members/approve','POST',{applicationId:a.id,confirmAge,confirmEligibility,confirmLicence});
+ closeApproval();await refresh('all');nav('members');msg('Member '+j.member.member_number+' approved and added to the live member register.')}
+ catch(e){$('approval-message').textContent=e.message}finally{$('confirm-approval').disabled=false}
+});
+$('cancel-approval').addEventListener('click',closeApproval);
+$('approval-modal').addEventListener('click',e=>{if(e.target===$('approval-modal'))closeApproval()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('approval-modal').classList.contains('open'))closeApproval()});
+refresh('all').then(()=>{const t=location.hash.slice(1);if(['overview','applications','members','door','ledger','incidents','legacy'].includes(t))nav(t)}).catch(()=>{});
+})();
 </script></body></html>
