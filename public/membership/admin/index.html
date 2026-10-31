@@ -11,7 +11,7 @@
 .tabs{display:flex;overflow-x:auto;gap:7px;padding:0 0 13px;margin-bottom:20px;border-bottom:1px solid var(--line)}.tabs button{flex:0 0 auto;padding:10px 14px;border:1px solid #654650;color:#d0b9b9;background:#191018;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap}.tabs button.active{color:#1e1113;background:var(--gold);border-color:var(--gold)}.tabs button:hover:not(.active){background:#36202b}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.stat{background:#20151b;border:1px solid var(--line);padding:22px;border-radius:8px}.stat b{display:block;font:400 37px Georgia,serif;color:var(--gold);line-height:1.2;margin:7px 0}.stat span{font-size:11px;color:#d3bbb4;letter-spacing:.08em;text-transform:uppercase;font-weight:700}.contenthead{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:17px}.cards{display:grid;gap:12px}.card{padding:20px;border:1px solid #75515e;background:var(--raised);border-radius:8px}.cardtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}.cardname{font:400 21px Georgia,serif;color:#f8eddf}.meta{font-size:12px;color:#d0b5ac;line-height:1.8;margin-top:7px;overflow-wrap:anywhere}.row{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.row.space{justify-content:space-between}.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:15px}.chip{font-size:10px;text-transform:uppercase;letter-spacing:.12em;padding:6px 9px;border:1px solid #a58a72;color:#f1cf94;border-radius:99px}.chip.active,.chip.approved{color:var(--good);border-color:#6f996f}.chip.suspended,.chip.declined,.chip.revoked{color:#e7abab;border-color:#a66a77}.notice{border-left:3px solid var(--gold);padding:14px 17px;background:#31202b;color:#d7c5bc;font-size:12px;line-height:1.85;margin:20px 0}.notice strong{color:#efd19a}.empty{padding:27px;color:#d2bdba;border:1px dashed #806260;text-align:center;border-radius:6px}.error{color:var(--error);font-size:13px}.good{color:var(--good);font-size:13px}.message{min-height:18px;font-size:13px;margin:9px 0}
 .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.formgrid .wide{grid-column:1/-1}.section{padding:4px 0}.tablewrap{overflow-x:auto}.table{width:100%;border-collapse:collapse;font-size:12px}.table th{text-align:left;font-size:10px;text-transform:uppercase;color:var(--gold);letter-spacing:.12em;padding:12px;border-bottom:1px solid #684e50}.table td{padding:12px;border-bottom:1px solid #684e5066;vertical-align:middle}.table tr:hover{background:#2b1a24}.inlinebtn{border:1px solid #977977;color:#f0d8b6;background:#382630;padding:7px 12px;border-radius:5px}.toolcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.toolcard{display:block;background:#27181f;padding:18px;border:1px solid #8b6e5e;border-radius:9px}.toolcard strong{display:block;font-size:15px;color:var(--gold)}.toolcard span{display:block;color:#d5c1b6;font-size:12px;margin-top:5px}.toolcard:hover{border-color:var(--gold);background:#35202b}
-.dialog{position:fixed;inset:0;background:#000c;display:none;justify-content:center;align-items:center;padding:17px;z-index:25;backdrop-filter:blur(4px)}.dialog.open{display:flex}.dialogbox{width:100%;max-width:530px;max-height:90vh;overflow:auto;padding:26px;background:#20141b;border:1.5px solid var(--gold);border-radius:13px;box-shadow:0 20px 90px #000d}.dialogbox h2{font-size:27px}.approvalcheck{display:flex;gap:10px;align-items:start;margin:16px 0;font-size:13px;color:#e6d2cb;cursor:pointer}.approvalcheck input{width:18px;height:18px;margin-top:3px;flex:none;accent-color:#d7ad6d}.footer{font-size:11px;color:#ad9995;margin-top:50px;padding-top:20px;border-top:1px solid #674e54}
+.private-link{width:100%;margin:14px 0;background:#120d12;border:1px solid #b18b65;color:#fff;padding:12px;font:12px monospace;border-radius:6px}.qr-scan{display:flex;flex-wrap:wrap;gap:10px;align-items:end}.qr-scan .field{flex:1;min-width:180px}.scan-result{background:#102519;border:1px solid #52855d;border-radius:8px;padding:16px;margin-top:14px}.camera{max-width:390px;width:100%;border:1px solid #b3925a;border-radius:10px;margin:15px auto;display:block}.dialog{position:fixed;inset:0;background:#000c;display:none;justify-content:center;align-items:center;padding:17px;z-index:25;backdrop-filter:blur(4px)}.dialog.open{display:flex}.dialogbox{width:100%;max-width:530px;max-height:90vh;overflow:auto;padding:26px;background:#20141b;border:1.5px solid var(--gold);border-radius:13px;box-shadow:0 20px 90px #000d}.dialogbox h2{font-size:27px}.approvalcheck{display:flex;gap:10px;align-items:start;margin:16px 0;font-size:13px;color:#e6d2cb;cursor:pointer}.approvalcheck input{width:18px;height:18px;margin-top:3px;flex:none;accent-color:#d7ad6d}.footer{font-size:11px;color:#ad9995;margin-top:50px;padding-top:20px;border-top:1px solid #674e54}
 @media(max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.toolcards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.page{padding:25px 14px 70px}.topinside{padding:15px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.stat{padding:14px}.stat b{font-size:28px}.toolcards{grid-template-columns:1fr}.panel{padding:18px}.panel.login{padding:24px 18px}.formgrid{grid-template-columns:1fr}.loginrow{flex-direction:column}.hero{margin-bottom:20px}.brand{font-size:16px}}
 </style></head><body>
 <header class="topbar"><div class="topinside"><a class="brand" href="/membership">AMICA SOHO</a><div class="toplinks"><span class="smallcaps">MEMBERSHIP OPERATIONS</span><a href="/membership">Registration ↗</a><a href="https://www.amicasoho.com/">Main website ↗</a></div></div></header>
@@ -38,6 +38,18 @@
 <section id="view-members" class="section hidden"><div class="contenthead"><div><h2>Members</h2><p class="sub">Approved records from this system. Member numbers are references, not QR credentials.</p></div><input class="input" id="member-search" style="max-width:260px" placeholder="Search name or member number" aria-label="Search members"></div><div id="members"></div></section>
 <section id="view-door" class="section hidden">
 <div class="contenthead"><div><h2>Door &amp; arrivals</h2><p class="sub">Verify identity, then record arrival. No unverified QR entry is accepted.</p></div><button class="btn sm" data-reload="door">Refresh arrivals</button></div>
+<div class="panel">
+<h3>Scan or verify a digital pass</h3>
+<p class="sub">Passes are verified against AMICA's server. A valid pass does not by itself admit a guest. Confirm the physical ID before recording entry.</p>
+<div class="qr-scan" style="margin-top:17px">
+<div class="field"><label for="scan-pass">QR link or private credential</label><input id="scan-pass" class="input" autocomplete="off" spellcheck="false" placeholder="Paste scanned pass link"></div>
+<button class="btn primary" id="verify-pass" type="button">Verify pass</button>
+<button class="btn" id="start-camera" type="button">Scan with camera</button>
+</div>
+<video class="camera hidden" id="qr-camera" playsinline muted autoplay></video>
+<button type="button" id="stop-camera" class="btn sm hidden">Stop camera</button>
+<div class="scan-result hidden" id="scan-result" role="status" aria-live="polite"></div>
+</div>
 <div class="panel"><div class="formgrid"><div class="field"><label for="arrival-member">Active member</label><select class="select" id="arrival-member"></select></div><div class="field"><label for="arrival-kind">Person arriving</label><select class="select" id="arrival-kind"><option value="member">Member</option><option value="guest">Named guest</option></select></div><div class="field hidden" id="guest-name-wrap"><label for="arrival-guest">Guest full name</label><input class="input" id="arrival-guest" type="text" maxlength="120" placeholder="Guest full name"></div><div class="field"><label>&nbsp;</label><button class="btn primary" id="check-in" type="button">Record entry</button></div></div><p class="sub">Guest check-in requires the host to be inside. The working limit is two named guests per member and 80 recorded customers; these are subject to licence verification.</p></div>
 <div class="panel"><div class="contenthead"><h3>Currently inside</h3><span class="chip" id="inside-count">0 inside</span></div><div id="inside"></div></div>
 </section>
@@ -59,6 +71,13 @@
 <label class="approvalcheck"><input type="checkbox" id="verify-eligibility"><span>I have reviewed eligibility under the current AMICA membership rules.</span></label>
 <label class="approvalcheck"><input type="checkbox" id="verify-licence"><span>I have checked the applicable licence conditions, waiting period and any required manager approvals.</span></label>
 <p class="message error" id="approval-message"></p><div class="actions"><button class="btn primary" id="confirm-approval" type="button">Confirm approval</button><button class="btn" id="cancel-approval" type="button">Cancel</button></div></div></div>
+<div class="dialog" id="pass-link-modal" role="dialog" aria-modal="true" aria-labelledby="pass-link-title" aria-hidden="true">
+<div class="dialogbox"><div class="smallcaps">CONFIDENTIAL MEMBER CREDENTIAL</div><h2 id="pass-link-title">Private digital pass</h2>
+<p class="sub">A new pass was issued and any previous pass is now invalid. Share this link only with the named member through a private channel.</p>
+<label class="smallcaps" for="private-link">Private pass link</label>
+<input class="private-link" type="text" id="private-link" readonly aria-label="Private pass link">
+<div class="actions"><button type="button" id="copy-pass-link" class="btn primary">Copy link</button><button type="button" id="close-pass-link" class="btn">Close</button></div>
+<p class="sub">The link will not be shown again. If lost, issue another pass to rotate the credential.</p></div></div>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
@@ -148,11 +167,28 @@ function renderMembers(){
  for(const m of members){const c=el('article','card');c.append(cardHeader(m.full_name,m.status));
  addMeta(c,[['Member number',m.member_number],['Contact',m.contact_value],['Approved',date(m.approved_at)]]);
  const row=el('div','actions');
+ if(m.status==='active'){
+  row.append(action('Issue / rotate digital pass',()=>issuePass(m),'btn sm primary'));
+  row.append(action('Revoke pass',()=>revokePass(m),'btn sm danger'));
+}
  if(m.status==='active')row.append(action('Suspend',()=>changeMemberStatus(m,'suspended'),'btn sm danger'));
  if(m.status==='suspended')row.append(action('Reactivate',()=>changeMemberStatus(m,'active'),'btn sm primary'));
  if(m.status!=='revoked')row.append(action('Revoke',()=>changeMemberStatus(m,'revoked'),'btn sm danger'));
  c.append(row);root.append(c)}
  $('members').append(root);
+}
+async function issuePass(m){
+ if(!confirm('Issue a new private digital pass for '+m.full_name+'? Any previously issued pass will stop working.'))return;
+ const j=await api('members/'+encodeURIComponent(m.id)+'/pass','POST',{});
+ $('private-link').value=j.passUrl;
+ $('pass-link-modal').classList.add('open');$('pass-link-modal').setAttribute('aria-hidden','false');
+ $('copy-pass-link').focus();
+ msg('Digital pass issued. Copy the link and share privately with the named member.');
+}
+async function revokePass(m){
+ if(!confirm('Revoke the current digital pass for '+m.full_name+'?'))return;
+ await api('members/'+encodeURIComponent(m.id)+'/pass/revoke','POST',{});
+ msg('Digital pass revoked. Existing QR links will no longer verify.');
 }
 async function changeMemberStatus(m,status){
  if(!confirm('Change '+m.member_number+' to '+status+'? This is recorded in the audit log.'))return;
@@ -202,6 +238,68 @@ for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click
 for(const b of document.querySelectorAll('[data-jump]'))b.addEventListener('click',()=>nav(b.dataset.jump));
 for(const b of document.querySelectorAll('[data-reload]'))b.addEventListener('click',()=>refresh(b.dataset.reload));
 $('member-search').addEventListener('input',renderMembers);
+let verifiedMember=null, cameraStream=null, scanning=false;
+function stopCamera(){
+ scanning=false;
+ if(cameraStream){for(const track of cameraStream.getTracks())track.stop();cameraStream=null}
+ const v=$('qr-camera');v.pause();v.srcObject=null;v.classList.add('hidden');$('stop-camera').classList.add('hidden');
+}
+function clearVerification(){verifiedMember=null;$('scan-result').classList.add('hidden');$('scan-result').replaceChildren()}
+async function verifyPass(){
+ clearVerification();
+ const input=$('scan-pass').value.trim();
+ if(!input){msg('Scan or paste the pass first.',true);return}
+ try{
+  const j=await api('passes/verify','POST',{token:input});
+  verifiedMember=j.member;
+  const root=$('scan-result');root.classList.remove('hidden');
+  root.append(el('div','smallcaps','SERVER VERIFIED · CHECK PHOTO ID'));
+  root.append(el('h3','',j.member.fullName),el('div','meta',j.member.memberNumber+' · '+j.member.status+' · expires '+date(j.expiresAt)));
+  root.append(el('p','sub','Confirm the pass holder is the named person before recording entry.'));
+  root.append(action('Confirm identity & record entry',async()=>{
+    if(!verifiedMember)return;
+    if(!confirm('Have you verified the physical ID of '+verifiedMember.fullName+'? Record member entry now?'))return;
+    await api('attendance/check-in','POST',{memberId:verifiedMember.id,kind:'member'});
+    $('scan-pass').value='';clearVerification();await refresh('door');msg('Verified member checked in successfully.');
+  },'btn primary'));
+  msg('Credential valid. Physical identity verification still required.');
+ }catch(e){msg(e.message,true);}
+}
+$('verify-pass').addEventListener('click',verifyPass);
+$('scan-pass').addEventListener('input',clearVerification);
+$('stop-camera').addEventListener('click',stopCamera);
+$('start-camera').addEventListener('click',async()=>{
+ if(!('BarcodeDetector' in window)){msg('This browser does not support QR scanning. Use a QR reader to copy the full pass link into the field.',true);return}
+ if(!navigator.mediaDevices?.getUserMedia){msg('Camera access is not available. Paste the QR link manually.',true);return}
+ try{
+  stopCamera();
+  cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+  const v=$('qr-camera');v.srcObject=cameraStream;v.classList.remove('hidden');$('stop-camera').classList.remove('hidden');await v.play();
+  const detector=new BarcodeDetector({formats:['qr_code']});scanning=true;
+  async function scanFrame(){
+   if(!scanning)return;
+   try{
+    const found=await detector.detect(v);
+    if(found?.length){const raw=found[0]?.rawValue||'';stopCamera();$('scan-pass').value=raw;await verifyPass();return}
+   }catch(e){stopCamera();msg('Camera scanner failed. Paste the pass link manually.',true);return}
+   if(scanning)requestAnimationFrame(scanFrame);
+  }
+  requestAnimationFrame(scanFrame);
+ }catch(e){stopCamera();msg('Camera permission was declined or unavailable. Paste the QR link manually.',true)}
+});
+$('copy-pass-link').addEventListener('click',async()=>{
+ try{await navigator.clipboard.writeText($('private-link').value);$('copy-pass-link').textContent='Copied'}catch{
+   $('private-link').focus();$('private-link').select();msg('Select and copy the displayed link manually.',true)
+ }
+});
+function closePrivateLink(){
+ $('private-link').value='';$('pass-link-modal').classList.remove('open');$('pass-link-modal').setAttribute('aria-hidden','true');
+ $('copy-pass-link').textContent='Copy link';
+}
+$('close-pass-link').addEventListener('click',closePrivateLink);
+$('pass-link-modal').addEventListener('click',e=>{if(e.target===$('pass-link-modal'))closePrivateLink()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('pass-link-modal').classList.contains('open'))closePrivateLink()});
+window.addEventListener('pagehide',stopCamera);
 $('arrival-kind').addEventListener('change',()=>$('guest-name-wrap').classList.toggle('hidden',$('arrival-kind').value!=='guest'));
 $('check-in').addEventListener('click',async()=>{
  const id=$('arrival-member').value,kind=$('arrival-kind').value,name=$('arrival-guest').value.trim();
