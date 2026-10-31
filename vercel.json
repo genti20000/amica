@@ -7,6 +7,28 @@
   ],
   "rewrites": [
     {
+      "source": "/pass",
+      "has": [
+        {
+          "type": "host",
+          "value": "members.amicasoho.com"
+        }
+      ],
+      "destination": "/membership/pass/index.html"
+    },
+    {
+      "source": "/api/membership/pass/view",
+      "destination": "/api/membership-pass"
+    },
+    {
+      "source": "/membership/pass",
+      "destination": "/membership/pass/index.html"
+    },
+    {
+      "source": "/membership/pass/",
+      "destination": "/membership/pass/index.html"
+    },
+    {
       "source": "/",
       "has": [
         {
