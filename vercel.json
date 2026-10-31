@@ -11,6 +11,22 @@
       "destination": "/api/careers"
     },
     {
+      "source": "/careers/bar-staff",
+      "destination": "/careers/bar-staff/index.html"
+    },
+    {
+      "source": "/careers/bar-staff/",
+      "destination": "/careers/bar-staff/index.html"
+    },
+    {
+      "source": "/careers/floor-staff",
+      "destination": "/careers/floor-staff/index.html"
+    },
+    {
+      "source": "/careers/floor-staff/",
+      "destination": "/careers/floor-staff/index.html"
+    },
+    {
       "source": "/careers",
       "destination": "/careers/index.html"
     },
