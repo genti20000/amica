@@ -1,6 +1,6 @@
 import type { Express, Response } from 'express';
 import type { PoolClient } from 'pg';
-import { randomUUID, randomBytes } from 'node:crypto';
+import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { db, transaction } from './db.js';
 
 // These routes are mounted AFTER the signed HTTP-only admin session middleware.
@@ -13,7 +13,8 @@ async function ensureOps() {
     await db.query("CREATE TABLE IF NOT EXISTS membership_attendance (id uuid PRIMARY KEY, member_id uuid NOT NULL REFERENCES membership_members(id), kind varchar(12) NOT NULL CHECK (kind IN ('member','guest')), guest_name varchar(120), checked_in timestamptz NOT NULL DEFAULT now(), checked_out timestamptz, created_at timestamptz NOT NULL DEFAULT now(), CHECK ((kind='member' AND guest_name IS NULL) OR (kind='guest' AND guest_name IS NOT NULL)))");
     await db.query("CREATE TABLE IF NOT EXISTS membership_incident_logs (id uuid PRIMARY KEY, category varchar(60) NOT NULL, description varchar(3000) NOT NULL, occurred_at timestamptz NOT NULL DEFAULT now(), recorded_at timestamptz NOT NULL DEFAULT now())");
     await db.query("CREATE TABLE IF NOT EXISTS membership_audit_events (id uuid PRIMARY KEY, action varchar(60) NOT NULL, subject_id varchar(64), details varchar(500) NOT NULL DEFAULT '', occurred_at timestamptz NOT NULL DEFAULT now())");
-    for (const table of ['membership_applications','membership_members','membership_attendance','membership_incident_logs','membership_audit_events']) {
+    await db.query("CREATE TABLE IF NOT EXISTS membership_pass_credentials (id uuid PRIMARY KEY, member_id uuid NOT NULL UNIQUE REFERENCES membership_members(id), token_hash varchar(64) NOT NULL UNIQUE, issued_at timestamptz NOT NULL DEFAULT now(), expires_at timestamptz NOT NULL, revoked_at timestamptz, last_verified_at timestamptz)");
+    for (const table of ['membership_applications','membership_members','membership_attendance','membership_incident_logs','membership_audit_events','membership_pass_credentials']) {
       await db.query('ALTER TABLE public.' + table + ' ENABLE ROW LEVEL SECURITY');
       await db.query('REVOKE ALL ON TABLE public.' + table + ' FROM anon, authenticated');
     }
@@ -28,6 +29,21 @@ function respondErr(res: Response, error: unknown) {
 }
 function idValid(id: string) { return /^[a-f0-9]{8}-[a-f0-9-]{27,}$/i.test(id); }
 function clean(v: unknown, max:number) {return typeof v==='string'?v.trim().slice(0,max):'';}
+// 256-bit opaque bearer pass. The QR embeds only a hash-fragment URL; the database stores only the SHA-256 hash.
+const hashPass=(token:string)=>createHash('sha256').update(token,'utf8').digest('hex');
+function normalizePassToken(value:unknown):string|null{
+ if(typeof value!=='string'||value.length>1500)return null;
+ let candidate=value.trim();
+ if(candidate.startsWith('https://')){
+  try{
+   const url=new URL(candidate);
+   if(!['members.amicasoho.com','www.amicasoho.com'].includes(url.host))return null;
+   candidate=new URLSearchParams(url.hash.replace(/^#/,'')).get('t')||'';
+  }catch{return null}
+ }
+ return /^[a-zA-Z0-9_-]{43}$/.test(candidate)?candidate:null;
+}
+
 const MAX_CUSTOMERS=80; // Operational ceiling from existing venue setup; verify against current licence.
 const MAX_GUESTS_PER_MEMBER=2; // Conservative current policy; verify against current licence.
 async function audit(client: PoolClient, action:string, id:string, details='') {
@@ -107,12 +123,74 @@ export function installMemberOperations(app:Express) {
         if(old.status==='revoked'&&status!=='revoked')return {error:'Revoked membership must be reviewed again; it cannot simply be reactivated.'};
         const updated=(await client.query("UPDATE membership_members SET status=$1,updated_at=now() WHERE id=$2 RETURNING id,status",[status,id])).rows[0];
         if(status!=='active')await client.query('UPDATE membership_attendance SET checked_out=now() WHERE member_id=$1 AND checked_out IS NULL',[id]);
+        if(status!=='active')await client.query('UPDATE membership_pass_credentials SET revoked_at=coalesce(revoked_at,now()) WHERE member_id=$1',[id]);
         await audit(client,'MEMBER_STATUS_CHANGED',id,old.status+' → '+status);
         return {member:updated};
       });
       if(!out)return res.status(404).json({success:false,error:'Member not found.'});
       if('error' in out)return res.status(409).json({success:false,error:out.error});
       return res.json({success:true,...out});
+    }catch(e){return respondErr(res,e);}
+  });
+
+  // Issue or rotate a member's pass credential. Never grant admission from mere possession of a pass;
+  // staff must verify the credential AND identity and use the authenticated check-in control.
+  app.post('/api/membership/members/:id/pass',async(req,res)=>{
+    const id=clean(req.params.id,64);
+    if(!idValid(id))return res.status(400).json({success:false,error:'Invalid member ID.'});
+    try{
+      await ensureOps();
+      const issued=await transaction(async client=>{
+        await client.query('SELECT pg_advisory_xact_lock(230042)');
+        const member=(await client.query('SELECT id,full_name,member_number,status FROM membership_members WHERE id=$1 FOR UPDATE',[id])).rows[0];
+        if(!member)return {error:'Member not found.',status:404};
+        if(member.status!=='active')return {error:'Only active members can receive a pass.',status:409};
+        const token=randomBytes(32).toString('base64url'),hash=hashPass(token);
+        const row=(await client.query(
+          "INSERT INTO membership_pass_credentials(id,member_id,token_hash,issued_at,expires_at,revoked_at) VALUES($1,$2,$3,now(),now()+interval '90 days',NULL) "+
+          "ON CONFLICT(member_id) DO UPDATE SET token_hash=excluded.token_hash,issued_at=excluded.issued_at,expires_at=excluded.expires_at,revoked_at=NULL,last_verified_at=NULL "+
+          "RETURNING expires_at",
+          [randomUUID(),id,hash]
+        )).rows[0];
+        await audit(client,'PASS_ISSUED',id,'Prior pass credential rotated; expiry '+new Date(row.expires_at).toISOString());
+        return {token,member,expiresAt:row.expires_at};
+      });
+      if('error'in issued&&issued.error)return res.status(issued.status||409).json({success:false,error:issued.error});
+      const passUrl='https://members.amicasoho.com/pass#t='+issued.token;
+      res.setHeader('Cache-Control','no-store');
+      return res.json({success:true,passUrl,expiresAt:issued.expiresAt,memberNumber:issued.member.member_number,
+        notice:'Treat this as a private bearer credential. Share only with the named member. Staff must separately verify ID at entry.'});
+    }catch(e){return respondErr(res,e);}
+  });
+  app.post('/api/membership/members/:id/pass/revoke',async(req,res)=>{
+    const id=clean(req.params.id,64);
+    if(!idValid(id))return res.status(400).json({success:false,error:'Invalid member ID.'});
+    try{
+      await ensureOps();
+      const out=await transaction(async client=>{
+        const x=await client.query('UPDATE membership_pass_credentials SET revoked_at=coalesce(revoked_at,now()) WHERE member_id=$1 AND revoked_at IS NULL RETURNING member_id',[id]);
+        if(!x.rowCount)return false;
+        await audit(client,'PASS_REVOKED',id,'Pass disabled by staff');
+        return true;
+      });
+      return out?res.json({success:true}):res.status(404).json({success:false,error:'No active pass found.'});
+    }catch(e){return respondErr(res,e);}
+  });
+  app.post('/api/membership/passes/verify',async(req,res)=>{
+    const token=normalizePassToken(req.body?.token);
+    if(!token)return res.status(400).json({success:false,error:'This is not a valid AMICA pass format.'});
+    try{
+      await ensureOps();
+      const rows=await db.query("SELECT m.id AS member_id,m.member_number,m.full_name,m.status,p.expires_at,p.revoked_at "+
+        "FROM membership_pass_credentials p JOIN membership_members m ON m.id=p.member_id WHERE p.token_hash=$1 LIMIT 1",[hashPass(token)]);
+      const row=rows.rows[0];
+      if(!row||row.revoked_at||new Date(row.expires_at).getTime()<Date.now()||row.status!=='active')
+        return res.status(403).json({success:false,error:'Pass invalid, expired, revoked, or membership not active.'});
+      await db.query('UPDATE membership_pass_credentials SET last_verified_at=now() WHERE token_hash=$1',[hashPass(token)]);
+      res.setHeader('Cache-Control','no-store');
+      return res.json({success:true,valid:true,member:{id:row.member_id,memberNumber:row.member_number,
+        fullName:row.full_name,status:row.status},expiresAt:row.expires_at,
+        notice:'Check the physical identity of the pass holder before recording entry.'});
     }catch(e){return respondErr(res,e);}
   });
   app.get('/api/membership/attendance',async(_req,res)=>{
