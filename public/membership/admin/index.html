@@ -183,7 +183,7 @@ async function issuePass(m){
  $('private-link').value=j.passUrl;
  $('pass-link-modal').classList.add('open');$('pass-link-modal').setAttribute('aria-hidden','false');
  $('copy-pass-link').focus();
- msg('Digital pass issued. Copy the link and share privately with the named member.');
+ msg(j.delivery==='sent'?'Digital pass issued and emailed to the registered member.':j.delivery==='failed'?'Pass issued, but email delivery failed. Copy the link and share privately.':'Digital pass issued. Copy the link and share privately with the named member.');
 }
 async function revokePass(m){
  if(!confirm('Revoke the current digital pass for '+m.full_name+'?'))return;
