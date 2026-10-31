@@ -142,7 +142,7 @@ export function installMemberOperations(app:Express) {
       await ensureOps();
       const issued=await transaction(async client=>{
         await client.query('SELECT pg_advisory_xact_lock(230042)');
-        const member=(await client.query('SELECT id,full_name,member_number,status FROM membership_members WHERE id=$1 FOR UPDATE',[id])).rows[0];
+        const member=(await client.query('SELECT id,full_name,member_number,status,contact_method,contact_value FROM membership_members WHERE id=$1 FOR UPDATE',[id])).rows[0];
         if(!member)return {error:'Member not found.',status:404};
         if(member.status!=='active')return {error:'Only active members can receive a pass.',status:409};
         const token=randomBytes(32).toString('base64url'),hash=hashPass(token);
@@ -157,8 +157,27 @@ export function installMemberOperations(app:Express) {
       });
       if('error'in issued&&issued.error)return res.status(issued.status||409).json({success:false,error:issued.error});
       const passUrl='https://members.amicasoho.com/pass#t='+issued.token;
+      let delivery:'sent'|'manual'|'failed'='manual';
+      // For email-based members, send their own credential directly. Phone-based members need a private manual share.
+      if(issued.member.contact_method==='email' && process.env.RESEND_API_KEY){
+        try{
+          const from=process.env.FROM_EMAIL||'AMICA SOHO <noreply@amicasoho.london>';
+          const sent=await fetch('https://api.resend.com/emails',{
+            method:'POST',
+            headers:{'Authorization':'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},
+            signal:AbortSignal.timeout(12000),
+            body:JSON.stringify({from,to:[issued.member.contact_value],
+              subject:'Your AMICA SOHO digital membership pass',
+              text:'Your membership has been approved. Open your private digital pass:\n\n'+passUrl+
+                '\n\nThis credential is personal. Please bring photo ID when visiting AMICA SOHO. '+
+                'A pass does not guarantee entry. If this message is unexpected, contact info@amicasoho.com.'})
+          });
+          delivery=sent.ok?'sent':'failed';
+          if(!sent.ok)console.error('Membership pass delivery failed with status',sent.status);
+        }catch(e){delivery='failed';console.error('Membership pass delivery error',e instanceof Error?e.message:'Unknown');}
+      }
       res.setHeader('Cache-Control','no-store');
-      return res.json({success:true,passUrl,expiresAt:issued.expiresAt,memberNumber:issued.member.member_number,
+      return res.json({success:true,passUrl,expiresAt:issued.expiresAt,delivery,memberNumber:issued.member.member_number,
         notice:'Treat this as a private bearer credential. Share only with the named member. Staff must separately verify ID at entry.'});
     }catch(e){return respondErr(res,e);}
   });
