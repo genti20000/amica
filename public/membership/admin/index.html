@@ -272,7 +272,41 @@ function renderIncidents(){
  for(const i of data.incidents){const card=el('div','card');card.append(cardHeader(i.category,'recorded'),kv('When',date(i.occurred_at)),kv('Details',i.description));root.append(card)}
  $('incidents').append(root);
 }
-function renderAll(){renderOverview();renderApplications();renderMembers();renderDoor();renderLedger();renderIncidents();renderCapacity()}
+function renderProprietor(){
+ clear('proprietor-guests');
+ const guests=data.proprietor||[];
+ if(!guests.length){$('proprietor-guests').append(el('p','empty','No proprietor guests recorded.'));return}
+ for(const g of guests){
+  const c=el('article','card');c.append(cardHeader(g.full_name,g.checked_out?'departed':g.smoking_started_at?'smoking':'inside'));
+  addMeta(c,[['Authorised by',g.authorised_by],['Reason',g.reason],['Entered',date(g.checked_in)],['Exited',date(g.checked_out)]]);
+  if(!g.checked_out){const row=el('div','actions');
+   row.append(action(g.smoking_started_at?'Smoking return':'Smoking exit',async()=>{
+    await api('proprietor-guests/'+encodeURIComponent(g.id)+'/smoking','POST',{action:g.smoking_started_at?'return':'leave'});
+    await refresh('proprietor');},'btn sm'));
+   row.append(action('Check out',async()=>{
+    if(!confirm('Confirm proprietor guest has left?'))return;
+    await api('proprietor-guests/'+encodeURIComponent(g.id)+'/check-out','POST',{});await refresh('proprietor');},'btn sm danger'));
+   c.append(row);
+  }$('proprietor-guests').append(c);
+ }
+}
+function renderRules(){
+ clear('rules-list');
+ if(!(data.rules||[]).length){$('rules-list').append(el('p','empty','No rule versions recorded.'));return}
+ for(const r of data.rules){const c=el('article','card');c.append(cardHeader(r.title,r.council_approved?'approved':'draft'));
+  addMeta(c,[['Version',r.version],['Created',date(r.created_at)],['Council approval reference',r.council_reference||'Not supplied']]);
+  c.append(el('p','meta',r.body));$('rules-list').append(c);
+ }
+}
+function renderAudit(){
+ clear('full-audit');
+ if(!(data.activity||[]).length){$('full-audit').append(el('p','empty','No audit events recorded.'));return}
+ for(const a of data.activity){const c=el('article','card');c.append(cardHeader(a.action,'recorded'));
+  addMeta(c,[['Timestamp',date(a.occurred_at)],['Subject',a.subject_id||'—'],['Details',a.details||'—']]);
+  $('full-audit').append(c);
+ }
+}
+function renderAll(){renderOverview();renderApplications();renderMembers();renderDoor();renderLedger();renderIncidents();renderCapacity();renderProprietor();renderRules();renderAudit()}
 $('login-form').addEventListener('submit',async e=>{
  e.preventDefault();$('login-message').textContent='';
  const password=$('password').value;
@@ -289,6 +323,21 @@ for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click
 for(const b of document.querySelectorAll('[data-jump]'))b.addEventListener('click',()=>nav(b.dataset.jump));
 for(const b of document.querySelectorAll('[data-reload]'))b.addEventListener('click',()=>refresh(b.dataset.reload));
 $('member-search').addEventListener('input',renderMembers);
+$('proprietor-form').addEventListener('submit',async e=>{
+ e.preventDefault();if(!$('proprietor-form').reportValidity())return;
+ if(!confirm('Have you verified identity, authorised this entry and checked total venue occupancy?'))return;
+ try{
+  await api('proprietor-guests','POST',{fullName:$('proprietor-name').value.trim(),reason:$('proprietor-reason').value.trim(),authorisedBy:$('proprietor-manager').value.trim(),identityChecked:$('proprietor-id').checked});
+  $('proprietor-form').reset();await refresh('proprietor');msg('Proprietor guest entry recorded.');
+ }catch(e){msg(e.message,true)}
+});
+$('rules-form').addEventListener('submit',async e=>{
+ e.preventDefault();if(!$('rules-form').reportValidity())return;
+ try{
+  await api('rule-versions','POST',{version:$('rules-version').value.trim(),title:$('rules-title').value.trim(),body:$('rules-body').value.trim()});
+  $('rules-form').reset();await refresh('rules');msg('Club rule draft saved. Council approval still required.');
+ }catch(e){msg(e.message,true)}
+});
 let verifiedMember=null, cameraStream=null, scanning=false;
 function stopCamera(){
  scanning=false;
