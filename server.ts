@@ -99,6 +99,10 @@ async function configureServer() {
     " reviewed_at timestamptz, review_note varchar(600))"
     );
     await membershipDb.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS hospitality_role varchar(160)');
+    await membershipDb.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS verified_original_applied_at timestamptz');
+    await membershipDb.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS original_evidence_reference varchar(300)');
+    await membershipDb.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS original_verification_reason varchar(600)');
+    await membershipDb.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS original_verified_at timestamptz');
     await membershipDb.query('ALTER TABLE public.membership_applications ENABLE ROW LEVEL SECURITY');
     await membershipDb.query('REVOKE ALL ON TABLE public.membership_applications FROM anon, authenticated');
   };
