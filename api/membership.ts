@@ -15,6 +15,10 @@ async function ensureTable() {
     "created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), " +
     "reviewed_at timestamptz, review_note varchar(600))"
   );
+  // Database-backed web submissions use the restricted server connection.
+  // Never expose application records to Supabase public API roles.
+  await db.query('ALTER TABLE public.membership_applications ENABLE ROW LEVEL SECURITY');
+  await db.query('REVOKE ALL ON TABLE public.membership_applications FROM anon, authenticated');
 }
 
 export default async function membership(req: Request, res: Response) {
