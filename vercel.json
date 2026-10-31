@@ -7,6 +7,42 @@
   ],
   "rewrites": [
     {
+      "source": "/api/membership/apply",
+      "destination": "/api/membership"
+    },
+    {
+      "source": "/membership",
+      "destination": "/membership/index.html"
+    },
+    {
+      "source": "/membership/",
+      "destination": "/membership/index.html"
+    },
+    {
+      "source": "/membership/rules",
+      "destination": "/membership/rules/index.html"
+    },
+    {
+      "source": "/membership/rules/",
+      "destination": "/membership/rules/index.html"
+    },
+    {
+      "source": "/membership/privacy",
+      "destination": "/membership/privacy/index.html"
+    },
+    {
+      "source": "/membership/privacy/",
+      "destination": "/membership/privacy/index.html"
+    },
+    {
+      "source": "/membership/admin",
+      "destination": "/membership/admin/index.html"
+    },
+    {
+      "source": "/membership/admin/",
+      "destination": "/membership/admin/index.html"
+    },
+    {
       "source": "/api/careers/apply",
       "destination": "/api/careers"
     },
