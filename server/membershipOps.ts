@@ -287,13 +287,80 @@ export function installMemberOperations(app:Express) {
       return out?res.json({success:true,...out}):res.status(404).json({success:false,error:'Active visit not found.'});
     }catch(e){return respondErr(res,e);}
   });
+
+  // Logged smoking re-entry is the only exception to the 01:30 admission cut-off.
+  app.post('/api/membership/attendance/:id/smoking',async(req,res)=>{
+    const id=clean(req.params.id,64),action=clean(req.body?.action,12);
+    if(!idValid(id)||!['leave','return'].includes(action))return res.status(400).json({success:false,error:'Invalid smoking transition.'});
+    try{
+      await ensureOps();
+      const out=await transaction(async client=>{
+        await client.query('SELECT pg_advisory_xact_lock(230042)');
+        const v=(await client.query('SELECT id,smoking_started_at FROM membership_attendance WHERE id=$1 AND checked_out IS NULL FOR UPDATE',[id])).rows[0];
+        if(!v)return {error:'Active attendance record not found.'};
+        if(action==='leave'){
+          if(v.smoking_started_at)return {error:'Person is already outside smoking.'};
+          const n=Number((await client.query("SELECT count(*)::int AS n FROM membership_attendance WHERE checked_out IS NULL AND smoking_started_at IS NOT NULL")).rows[0].n);
+          if(n>=10)return {error:'Maximum 10 people temporarily outside smoking.'};
+          await client.query('UPDATE membership_attendance SET smoking_started_at=now() WHERE id=$1',[id]);
+          await audit(client,'SMOKING_EXIT',id,'Temporary smoking break started');
+        }else{
+          if(!v.smoking_started_at)return {error:'No recorded temporary smoking exit for this person.'};
+          const n=Number((await client.query("SELECT count(*)::int AS n FROM membership_attendance WHERE checked_out IS NULL AND smoking_started_at IS NULL")).rows[0].n);
+          if(n>=MAX_CUSTOMERS)return {error:'Capacity limit reached. Smoking re-entry cannot be recorded.'};
+          await client.query('UPDATE membership_attendance SET smoking_started_at=NULL WHERE id=$1',[id]);
+          await audit(client,'SMOKING_RETURN',id,'Returned from a logged temporary smoking exit');
+        }
+        return {ok:true};
+      });
+      if('error'in out)return res.status(409).json({success:false,error:out.error});
+      return res.json({success:true,message:action==='leave'?'Smoking exit recorded.':'Smoking re-entry recorded.'});
+    }catch(e){return respondErr(res,e);}
+  });
+  app.get('/api/membership/capacity',async(_req,res)=>{
+    try{await ensureOps();const rows=await db.query('SELECT hour_start,recorded_at,customers_inside,member_count,guest_count,notes FROM membership_capacity_log ORDER BY hour_start DESC LIMIT 120');
+      return res.json({success:true,capacity:rows.rows});}catch(e){return respondErr(res,e);}
+  });
+  app.post('/api/membership/capacity',async(req,res)=>{
+    const total=Number(req.body?.customersInside),notes=clean(req.body?.notes,500);
+    if(!Number.isInteger(total)||total<0||total>80)return res.status(400).json({success:false,error:'Provide a verified headcount between 0 and the licensed maximum of 80 customers.'});
+    try{
+      await ensureOps();
+      const snapshot=await transaction(async client=>{
+        const rows=(await client.query("SELECT kind,count(*)::int AS n FROM membership_attendance WHERE checked_out IS NULL AND smoking_started_at IS NULL GROUP BY kind")).rows;
+        const members=rows.find(x=>x.kind==='member')?.n||0,guests=rows.find(x=>x.kind==='guest')?.n||0;
+        if(total<members+guests)return {error:'Headcount cannot be less than recorded members and guests inside.'};
+        const x=(await client.query("INSERT INTO membership_capacity_log(id,hour_start,customers_inside,member_count,guest_count,notes) VALUES($1,date_trunc('hour',now()),$2,$3,$4,$5) "+
+          "ON CONFLICT(hour_start) DO UPDATE SET customers_inside=excluded.customers_inside,member_count=excluded.member_count,guest_count=excluded.guest_count,notes=excluded.notes,recorded_at=now() "+
+          "RETURNING hour_start,customers_inside,member_count,guest_count,recorded_at",[randomUUID(),total,members,guests,notes])).rows[0];
+        await audit(client,'HOURLY_CAPACITY_RECORDED','', 'Customer headcount '+total+'/80, members '+members+', guests '+guests);
+        return {snapshot:x};
+      });
+      if('error'in snapshot)return res.status(409).json({success:false,error:snapshot.error});
+      return res.json({success:true,...snapshot});
+    }catch(e){return respondErr(res,e);}
+  });
+  app.get('/api/membership/attendance/export-31-days',async(_req,res)=>{
+    try{
+      await ensureOps();
+      const rows=(await db.query("SELECT m.member_number,m.full_name AS member_name,v.kind,v.guest_name,v.checked_in,v.checked_out,v.smoking_started_at "+
+        "FROM membership_attendance v JOIN membership_members m ON m.id=v.member_id "+
+        "WHERE v.checked_in >= now()-interval '31 days' ORDER BY v.checked_in DESC")).rows;
+      const quote=(value:unknown)=>{let s=String(value??'');if(/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};
+      const csv=[['Member number','Member name','Type','Guest name','Check in UTC','Check out UTC','Smoking exit UTC'].join(','),
+        ...rows.map(x=>[x.member_number,x.member_name,x.kind,x.guest_name,x.checked_in?new Date(x.checked_in).toISOString():'',x.checked_out?new Date(x.checked_out).toISOString():'',x.smoking_started_at?new Date(x.smoking_started_at).toISOString():''].map(quote).join(','))].join('\n');
+      res.setHeader('Content-Type','text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition','attachment; filename="amica-membership-attendance-31days.csv"');
+      return res.send(csv);
+    }catch(e){return respondErr(res,e);}
+  });
   app.get('/api/membership/incidents',async(_req,res)=>{
     try{await ensureOps();const rows=await db.query('SELECT id,category,description,occurred_at,recorded_at FROM membership_incident_logs ORDER BY recorded_at DESC LIMIT 150');
       return res.json({success:true,incidents:rows.rows});}catch(e){return respondErr(res,e);}
   });
   app.post('/api/membership/incidents',async(req,res)=>{
     const category=clean(req.body?.category,60),description=clean(req.body?.description,3000);
-    if(!['Entry refusal','Conduct','Safeguarding','Medical','Other'].includes(category)||description.length<10)
+    if(!['Crime reported','Ejection','Crime or disorder complaint','Disorder','Drug or weapon seizure','CCTV/search/scanner fault','Alcohol sale refusal','Authority/emergency visit','Other'].includes(category)||description.length<10)
       return res.status(400).json({success:false,error:'Select a category and provide details (at least 10 characters).'});
     try{await ensureOps();const row=await transaction(async client=>{
       const rec=(await client.query('INSERT INTO membership_incident_logs(id,category,description) VALUES($1,$2,$3) RETURNING id,category,occurred_at',[randomUUID(),category,description])).rows[0];
