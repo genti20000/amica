@@ -7,6 +7,56 @@
   ],
   "rewrites": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "members.amicasoho.com"
+        }
+      ],
+      "destination": "/membership/index.html"
+    },
+    {
+      "source": "/register",
+      "has": [
+        {
+          "type": "host",
+          "value": "members.amicasoho.com"
+        }
+      ],
+      "destination": "/membership/index.html"
+    },
+    {
+      "source": "/rules",
+      "has": [
+        {
+          "type": "host",
+          "value": "members.amicasoho.com"
+        }
+      ],
+      "destination": "/membership/rules/index.html"
+    },
+    {
+      "source": "/privacy",
+      "has": [
+        {
+          "type": "host",
+          "value": "members.amicasoho.com"
+        }
+      ],
+      "destination": "/membership/privacy/index.html"
+    },
+    {
+      "source": "/admin",
+      "has": [
+        {
+          "type": "host",
+          "value": "members.amicasoho.com"
+        }
+      ],
+      "destination": "/membership/admin/index.html"
+    },
+    {
       "source": "/api/membership/apply",
       "destination": "/api/membership"
     },
