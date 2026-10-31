@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { createHash } from 'node:crypto';
-import { db } from '../server/db.js';
+import { membershipDb as db, requireMembershipDatabase } from '../server/membershipDb.js';
 
 // Public credential view: possession of an unguessable 256-bit token is required.
 // All staff verification and check-ins remain separately behind admin authentication.
@@ -13,6 +13,7 @@ export default async function viewMembershipPass(req: Request,res:Response){
  if(typeof token!=='string'||!/^[a-zA-Z0-9_-]{43}$/.test(token))
   return res.status(400).json({success:false,error:'Invalid credential.'});
  try{
+  requireMembershipDatabase();
   const hash=createHash('sha256').update(token,'utf8').digest('hex');
   const result=await db.query(
    'SELECT m.full_name,m.member_number,m.status,p.expires_at,p.revoked_at FROM membership_pass_credentials p '+
