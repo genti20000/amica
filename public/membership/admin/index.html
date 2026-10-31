@@ -32,6 +32,12 @@
 <section id="view-overview" class="section">
 <div class="stats" id="metrics"></div>
 <div class="notice"><strong>Live record scope:</strong> These totals count only entries recorded in this membership system. Restaurant customers and any earlier Firebase records are not automatically included. Reconcile physical occupancy at the door and verify licence conditions before admitting guests.</div>
+<div class="panel">
+<div class="contenthead"><h2>Hourly licensed headcount</h2></div>
+<p class="sub">Condition 22 requires an hourly capacity record. Enter the actual total customers inside, including restaurant patrons, excluding staff. Maximum 80.</p>
+<div class="row" style="margin-top:15px"><label for="capacity-total" class="smallcaps">TOTAL CUSTOMERS</label><input type="number" min="0" max="80" step="1" class="input" style="max-width:130px" id="capacity-total" placeholder="0–80"><input type="text" class="input" style="max-width:300px" id="capacity-notes" placeholder="Optional headcount note" maxlength="500"><button type="button" class="btn primary" id="save-capacity">Record this hour</button></div>
+<div id="capacity-records" class="cards" style="margin-top:18px"></div>
+</div>
 <div class="panel"><div class="contenthead"><h2>Recent activity</h2><button type="button" class="btn sm" data-jump="applications">Review applications</button></div><div id="activity"></div></div>
 </section>
 <section id="view-applications" class="section hidden"><div class="contenthead"><div><h2>Applications</h2><p class="sub">Licence 37(a): applicants must work in hospitality when applying. Wait at least 48 hours before activation.</p></div><button class="btn sm" data-reload="applications">Refresh</button></div><div id="applications"></div></section>
@@ -53,8 +59,8 @@
 <div class="panel"><div class="formgrid"><div class="field"><label for="arrival-member">Active member</label><select class="select" id="arrival-member"></select></div><div class="field"><label for="arrival-kind">Person arriving</label><select class="select" id="arrival-kind"><option value="member">Member</option><option value="guest">Named guest</option></select></div><div class="field hidden" id="guest-name-wrap"><label for="arrival-guest">Guest full name</label><input class="input" id="arrival-guest" type="text" maxlength="120" placeholder="Guest full name"></div><div class="field"><label>&nbsp;</label><button class="btn primary" id="check-in" type="button">Record entry</button></div></div><p class="sub">Guest check-in requires the host to be inside. The working limit is two named guests per member and 80 recorded customers; these are subject to licence verification.</p></div>
 <div class="panel"><div class="contenthead"><h3>Currently inside</h3><span class="chip" id="inside-count">0 inside</span></div><div id="inside"></div></div>
 </section>
-<section id="view-ledger" class="section hidden"><div class="contenthead"><div><h2>Guest &amp; attendance register</h2><p class="sub">Recent member and named-guest entries, including departures.</p></div><button class="btn sm" data-reload="ledger">Refresh</button></div><div class="panel"><div class="tablewrap"><table class="table"><thead><tr><th>Person</th><th>Host</th><th>Entry</th><th>Exit</th><th>Type</th></tr></thead><tbody id="ledger"></tbody></table></div></div></section>
-<section id="view-incidents" class="section hidden"><div class="contenthead"><div><h2>Incident register</h2><p class="sub">Append-only event reporting, restricted to authorised staff.</p></div><button class="btn sm" data-reload="incidents">Refresh</button></div><div class="panel"><form id="incident-form" class="formgrid"><div class="field"><label for="incident-category">Category</label><select id="incident-category" class="select"><option>Entry refusal</option><option>Conduct</option><option>Safeguarding</option><option>Medical</option><option>Other</option></select></div><div class="field wide"><label for="incident-description">Description</label><textarea id="incident-description" class="textarea" maxlength="3000" required minlength="10" placeholder="What happened, actions taken and any relevant details. Avoid unnecessary sensitive information."></textarea></div><div class="wide"><button class="btn primary" type="submit">Save incident</button></div></form></div><div id="incidents"></div></section>
+<section id="view-ledger" class="section hidden"><div class="contenthead"><div><h2>Guest &amp; attendance register</h2><p class="sub">Condition 37(e): a legible 31-day record must be available at reception.</p></div><div class="row"><a class="btn primary" href="/api/membership/attendance/export-31-days">Download 31-day CSV</a><button class="btn sm" data-reload="ledger">Refresh</button></div></div><div class="panel"><div class="tablewrap"><table class="table"><thead><tr><th>Person</th><th>Host</th><th>Entry</th><th>Exit</th><th>Type</th></tr></thead><tbody id="ledger"></tbody></table></div></div></section>
+<section id="view-incidents" class="section hidden"><div class="contenthead"><div><h2>Incident register</h2><p class="sub">Licence condition 9: record relevant incidents within 24 hours and make the log available to authorised officers.</p></div><button class="btn sm" data-reload="incidents">Refresh</button></div><div class="panel"><form id="incident-form" class="formgrid"><div class="field"><label for="incident-category">Category</label><select id="incident-category" class="select"><option>Crime reported</option><option>Ejection</option><option>Crime or disorder complaint</option><option>Disorder</option><option>Drug or weapon seizure</option><option>CCTV/search/scanner fault</option><option>Alcohol sale refusal</option><option>Authority/emergency visit</option><option>Other</option></select></div><div class="field wide"><label for="incident-description">Description</label><textarea id="incident-description" class="textarea" maxlength="3000" required minlength="10" placeholder="What happened, actions taken and any relevant details. Avoid unnecessary sensitive information."></textarea></div><div class="wide"><button class="btn primary" type="submit">Save incident</button></div></form></div><div id="incidents"></div></section>
 <section id="view-legacy" class="section hidden"><div class="contenthead"><h2>Legacy operations dashboard</h2></div><div class="notice"><strong>Restricted archive/tool:</strong> The original Firebase-based dashboard remains behind Vercel sign-in but its underlying Firebase rules and client-generated QR passes are not trusted for live admission. Do not enter new personal data or issue live passes there. Historical data has not yet been migrated or reconciled.</div><div class="toolcards">
 <a class="toolcard" href="https://mem-eight-lemon.vercel.app/door" target="_blank" rel="noopener"><strong>Original Door Dashboard</strong><span>Vercel sign-in required ↗</span></a>
 <a class="toolcard" href="https://mem-eight-lemon.vercel.app/cards" target="_blank" rel="noopener"><strong>Original Member Passes</strong><span>Legacy interface only ↗</span></a>
@@ -83,7 +89,7 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 let tab='overview',pendingApproval=null;
-let data={overview:null,applications:[],members:[],attendance:[],incidents:[],activity:[]};
+let data={overview:null,applications:[],members:[],attendance:[],incidents:[],activity:[],capacity:[]};
 const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=String(txt);return x};
 const date=x=>x?new Date(x).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}):'—';
 const msg=(text,error=false)=>{const x=$('status-message');x.textContent=text||'';x.className='message '+(error?'error':'good')};
@@ -109,13 +115,13 @@ function addMeta(container,items){for(const [key,value] of items)container.appen
 async function refresh(wanted){
  try{
   msg('Loading…');
-  const requests=wanted==='all'?['overview','applications','members','attendance','incidents','activity'] :
+  const requests=wanted==='all'?['overview','applications','members','attendance','incidents','activity','capacity'] :
   wanted==='door'||wanted==='ledger'?['members','attendance','overview']:
   wanted==='applications'?['applications','overview']:
   wanted==='members'?['members','overview']:
   [wanted];
   const results=await Promise.all(requests.map(async name=>{
-    const endpoint={applications:'applications',overview:'overview',members:'members',attendance:'attendance',incidents:'incidents',activity:'activity'}[name];
+    const endpoint={applications:'applications',overview:'overview',members:'members',attendance:'attendance',incidents:'incidents',activity:'activity',capacity:'capacity'}[name];
     const j=await api(endpoint);
     return [name,j[name]??j];
   }));
@@ -132,6 +138,18 @@ function renderOverview(){
  const list=el('div','cards');
  for(const a of data.activity.slice(0,10)){const item=el('div','card');item.append(el('div','smallcaps',a.action),kv('When',date(a.occurred_at)));if(a.details)item.append(kv('Details',a.details));list.append(item)}
  $('activity').append(list);
+}
+function renderCapacity(){
+ clear('capacity-records');
+ const recent=(data.capacity||[]).slice(0,8);
+ if(!recent.length){$('capacity-records').append(el('p','sub','No hourly capacity records yet.'));return}
+ for(const item of recent){
+  const c=el('div','card');
+  c.append(cardHeader(date(item.hour_start),item.customers_inside+' / 80'));
+  c.append(kv('Member / guest records',item.member_count+' members · '+item.guest_count+' guests'));
+  if(item.notes)c.append(kv('Note',item.notes));
+  $('capacity-records').append(c);
+ }
 }
 function renderApplications(){
  clear('applications');const list=data.applications||[];
@@ -209,10 +227,16 @@ function renderDoor(){
   if([...select.options].some(x=>x.value===previous))select.value=previous;
  }
  clear('inside');const active=data.attendance.filter(x=>!x.checked_out);
- $('inside-count').textContent=active.length+' recorded inside';
+ $('inside-count').textContent=active.filter(x=>!x.smoking_started_at).length+' inside · '+active.filter(x=>x.smoking_started_at).length+' smoking';
  if(!active.length){$('inside').append(el('p','empty','No active membership arrivals yet.'));return}
  const stack=el('div','cards');
  for(const a of active){const item=el('div','card');item.append(cardHeader(a.kind==='guest'?a.guest_name:a.member_name,a.kind));addMeta(item,[['Host member',a.member_name+' ('+a.member_number+')'],['Checked in',date(a.checked_in)]]);
+ item.append(el('div','meta',a.smoking_started_at?'Temporarily outside smoking since '+date(a.smoking_started_at):'Inside premises'));
+ item.append(action(a.smoking_started_at?'Record smoking re-entry':'Record smoking exit',async()=>{
+    const op=a.smoking_started_at?'return':'leave';
+    if(!confirm(op==='return'?'Confirm this person has returned from a logged smoking break?':'Record a temporary smoking exit? No more than 10 people may be outside smoking.'))return;
+    await api('attendance/'+encodeURIComponent(a.id)+'/smoking','POST',{action:op});await refresh('door')
+ },'btn sm'));
  item.append(action('Record exit',async()=>{if(!confirm('Record this person as exited?'))return;await api('attendance/'+encodeURIComponent(a.id)+'/check-out','POST',{});await refresh('door')},'btn sm'));
  stack.append(item)}
  $('inside').append(stack);
@@ -228,7 +252,7 @@ function renderIncidents(){
  for(const i of data.incidents){const card=el('div','card');card.append(cardHeader(i.category,'recorded'),kv('When',date(i.occurred_at)),kv('Details',i.description));root.append(card)}
  $('incidents').append(root);
 }
-function renderAll(){renderOverview();renderApplications();renderMembers();renderDoor();renderLedger();renderIncidents()}
+function renderAll(){renderOverview();renderApplications();renderMembers();renderDoor();renderLedger();renderIncidents();renderCapacity()}
 $('login-form').addEventListener('submit',async e=>{
  e.preventDefault();$('login-message').textContent='';
  const password=$('password').value;
@@ -314,6 +338,11 @@ $('check-in').addEventListener('click',async()=>{
  if(kind==='guest'&&!name){msg('Enter the named guest.',true);return}
  if(!confirm('Identity checked? Record '+(kind==='member'?'member arrival':'named guest arrival')+' now?'))return;
  try{await api('attendance/check-in','POST',{memberId:id,kind,guestName:name});$('arrival-guest').value='';await refresh('door');msg('Entry recorded.')}catch(e){msg(e.message,true)}
+});
+$('save-capacity').addEventListener('click',async()=>{
+ const count=Number($('capacity-total').value),notes=$('capacity-notes').value.trim();
+ if($('capacity-total').value===''){msg('Enter the current total customer headcount.',true);return}
+ try{await api('capacity','POST',{customersInside:count,notes});await refresh('all');msg('This hour\'s customer headcount saved to the licence log.')}catch(e){msg(e.message,true)}
 });
 $('incident-form').addEventListener('submit',async e=>{
  e.preventDefault();const category=$('incident-category').value,description=$('incident-description').value.trim();
