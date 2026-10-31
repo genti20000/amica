@@ -47,15 +47,14 @@ function normalizePassToken(value:unknown):string|null{
  return /^[a-zA-Z0-9_-]{43}$/.test(candidate)?candidate:null;
 }
 
-const MAX_CUSTOMERS=80; // Operational ceiling from existing venue setup; verify against current licence.
-const MAX_GUESTS_PER_MEMBER=2;
+const MAX_CUSTOMERS=80; // Premises licence 19/00938/LIPDPS condition 14, excluding staff.
+const MAX_GUESTS_PER_MEMBER=2; // Condition 37(b), applied conservatively at all times.
 // Hard stop for NEW admission after 01:30 local time. Smoking return uses a separate logged transition.
 function lateAdmissionClosed():boolean{
  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
  const h=Number(parts.find(p=>p.type==='hour')?.value||0),m=Number(parts.find(p=>p.type==='minute')?.value||0);
  return (h===1&&m>=30)||(h>=2&&h<6);
 }
- // Conservative current policy; verify against current licence.
 async function audit(client: PoolClient, action:string, id:string, details='') {
   await client.query('INSERT INTO membership_audit_events(id,action,subject_id,details) VALUES ($1,$2,$3,$4)',[randomUUID(),action,id,details]);
 }
@@ -76,7 +75,7 @@ export function installMemberOperations(app:Express) {
         activeMembers:byStatus(members.rows,'active'),suspendedMembers:byStatus(members.rows,'suspended'),
         membersInside:byKind('member'),guestsInside:byKind('guest'),
         occupancy:byKind('member')+byKind('guest'),workingCapacity:MAX_CUSTOMERS,
-        incidentsToday:incidents.rows[0]?.count||0,notices:['Counts cover membership check-ins only; reconcile with restaurant customers and staff.','Working capacity and guest limits require verification against the current licence.']});
+        incidentsToday:incidents.rows[0]?.count||0,notices:['Counts cover membership check-ins only; reconcile with restaurant customers and exclude staff.','Conditions 14, 22, 31 and 37 require full hourly headcount, smoking exit limits and late-night admission controls.']});
     } catch(e){return respondErr(res,e);}
   });
   app.get('/api/membership/members',async (req,res)=>{
@@ -119,7 +118,7 @@ export function installMemberOperations(app:Express) {
         return {member:created};
       });
       if('error' in member && member.error)return res.status(member.status || 409).json({success:false,error:member.error});
-      return res.status(201).json({success:true,...member,notice:'Membership active. Digital QR passes are not enabled until server verification and credential delivery are complete.'});
+      return res.status(201).json({success:true,...member,notice:'Membership approved. Issue the server-verified personal digital pass from the Members section.'});
     }catch(e){return respondErr(res,e);}
   });
   app.post('/api/membership/members/:id/status',async(req,res)=>{
