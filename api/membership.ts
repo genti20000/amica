@@ -61,7 +61,7 @@ export default async function membership(req: Request, res: Response) {
       const from=process.env.FROM_EMAIL || 'AMICA SOHO <noreply@amicasoho.london>';
       const subject='AMICA SOHO · New membership application · '+name;
       const text='Membership application received\n\nApplicant: '+name+'\nContact: '+contact+' ('+method+')' +
-        '\nReference: '+id+'\nReceived: '+now.toISOString() +
+        '\nHospitality role/employer: '+hospitalityRole+'\nReference: '+id+'\nReceived: '+now.toISOString() +
         '\nClub Rules acknowledged: Yes\n18+ confirmed: Yes\nPrivacy notice acknowledged: Yes\nStatus: PENDING REVIEW' +
         '\n\nThis application does not confer membership or permission to enter.';
       try {
