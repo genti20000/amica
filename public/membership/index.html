@@ -97,6 +97,11 @@
           <input id="contactValue" name="contactValue" type="email" placeholder="Enter your email address" autocomplete="email" maxlength="160" required/>
         </div>
       </div>
+      <div class="field">
+        <label for="hospitalityRole">HOSPITALITY ROLE / EMPLOYER *</label>
+        <input id="hospitalityRole" name="hospitalityRole" type="text" placeholder="e.g. Bar staff · AMICA / Your employer" autocomplete="organization-title" maxlength="160" required/>
+        <div style="font-size:11px;line-height:1.6;color:#ddc29e;margin-top:8px">Membership is available only to those working in hospitality at the time of application. Eligibility is checked by management.</div>
+      </div>
       <div class="checks">
         <label class="check-label">
           <input id="acceptRules" type="checkbox" required/>
@@ -183,6 +188,7 @@
        fullName:document.getElementById('fullName').value.trim(),
        contactMethod:method,
        contactValue:contact.value.trim(),
+       hospitalityRole:document.getElementById('hospitalityRole').value.trim(),
        acceptRules:document.getElementById('acceptRules').checked,
        confirmAdult:document.getElementById('confirmAdult').checked,
        acceptPrivacy:document.getElementById('acceptPrivacy').checked,
