@@ -164,7 +164,7 @@
    feedback.className='feedback';
  }
  for(const pill of document.querySelectorAll('.method')) pill.addEventListener('click',()=>selectMethod(pill.dataset.method));
- const openRules=()=>{modal.classList.add('show');modal.setAttribute('aria-hidden','false');rulesClose.focus()};
+ const openRules=(event)=>{event?.preventDefault();event?.stopPropagation();modal.classList.add('show');modal.setAttribute('aria-hidden','false');rulesClose.focus()};
  const closeRules=()=>{modal.classList.remove('show');modal.setAttribute('aria-hidden','true');rulesTrigger.focus()};
  rulesTrigger.addEventListener('click',openRules);
  rulesClose.addEventListener('click',closeRules);
