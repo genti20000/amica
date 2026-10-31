@@ -1,6 +1,6 @@
 import type { Express, Response } from 'express';
 import type { PoolClient } from 'pg';
-import { randomUUID, randomBytes, createHash } from 'node:crypto';
+import { randomUUID, randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { membershipDb as db, membershipTransaction as transaction, requireMembershipDatabase } from './membershipDb.js';
 
 // These routes are mounted AFTER the signed HTTP-only admin session middleware.
@@ -16,6 +16,10 @@ async function ensureOps() {
     await db.query("CREATE TABLE IF NOT EXISTS membership_audit_events (id uuid PRIMARY KEY, action varchar(60) NOT NULL, subject_id varchar(64), details varchar(500) NOT NULL DEFAULT '', occurred_at timestamptz NOT NULL DEFAULT now())");
     await db.query("CREATE TABLE IF NOT EXISTS membership_pass_credentials (id uuid PRIMARY KEY, member_id uuid NOT NULL UNIQUE REFERENCES membership_members(id), token_hash varchar(64) NOT NULL UNIQUE, issued_at timestamptz NOT NULL DEFAULT now(), expires_at timestamptz NOT NULL, revoked_at timestamptz, last_verified_at timestamptz)");
     await db.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS hospitality_role varchar(160)');
+    await db.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS verified_original_applied_at timestamptz');
+    await db.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS original_evidence_reference varchar(300)');
+    await db.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS original_verification_reason varchar(600)');
+    await db.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS original_verified_at timestamptz');
     await db.query('ALTER TABLE public.membership_attendance ADD COLUMN IF NOT EXISTS smoking_started_at timestamptz');
     await db.query("CREATE TABLE IF NOT EXISTS membership_capacity_log (id uuid PRIMARY KEY, hour_start timestamptz NOT NULL, recorded_at timestamptz NOT NULL DEFAULT now(), customers_inside integer NOT NULL CHECK(customers_inside BETWEEN 0 AND 80), member_count integer NOT NULL, guest_count integer NOT NULL, notes varchar(500) NOT NULL DEFAULT '', UNIQUE(hour_start))");
     for (const table of ['membership_applications','membership_members','membership_attendance','membership_incident_logs','membership_audit_events','membership_pass_credentials','membership_capacity_log']) {
@@ -91,6 +95,54 @@ export function installMemberOperations(app:Express) {
       return res.json({success:true,members:rows.rows});
     }catch(e){return respondErr(res,e);}
   });
+
+  // A manager may DOCUMENT a genuine earlier paper/offline application, never bypass waiting.
+  // Requires the primary manager password, two pieces of documentary context and immutable audit.
+  app.post('/api/membership/applications/:id/verify-original-date',async(req,res)=>{
+    const id=clean(req.params.id,64);
+    const dateText=clean(req.body?.originalAppliedAt,40);
+    const evidence=clean(req.body?.evidenceReference,300);
+    const reason=clean(req.body?.reason,600);
+    const managerPassword=typeof req.body?.managerPassword==='string'?req.body.managerPassword:'';
+    const managerSecret=process.env.ADMIN_PASSWORD||'';
+    if(!idValid(id)||!managerSecret||!managerPassword||!dateText||evidence.length<12||reason.length<20||
+       req.body?.confirmEvidence!==true||req.body?.confirmNoBypass!==true)
+      return res.status(400).json({success:false,error:'Manager authorisation, original application evidence and confirmation that no waiting time is being bypassed are required.'});
+    const provided=Buffer.from(managerPassword),expected=Buffer.from(managerSecret);
+    if(provided.length!==expected.length||!timingSafeEqual(provided,expected))
+      return res.status(403).json({success:false,error:'Primary management authorisation failed.'});
+    const original=new Date(dateText);
+    if(Number.isNaN(original.getTime()))
+      return res.status(400).json({success:false,error:'Invalid original application date.'});
+    const now=Date.now();
+    if(original.getTime()>now-48*3600000)
+      return res.status(409).json({success:false,error:'A genuine 48-hour waiting period has not elapsed. An earlier date cannot be used to bypass this requirement.'});
+    if(original.getTime()<now-366*86400000)
+      return res.status(400).json({success:false,error:'Historical applications older than one year require separate documented manual review.'});
+    try{
+      await ensureOps();
+      const outcome=await transaction(async client=>{
+        await client.query('SELECT pg_advisory_xact_lock(230042)');
+        const app=(await client.query(
+          "SELECT id,created_at,status,verified_original_applied_at FROM membership_applications WHERE id=$1 FOR UPDATE",[id])).rows[0];
+        if(!app)return {error:'Application not found.',status:404};
+        if(!['pending','reviewed'].includes(app.status))
+          return {error:'An already decided application cannot have its date adjusted.',status:409};
+        if(original.getTime()>=new Date(app.created_at).getTime())
+          return {error:'Use the recorded application date unless you have evidence of an earlier application.',status:400};
+        if(app.verified_original_applied_at)
+          return {error:'An earlier original application has already been verified. Contact the licensing manager to investigate a correction.',status:409};
+        const result=(await client.query(
+          'UPDATE membership_applications SET verified_original_applied_at=$1,original_evidence_reference=$2,original_verification_reason=$3,original_verified_at=now(),updated_at=now() WHERE id=$4 RETURNING id,created_at,verified_original_applied_at,original_verified_at',
+          [original,evidence,reason,id])).rows[0];
+        await audit(client,'ORIGINAL_APPLICATION_VERIFIED',id,
+          'Earlier genuine application documented; evidence '+evidence+'; reason '+reason);
+        return {application:result};
+      });
+      if('error'in outcome)return res.status(outcome.status).json({success:false,error:outcome.error});
+      return res.json({success:true,...outcome,notice:'Earlier documented application recorded. Membership remains subject to the full elapsed 48-hour waiting period, eligibility and manager approval.'});
+    }catch(e){return respondErr(res,e);}
+  });
   app.post('/api/membership/members/approve',async(req,res)=>{
     const applicationId=clean(req.body?.applicationId,64);
     if(!idValid(applicationId)||req.body?.confirmAge!==true||req.body?.confirmEligibility!==true||req.body?.confirmHospitality!==true||req.body?.confirmLicence!==true)
@@ -104,8 +156,11 @@ export function installMemberOperations(app:Express) {
         if(a.status==='declined')return {error:'Declined application cannot be activated.',status:409};
         if(!a.is_adult||!a.rules_accepted_at)return {error:'Required application declarations are missing.',status:409};
         if(!a.hospitality_role||String(a.hospitality_role).trim().length<3)return {error:'Applicant hospitality occupation or employer must be recorded and verified before approval.',status:409};
-        const ageHours=(Date.now()-new Date(a.created_at).getTime())/3600000;
-        if(ageHours<48)return {error:'The current membership policy requires at least 48 hours after application before activation.',status:409};
+        // The 48-hour clock can only start at a documented earlier application date,
+        // independently verified by a manager. The original online created_at remains immutable.
+        const recordedStart=a.verified_original_applied_at||a.created_at;
+        const ageHours=(Date.now()-new Date(recordedStart).getTime())/3600000;
+        if(ageHours<48)return {error:'At least 48 full hours must elapse from the proven original application. No early activation is permitted under the premises licence.',status:409};
         const prior=await client.query('SELECT id FROM membership_members WHERE application_id=$1',[applicationId]);
         if(prior.rowCount)return {error:'Application already has a member record.',status:409};
         const memberId=randomUUID();
