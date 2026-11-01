@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { createHash } from 'node:crypto';
-import { membershipDb as db, requireMembershipDatabase } from '../server/membershipDb.js';
+import { lookupPass } from '../server/membershipFirestore.js';
 
 // Public credential view: possession of an unguessable 256-bit token is required.
 // All staff verification and check-ins remain separately behind admin authentication.
@@ -13,12 +13,8 @@ export default async function viewMembershipPass(req: Request,res:Response){
  if(typeof token!=='string'||!/^[a-zA-Z0-9_-]{43}$/.test(token))
   return res.status(400).json({success:false,error:'Invalid credential.'});
  try{
-  requireMembershipDatabase();
   const hash=createHash('sha256').update(token,'utf8').digest('hex');
-  const result=await db.query(
-   'SELECT m.full_name,m.member_number,m.status,p.expires_at,p.revoked_at FROM membership_pass_credentials p '+
-   'JOIN membership_members m ON m.id=p.member_id WHERE p.token_hash=$1 LIMIT 1',[hash]);
-  const row=result.rows[0];
+  const row=await lookupPass(hash);
   if(!row||row.revoked_at||row.status!=='active'||new Date(row.expires_at).getTime()<Date.now())
    return res.status(403).json({success:false,error:'This pass is no longer valid. Please contact AMICA management.'});
   return res.json({success:true,member:{fullName:row.full_name,memberNumber:row.member_number},

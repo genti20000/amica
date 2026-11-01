@@ -25,7 +25,7 @@
 </style></head><body>
 <header class="topbar"><div class="topinside"><a class="brand" href="/membership">AMICA SOHO</a><div class="toplinks"><span class="smallcaps">MEMBERSHIP OPERATIONS</span><a href="/membership">Registration ↗</a><a href="https://www.amicasoho.com/">Main website ↗</a></div></div></header>
 <main class="page">
-<div class="hero"><div><div class="smallcaps">23 FRITH STREET · MANAGEMENT</div><h1>Membership control</h1><p class="sub">One secure register for applications, approved members, arrivals, guests and incidents.</p></div><div class="hero-actions hidden" id="authenticated-actions"><button class="btn ghost" id="refresh" type="button">Refresh</button><button class="btn" id="logout" type="button">Sign out</button></div></div>
+<div class="hero"><div><div class="smallcaps">23 FRITH STREET · MANAGEMENT</div><h1>Membership control</h1><p class="sub">One secure register for applications, approved members, arrivals, guests and incidents.</p></div><div class="hero-actions hidden" id="authenticated-actions"><button class="btn ghost" id="superadmin-signin" type="button">Joni · Super admin</button><span id="superadmin-state" class="sub"></span><button class="btn ghost" id="refresh" type="button">Refresh</button><button class="btn" id="logout" type="button">Sign out</button></div></div>
 <section class="panel login" id="login"><div class="smallcaps">STAFF AUTHORISATION</div><h2>Admin sign-in</h2><p class="sub">Sign in with the existing AMICA bookings administration password. All personal information and operational records remain behind this secure session.</p><form id="login-form"><div class="loginrow"><input class="input" id="password" type="password" required autocomplete="current-password" placeholder="Admin password" aria-label="Admin password"><button class="btn primary" type="submit">SIGN IN</button></div></form><p class="message error" id="login-message" role="status"></p></section>
 <div id="app" class="hidden">
 <div class="quick-actions" aria-label="Frequently used membership tasks">
@@ -100,7 +100,7 @@
 </div>
 <footer class="footer">AMICA SOHO · Restricted member management · 23 Frith Street, Soho · <a href="mailto:info@amicasoho.com">info@amicasoho.com</a></footer>
 </main>
-<div class="dialog" id="approval-modal" role="dialog" aria-modal="true" aria-labelledby="approval-title" aria-hidden="true"><div class="dialogbox"><div class="smallcaps">VERIFY BEFORE ACTIVATION</div><h2 id="approval-title">Approve membership</h2><p class="sub" id="approval-name"></p><div class="notice">Membership can be activated only after at least 48 hours under the current operating policy. Do not approve before confirming the premises licence and applicant eligibility.</div>
+<div class="dialog" id="approval-modal" role="dialog" aria-modal="true" aria-labelledby="approval-title" aria-hidden="true"><div class="dialogbox"><div class="smallcaps">VERIFY BEFORE ACTIVATION</div><h2 id="approval-title">Approve membership</h2><p class="sub" id="approval-name"></p><div class="notice" id="approval-policy">Wait at least 48 hours and verify applicant eligibility before approval.</div>
 <label class="approvalcheck"><input type="checkbox" id="verify-age"><span>I have checked government-issued ID and verified this applicant is 18 or older.</span></label>
 <label class="approvalcheck"><input type="checkbox" id="verify-eligibility"><span>I have reviewed eligibility under the current AMICA membership rules.</span></label>
 <label class="approvalcheck"><input type="checkbox" id="verify-hospitality"><span>I have verified the applicant was working in the hospitality industry when they applied, in accordance with licence condition 37(a).</span></label>
@@ -134,7 +134,7 @@
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
-let tab='overview',pendingApproval=null,pendingEarlierApplication=null;
+let tab='overview',pendingApproval=null,pendingEarlierApplication=null,superAdmin=false,pendingOverride=false;
 let data={overview:null,applications:[],members:[],attendance:[],incidents:[],activity:[],capacity:[],proprietor:[],rules:[]};
 const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=String(txt);return x};
 const date=x=>x?new Date(x).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}):'—';
@@ -145,7 +145,7 @@ async function api(path,method='GET',body){
  if(!r.ok||!j.success)throw new Error(j.error||'Request could not be completed.');
  return j;
 }
-function showLogin(){ $('login').classList.remove('hidden');$('app').classList.add('hidden');$('authenticated-actions').classList.add('hidden');}
+function showLogin(){superAdmin=false;pendingOverride=false; $('login').classList.remove('hidden');$('app').classList.add('hidden');$('authenticated-actions').classList.add('hidden');}
 function showApp(){ $('login').classList.add('hidden');$('app').classList.remove('hidden');$('authenticated-actions').classList.remove('hidden');}
 const nav=(t)=>{tab=t;for(const b of document.querySelectorAll('[data-tab]'))b.classList.toggle('active',b.dataset.tab===t);
  for(const section of document.querySelectorAll('section[id^="view-"]'))section.classList.toggle('hidden',section.id!=='view-'+t);
@@ -236,6 +236,7 @@ function renderApplications(){
      approve.disabled=remaining>0;
      approve.title=remaining>0?'Cannot approve before the full 48-hour waiting period.':'Review identity, hospitality and club rules before approval.';
      row.append(approve);
+     if(remaining>0&&superAdmin)row.append(action('Super-admin · override 48 hours',()=>openApproval(a,true),'btn sm danger'));
      if(remaining>0&&!a.verified_original_applied_at)row.append(action('Record prior paper application',()=>openPriorVerification(a),'btn sm'));
      row.append(action('Mark reviewed',()=>changeApplication(a.id,'reviewed')));
      row.append(action('Decline',()=>changeApplication(a.id,'declined'),'btn sm danger'));
@@ -260,7 +261,7 @@ function closePriorVerification(){
  $('prior-form').reset();
  $('prior-date-modal').classList.remove('open');$('prior-date-modal').setAttribute('aria-hidden','true');
 }
-function openApproval(a){pendingApproval=a;$('approval-name').textContent=a.full_name+' · Applied '+date(a.created_at);
+function openApproval(a,override=false){pendingApproval=a;pendingOverride=override; $('approval-title').textContent=override?'Super-admin waiting-period override':'Approve membership';$('approval-policy').textContent=override?'This approves membership before 48 hours have elapsed and conflicts with the stated licence waiting period. Other eligibility and admission checks still apply.':'Wait at least 48 hours and verify applicant eligibility before approval.';$('approval-name').textContent=a.full_name+' · Applied '+date(a.created_at);
  for(const id of ['verify-age','verify-eligibility','verify-hospitality','verify-licence'])$(id).checked=false;
  $('approval-message').textContent='';$('approval-modal').classList.add('open');$('approval-modal').setAttribute('aria-hidden','false');$('verify-age').focus();
 }
@@ -374,11 +375,26 @@ $('login-form').addEventListener('submit',async e=>{
   const r=await fetch('/api/admin/login',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
   $('password').value='';const j=await r.json().catch(()=>({}));
   if(!r.ok||!j.success)throw new Error(j.error||'Unable to sign in.');
-  await refresh('all');
+  await refresh('all');await refreshIdentity();
  }catch(e){$('login-message').textContent=e.message;showLogin()}
 });
 $('logout').addEventListener('click',async()=>{await fetch('/api/admin/logout',{method:'POST',credentials:'same-origin'}).catch(()=>{});showLogin();msg('Signed out.');});
-$('refresh').addEventListener('click',()=>refresh('all'));
+async function refreshIdentity(){
+ const identity=await api('identity');superAdmin=identity.superAdmin===true;
+ $('superadmin-state').textContent=superAdmin?'Super admin verified · 30-minute session':'';
+ $('superadmin-signin').textContent=superAdmin?'Lock super admin':'Joni · Super admin';renderApplications();
+}
+$('superadmin-signin').addEventListener('click',async()=>{
+ const button=$('superadmin-signin');button.disabled=true;
+ try{
+  if(superAdmin){await api('superadmin/logout','POST',{});await refreshIdentity();return}
+  const challenge=await api('superadmin/challenge','POST',{});
+  const code=prompt('Enter the six-digit code sent to members@amicasoho.com. Never share this code.');
+  if(code===null)return;
+  await api('superadmin/verify','POST',{challenge:challenge.challenge,code:code.trim()});await refreshIdentity();msg('Super-admin session verified.');
+ }catch(e){msg(e.message,true)}finally{button.disabled=false}
+});
+$('refresh').addEventListener('click',()=>refresh('all').then(refreshIdentity));
 for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click',()=>nav(b.dataset.tab));
 for(const b of document.querySelectorAll('[data-jump]'))b.addEventListener('click',()=>nav(b.dataset.jump));
 for(const b of document.querySelectorAll('[data-reload]'))b.addEventListener('click',()=>refresh(b.dataset.reload));
@@ -510,13 +526,13 @@ $('confirm-approval').addEventListener('click',async()=>{
  const confirmAge=$('verify-age').checked,confirmEligibility=$('verify-eligibility').checked,confirmHospitality=$('verify-hospitality').checked,confirmLicence=$('verify-licence').checked;
  if(!confirmAge||!confirmEligibility||!confirmHospitality||!confirmLicence){$('approval-message').textContent='Complete all checks before approval.';return}
  $('confirm-approval').disabled=true;
- try{const j=await api('members/approve','POST',{applicationId:a.id,confirmAge,confirmEligibility,confirmHospitality,confirmLicence});
+ try{const j=await api('members/approve','POST',{applicationId:a.id,confirmAge,confirmEligibility,confirmHospitality,confirmLicence,superAdminOverride:pendingOverride});
  closeApproval();await refresh('all');nav('members');msg('Member '+j.member.member_number+' approved and added to the live member register.')}
  catch(e){$('approval-message').textContent=e.message}finally{$('confirm-approval').disabled=false}
 });
 $('cancel-approval').addEventListener('click',closeApproval);
 $('approval-modal').addEventListener('click',e=>{if(e.target===$('approval-modal'))closeApproval()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('approval-modal').classList.contains('open'))closeApproval()});
-refresh('all').then(()=>{const t=location.hash.slice(1);if(['overview','applications','members','door','ledger','proprietor','incidents','rules','audit'].includes(t))nav(t)}).catch(()=>{});
+refresh('all').then(refreshIdentity).then(()=>{const t=location.hash.slice(1);if(['overview','applications','members','door','ledger','proprietor','incidents','rules','audit'].includes(t))nav(t)}).catch(()=>{});
 })();
 </script></body></html>

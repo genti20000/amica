@@ -1,27 +1,10 @@
 import type { Request, Response } from 'express';
-import { randomUUID } from 'node:crypto';
-import { membershipDb as db, requireMembershipDatabase } from '../server/membershipDb.js';
+import { randomUUID, createHash } from 'node:crypto';
+import { submitApplication } from '../server/membershipFirestore.js';
 
 const EMAIL = 'info@amicasoho.com';
 const clean = (v: unknown, max: number) => typeof v === 'string' ? v.trim().slice(0, max) : '';
 const escapeHtml = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-
-async function ensureTable() {
-  requireMembershipDatabase();
-  await db.query(
-    "CREATE TABLE IF NOT EXISTS membership_applications (" +
-    "id uuid PRIMARY KEY, full_name varchar(120) NOT NULL, contact_method varchar(12) NOT NULL, " +
-    "contact_value varchar(160) NOT NULL, rules_accepted_at timestamptz NOT NULL, " +
-    "is_adult boolean NOT NULL, status varchar(24) NOT NULL DEFAULT 'pending', " +
-    "created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), " +
-    "reviewed_at timestamptz, review_note varchar(600))"
-  );
-  // Database-backed web submissions use the restricted server connection.
-  // Never expose application records to Supabase public API roles.
-  await db.query('ALTER TABLE public.membership_applications ENABLE ROW LEVEL SECURITY');
-  await db.query('REVOKE ALL ON TABLE public.membership_applications FROM anon, authenticated');
-  await db.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS hospitality_role varchar(160)');
-}
 
 export default async function membership(req: Request, res: Response) {
   res.setHeader('Cache-Control','no-store');
@@ -45,18 +28,13 @@ export default async function membership(req: Request, res: Response) {
       try { origin=new URL(req.headers.origin); } catch { return res.status(403).json({success:false,error:'Invalid request origin.'}); }
       if(origin.host !== req.headers.host) return res.status(403).json({success:false,error:'Invalid request origin.'});
     }
-    await ensureTable();
     const id=randomUUID(), now=new Date();
-    const existing=await db.query(
-      "SELECT id FROM membership_applications WHERE contact_method=$1 AND lower(contact_value)=lower($2) AND created_at > now() - interval '12 hours' LIMIT 1",
-      [method,contact]
-    );
-    if(existing.rows.length) return res.json({success:true,message:'Your application has been received for review.'});
-    await db.query(
-      "INSERT INTO membership_applications (id,full_name,contact_method,contact_value,hospitality_role,rules_accepted_at,is_adult,status,created_at,updated_at) " +
-      "VALUES ($1,$2,$3,$4,$6,$5,true,'pending',$5,$5)",
-      [id,name,method,contact,now,hospitalityRole]
-    );
+    const saved=await submitApplication({id,full_name:name,contact_method:method,contact_value:contact,
+      hospitality_role:hospitalityRole,rules_accepted_at:now.toISOString(),privacy_accepted_at:now.toISOString(),
+      is_adult:true,status:'pending',created_at:now.toISOString(),updated_at:now.toISOString(),
+      reviewed_at:null,review_note:null,verified_original_applied_at:null},
+      createHash('sha256').update(method+':'+contact.toLowerCase()).digest('hex'));
+    if(!saved)return res.json({success:true,message:'Your application has been received for review.'});
     // Notification failure must not lose an already-saved application.
     if(process.env.RESEND_API_KEY) {
       const from=process.env.FROM_EMAIL || 'AMICA SOHO <noreply@amicasoho.london>';

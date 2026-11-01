@@ -1,8 +1,7 @@
 import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto';
 import express from 'express';
-import { installMemberOperations } from './server/membershipOps.js';
-import { installMemberExtraOperations } from './server/membershipExtras.js';
-import { membershipDb, requireMembershipDatabase } from './server/membershipDb.js';
+import { installFirebaseMembership } from './server/membershipFirebaseRoutes.js';
+import { revokeSuperAdmin } from './server/membershipIdentity.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {
@@ -35,7 +34,11 @@ export const app = express();
 async function configureServer() {
 
   app.use(express.json({ limit: '32kb' }));
-  app.post('/api/admin/logout', (req, res) => { res.clearCookie('amica_admin', {path:'/api'}); res.json({success:true}); });
+  app.post('/api/admin/logout', async (req, res) => {
+    res.clearCookie('amica_admin', {path:'/api'}); res.clearCookie('amica_superadmin', {path:'/api'});
+    try { await revokeSuperAdmin(req); res.json({success:true}); }
+    catch { res.status(503).json({success:false,error:'Cookies cleared; server session revocation could not be confirmed.'}); }
+  });
 
   // Admin authorization is enforced on the server, independent of the preview lock.
   const adminPasswords = [process.env.ADMIN_PASSWORD, process.env.ADMIN_PASSWORD_EXTRA]
@@ -63,8 +66,9 @@ async function configureServer() {
     const publicRead = req.method === 'GET' && ['/health', '/system/settings', '/system/blocked-dates'].includes(req.path);
     if (publicRead || (req.method === 'POST' && req.path === '/bookings')) return next();
     const cookie = (req.headers.cookie || '').split(';').map(v => v.trim()).find(v => v.startsWith('amica_admin='))?.slice(12) || '';
-    const [expires, signature] = cookie.split('.');
-    if (adminPasswords.length === 0 || !expires || !signature || Number(expires) < Date.now() || !equal(signature, sign(expires))) {
+    const parts = cookie.split('.');
+    const [expires, signature] = parts;
+    if (parts.length !== 2 || !/^\d+$/.test(expires || '') || adminPasswords.length === 0 || !expires || !signature || Number(expires) < Date.now() || !equal(signature, sign(expires))) {
       return res.status(401).json({ success: false, error: 'Admin sign-in is required.' });
     }
     if (!['GET', 'HEAD'].includes(req.method) && req.headers.origin) {
@@ -82,75 +86,8 @@ async function configureServer() {
   });
 
 
-  // All membership operations inherit the server-side admin auth above.
-  installMemberOperations(app);
-  installMemberExtraOperations(app);
-
-  // Membership review is intentionally separate from booking records.
-  // This route is behind the existing signed, httpOnly admin session middleware above.
-  const initMemberApplications = async () => {
-    requireMembershipDatabase();
-    await membershipDb.query(
-    "CREATE TABLE IF NOT EXISTS membership_applications (" +
-    "id uuid PRIMARY KEY, full_name varchar(120) NOT NULL, contact_method varchar(12) NOT NULL," +
-    " contact_value varchar(160) NOT NULL, rules_accepted_at timestamptz NOT NULL," +
-    " is_adult boolean NOT NULL, status varchar(24) NOT NULL DEFAULT 'pending'," +
-    " created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()," +
-    " reviewed_at timestamptz, review_note varchar(600))"
-    );
-    await membershipDb.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS hospitality_role varchar(160)');
-    await membershipDb.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS verified_original_applied_at timestamptz');
-    await membershipDb.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS original_evidence_reference varchar(300)');
-    await membershipDb.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS original_verification_reason varchar(600)');
-    await membershipDb.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS original_verified_at timestamptz');
-    await membershipDb.query('ALTER TABLE public.membership_applications ENABLE ROW LEVEL SECURITY');
-    await membershipDb.query('REVOKE ALL ON TABLE public.membership_applications FROM anon, authenticated');
-  };
-  // Licence 19/00938/LIPDPS condition 37(a): all members must work in hospitality on application.
-  app.post('/api/membership/applications/:id/hospitality', async (req,res) => {
-    const id=String(req.params.id||''),role=typeof req.body?.hospitalityRole==='string'?req.body.hospitalityRole.trim().slice(0,160):'';
-    if(!/^[a-f0-9-]{36}$/i.test(id)||role.length<3)
-      return res.status(400).json({success:false,error:'Provide the applicant hospitality role or employer.'});
-    try{
-      requireMembershipDatabase();
-      await membershipDb.query('ALTER TABLE public.membership_applications ADD COLUMN IF NOT EXISTS hospitality_role varchar(160)');
-      const out=await membershipDb.query("UPDATE membership_applications SET hospitality_role=$1,updated_at=now() WHERE id=$2 AND status IN ('pending','reviewed') RETURNING id,hospitality_role",[role,id]);
-      return out.rows.length?res.json({success:true,application:out.rows[0]}):res.status(409).json({success:false,error:'Application already finalised or not found.'});
-    }catch(e){console.error('Hospitality verification update failed:',e instanceof Error?e.message:'Unknown');return res.status(503).json({success:false,error:'Unable to update application.'});}
-  });
-  app.get('/api/membership/applications', async (_req, res) => {
-    try {
-      await initMemberApplications();
-      const rows = await membershipDb.query(
-        "SELECT id,full_name,contact_method,contact_value,hospitality_role,is_adult,rules_accepted_at,status,created_at,reviewed_at,review_note,verified_original_applied_at,original_evidence_reference,original_verification_reason,original_verified_at " +
-        "FROM membership_applications ORDER BY created_at DESC LIMIT 200"
-      );
-      return res.json({ success:true, applications:rows.rows });
-    } catch (error) {
-      console.error('Member application list unavailable:', error instanceof Error ? error.message : 'Unknown');
-      return res.status(503).json({success:false,error:'Membership applications unavailable.'});
-    }
-  });
-  app.post('/api/membership/applications/:id/review', async (req, res) => {
-    const id=String(req.params.id||'');
-    const status=String(req.body?.status||'');
-    const reviewNote=typeof req.body?.note==='string'?req.body.note.trim().slice(0,600):'';
-    if(!/^[a-f0-9-]{36}$/i.test(id) || !['pending','reviewed','declined'].includes(status))
-      return res.status(400).json({success:false,error:'Invalid application or review status.'});
-    try {
-      requireMembershipDatabase();
-      const result=await membershipDb.query(
-        "UPDATE membership_applications SET status=$1,review_note=$2,reviewed_at=now(),updated_at=now() WHERE id=$3 AND status IN ('pending','reviewed') RETURNING id,status",
-        [status,reviewNote,id]
-      );
-      if(!result.rows.length)return res.status(409).json({success:false,error:'Application not found or already finalised.'});
-      return res.json({success:true,application:result.rows[0],
-        notice:'A review status is not a membership pass or admission approval.'});
-    } catch(error){
-      console.error('Membership review error:',error instanceof Error?error.message:'Unknown');
-      return res.status(503).json({success:false,error:'Review could not be saved.'});
-    }
-  });
+  // Membership uses only the isolated Firebase project, behind the existing staff session.
+  installFirebaseMembership(app);
 
   // =========================================================================
   // API ROUTES
