@@ -131,12 +131,35 @@
 <input class="private-link" type="text" id="private-link" readonly aria-label="Private pass link">
 <div class="actions"><button type="button" id="copy-pass-link" class="btn primary">Copy link</button><button type="button" id="close-pass-link" class="btn">Close</button></div>
 <p class="sub">The link will not be shown again. If lost, issue another pass to rotate the credential.</p></div></div>
+<div class="dialog" id="staff-question" role="dialog" aria-modal="true" aria-labelledby="staff-question-title" aria-hidden="true"><form class="dialogbox" id="staff-question-form"><div class="smallcaps">AMICA MEMBERSHIP</div><h2 id="staff-question-title">Confirm action</h2><p class="sub" id="staff-question-message"></p><label id="staff-question-label" class="field">Your response<input class="input" id="staff-question-value" type="text" autocomplete="off"></label><div class="actions"><button class="btn primary" type="submit" id="staff-question-submit">Continue</button><button class="btn" type="button" id="staff-question-cancel">Cancel</button></div></form></div>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 let tab='overview',pendingApproval=null,pendingEarlierApplication=null,superAdmin=false,pendingOverride=false;
 let data={overview:null,applications:[],members:[],attendance:[],incidents:[],activity:[],capacity:[],proprietor:[],rules:[]};
 const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=String(txt);return x};
+let pendingQuestion=null;
+function askQuestion(message,{confirmation=false,value='',code=false}={}){
+ if(pendingQuestion)return Promise.reject(new Error('Complete the open action first.'));
+ const previous=document.activeElement;
+ return new Promise(resolve=>{
+  pendingQuestion=result=>{pendingQuestion=null;$('staff-question').classList.remove('open');$('staff-question').setAttribute('aria-hidden','true');$('staff-question-value').value='';previous?.focus();resolve(result)};
+  $('staff-question-title').textContent=confirmation?'Confirm action':code?'Verify super-admin sign-in':'Enter details';
+  $('staff-question-message').textContent=message;
+  $('staff-question-label').classList.toggle('hidden',confirmation);
+  const input=$('staff-question-value');input.value=value;input.required=!confirmation;input.maxLength=code?6:160;input.inputMode=code?'numeric':'text';input.autocomplete=code?'one-time-code':'off';
+  if(code)input.pattern='[0-9]{6}';else input.removeAttribute('pattern');
+  $('staff-question-submit').textContent=confirmation?'Confirm':code?'Verify code':'Save';
+  $('staff-question').classList.add('open');$('staff-question').setAttribute('aria-hidden','false');
+  (confirmation?$('staff-question-submit'):input).focus();
+ });
+}
+const askText=(message,value='',options={})=>askQuestion(message,{value,...options});
+const askConfirm=async message=>(await askQuestion(message,{confirmation:true}))===true;
+$('staff-question-form').addEventListener('submit',event=>{event.preventDefault();if(!pendingQuestion||!$('staff-question-form').reportValidity())return;pendingQuestion($('staff-question-label').classList.contains('hidden')?true:$('staff-question-value').value)});
+$('staff-question-cancel').addEventListener('click',()=>pendingQuestion?.(null));
+$('staff-question').addEventListener('click',event=>{if(event.target===$('staff-question'))pendingQuestion?.(null)});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&pendingQuestion){event.preventDefault();pendingQuestion(null)}});
 const date=x=>x?new Date(x).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}):'—';
 const msg=(text,error=false)=>{const x=$('status-message');x.textContent=text||'';x.className='message '+(error?'error':'good')};
 async function api(path,method='GET',body){
@@ -227,7 +250,7 @@ function renderApplications(){
    const row=el('div','actions');
    if(['pending','reviewed'].includes(a.status)){
      row.append(action('Edit hospitality role',async()=>{
-       const value=prompt('Hospitality role / employer for '+a.full_name+' (verify evidence before approval):',a.hospitality_role||'');
+       const value=await askText('Hospitality role / employer for '+a.full_name+' (verify evidence before approval):',a.hospitality_role||'');
        if(value===null)return;
        const role=value.trim();if(role.length<3){msg('Enter the applicant occupation or employer.',true);return}
        await api('applications/'+encodeURIComponent(a.id)+'/hospitality','POST',{hospitalityRole:role});await refresh('applications');
@@ -247,7 +270,7 @@ function renderApplications(){
  $('applications').append(cards);
 }
 async function changeApplication(id,status){
- if(status==='declined'&&!confirm('Decline this application?'))return;
+ if(status==='declined'&&!await askConfirm('Decline this application?'))return;
  await api('applications/'+encodeURIComponent(id)+'/review','POST',{status,note:''});await refresh('applications');
 }
 function openPriorVerification(a){
@@ -284,7 +307,7 @@ function renderMembers(){
  $('members').append(root);
 }
 async function issuePass(m){
- if(!confirm('Issue a new private digital pass for '+m.full_name+'? Any previously issued pass will stop working.'))return;
+ if(!await askConfirm('Issue a new private digital pass for '+m.full_name+'? Any previously issued pass will stop working.'))return;
  const j=await api('members/'+encodeURIComponent(m.id)+'/pass','POST',{});
  $('private-link').value=j.passUrl;
  $('pass-link-modal').classList.add('open');$('pass-link-modal').setAttribute('aria-hidden','false');
@@ -292,12 +315,12 @@ async function issuePass(m){
  msg(j.delivery==='sent'?'Digital pass issued and emailed to the registered member.':j.delivery==='failed'?'Pass issued, but email delivery failed. Copy the link and share privately.':'Digital pass issued. Copy the link and share privately with the named member.');
 }
 async function revokePass(m){
- if(!confirm('Revoke the current digital pass for '+m.full_name+'?'))return;
+ if(!await askConfirm('Revoke the current digital pass for '+m.full_name+'?'))return;
  await api('members/'+encodeURIComponent(m.id)+'/pass/revoke','POST',{});
  msg('Digital pass revoked. Existing QR links will no longer verify.');
 }
 async function changeMemberStatus(m,status){
- if(!confirm('Change '+m.member_number+' to '+status+'? This is recorded in the audit log.'))return;
+ if(!await askConfirm('Change '+m.member_number+' to '+status+'? This is recorded in the audit log.'))return;
  await api('members/'+encodeURIComponent(m.id)+'/status','POST',{status});await refresh('members');
 }
 function renderDoor(){
@@ -315,10 +338,10 @@ function renderDoor(){
  item.append(el('div','meta',a.smoking_started_at?'Temporarily outside smoking since '+date(a.smoking_started_at):'Inside premises'));
  item.append(action(a.smoking_started_at?'Record smoking re-entry':'Record smoking exit',async()=>{
     const op=a.smoking_started_at?'return':'leave';
-    if(!confirm(op==='return'?'Confirm this person has returned from a logged smoking break?':'Record a temporary smoking exit? No more than 10 people may be outside smoking.'))return;
+    if(!await askConfirm(op==='return'?'Confirm this person has returned from a logged smoking break?':'Record a temporary smoking exit? No more than 10 people may be outside smoking.'))return;
     await api('attendance/'+encodeURIComponent(a.id)+'/smoking','POST',{action:op});await refresh('door')
  },'btn sm'));
- item.append(action('Record exit',async()=>{if(!confirm('Record this person as exited?'))return;await api('attendance/'+encodeURIComponent(a.id)+'/check-out','POST',{});await refresh('door')},'btn sm'));
+ item.append(action('Record exit',async()=>{if(!await askConfirm('Record this person as exited?'))return;await api('attendance/'+encodeURIComponent(a.id)+'/check-out','POST',{});await refresh('door')},'btn sm'));
  stack.append(item)}
  $('inside').append(stack);
 }
@@ -345,7 +368,7 @@ function renderProprietor(){
     await api('proprietor-guests/'+encodeURIComponent(g.id)+'/smoking','POST',{action:g.smoking_started_at?'return':'leave'});
     await refresh('proprietor');},'btn sm'));
    row.append(action('Check out',async()=>{
-    if(!confirm('Confirm proprietor guest has left?'))return;
+    if(!await askConfirm('Confirm proprietor guest has left?'))return;
     await api('proprietor-guests/'+encodeURIComponent(g.id)+'/check-out','POST',{});await refresh('proprietor');},'btn sm danger'));
    c.append(row);
   }$('proprietor-guests').append(c);
@@ -389,7 +412,7 @@ $('superadmin-signin').addEventListener('click',async()=>{
  try{
   if(superAdmin){await api('superadmin/logout','POST',{});await refreshIdentity();return}
   const challenge=await api('superadmin/challenge','POST',{});
-  const code=prompt('Enter the six-digit code sent to members@amicasoho.com. Never share this code.');
+  const code=await askText('Enter the six-digit code sent to members@amicasoho.com. Never share this code.','',{code:true});
   if(code===null)return;
   await api('superadmin/verify','POST',{challenge:challenge.challenge,code:code.trim()});await refreshIdentity();msg('Super-admin session verified.');
  }catch(e){msg(e.message,true)}finally{button.disabled=false}
@@ -428,7 +451,7 @@ $('prior-date-modal').addEventListener('click',e=>{if(e.target===$('prior-date-m
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('prior-date-modal').classList.contains('open'))closePriorVerification()});
 $('proprietor-form').addEventListener('submit',async e=>{
  e.preventDefault();if(!$('proprietor-form').reportValidity())return;
- if(!confirm('Have you verified identity, authorised this entry and checked total venue occupancy?'))return;
+ if(!await askConfirm('Have you verified identity, authorised this entry and checked total venue occupancy?'))return;
  try{
   await api('proprietor-guests','POST',{fullName:$('proprietor-name').value.trim(),reason:$('proprietor-reason').value.trim(),authorisedBy:$('proprietor-manager').value.trim(),identityChecked:$('proprietor-id').checked});
   $('proprietor-form').reset();await refresh('proprietor');msg('Proprietor guest entry recorded.');
@@ -461,7 +484,7 @@ async function verifyPass(){
   root.append(el('p','sub','Confirm the pass holder is the named person before recording entry.'));
   root.append(action('Confirm identity & record entry',async()=>{
     if(!verifiedMember)return;
-    if(!confirm('Have you verified the physical ID of '+verifiedMember.fullName+'? Record member entry now?'))return;
+    if(!await askConfirm('Have you verified the physical ID of '+verifiedMember.fullName+'? Record member entry now?'))return;
     await api('attendance/check-in','POST',{memberId:verifiedMember.id,kind:'member'});
     $('scan-pass').value='';clearVerification();await refresh('door');msg('Verified member checked in successfully.');
   },'btn primary'));
@@ -508,7 +531,7 @@ $('check-in').addEventListener('click',async()=>{
  const id=$('arrival-member').value,kind=$('arrival-kind').value,name=$('arrival-guest').value.trim();
  if(!id){msg('Choose an approved member.',true);return}
  if(kind==='guest'&&!name){msg('Enter the named guest.',true);return}
- if(!confirm('Identity checked? Record '+(kind==='member'?'member arrival':'named guest arrival')+' now?'))return;
+ if(!await askConfirm('Identity checked? Record '+(kind==='member'?'member arrival':'named guest arrival')+' now?'))return;
  try{await api('attendance/check-in','POST',{memberId:id,kind,guestName:name});$('arrival-guest').value='';await refresh('door');msg('Entry recorded.')}catch(e){msg(e.message,true)}
 });
 $('save-capacity').addEventListener('click',async()=>{
