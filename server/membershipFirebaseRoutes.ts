@@ -2,6 +2,7 @@ import type { Express, Request, Response } from 'express';
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { atomic, list, read, lookupPass, instant, deny, MembershipError, hashId, type Unit } from './membershipFirestore.js';
 import { identityRoutes, isSuperAdmin } from './membershipIdentity.js';
+import { queueApprovalConfirmation, sendApprovalConfirmation } from './membershipApprovalEmail.js';
 type Row = Record<string, any>;
 const clean = (v: unknown, max = 160) => typeof v === 'string' ? v.trim().slice(0, max) : '';
 const id = (value: unknown) => { const result = clean(value, 64); if (!hashId.test(result)) deny('Invalid record ID.', 400); return result; };
@@ -73,11 +74,21 @@ export function installFirebaseMembership(app: Express) {
       if (!override && Date.now() - Date.parse(a.verified_original_applied_at || a.created_at) < 48 * 3600000) deny('At least 48 full hours must elapse before membership approval.');
       // The application itself is the uniqueness lock; simultaneous approvals cannot create duplicates.
       const memberId = randomUUID(), now = instant();
-      const m = {id: memberId, application_id: applicationId, member_number: 'AMC-' + randomBytes(5).toString('hex').toUpperCase(), full_name: a.full_name, contact_method: a.contact_method, contact_value: a.contact_value, status: 'active', approved_at: now, created_at: now, updated_at: now};
+      const m = {id: memberId, application_id: applicationId, member_number: 'AMC-' + randomBytes(5).toString('hex').toUpperCase(), full_name: a.full_name, contact_method: a.contact_method, contact_value: a.contact_value, status: 'active', approved_at: now, created_at: now, updated_at: now, approval_email_status: a.contact_method === 'email' ? 'pending' : 'manual'};
+      queueApprovalConfirmation(unit, m);
       unit.set('members', memberId, m); unit.set('applications', applicationId, {...a, status: 'approved', reviewed_at: now, updated_at: now});
       if (!override) unit.audit('MEMBER_APPROVED', memberId, 'Eligibility declarations checked; 48-hour waiting period completed.');
       return m;
-    }); res.status(201).json({success: true, member});
+    });
+    const approvalEmail = await sendApprovalConfirmation(member.id);
+    res.status(201).json({success: true, member: {...member, approval_email_status: approvalEmail}, approvalEmail});
+  });
+  route(app, 'post', 'members/:id/approval-email/retry', async (req, res) => {
+    const memberId = id(req.params.id);
+    const member = await read('members', memberId);
+    if (!member) deny('Member not found.', 404);
+    if (member.status !== 'active') deny('Only active members can receive an approval confirmation.');
+    res.json({success: true, approvalEmail: await sendApprovalConfirmation(memberId)});
   });
   route(app, 'post', 'members/:id/status', async (req, res) => {
     const memberId = id(req.params.id), status = clean(req.body?.status, 20); if (!['active', 'suspended', 'revoked'].includes(status)) deny('Invalid member status.', 400);

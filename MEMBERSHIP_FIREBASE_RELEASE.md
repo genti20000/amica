@@ -25,3 +25,9 @@ Only that elevated session can request `superAdminOverride: true` on membership 
 Read/list queries use Enterprise pipelines. Operational mutations use document transactions, including a small live-visit coordination document to serialize headcount and guest/smoking decisions. No client-side collections or public service credentials are used.
 
 Before promoting the preview, verify real staff sign-in, email-code delivery and the super-admin session in the deployed environment; verify anonymous APIs are denied, the public registration/pass pages work, and restaurant health and both existing domains remain functional. Do not submit fake member records into the live register. Keep the previous production deployment available for rollback.
+
+## Approval confirmation emails
+
+New approvals queue an email in the same Firestore transaction as membership creation, then send it through Resend to the application's registered email address. The message includes the membership number; issuing a digital pass remains a separate staff action. Phone-only applicants require manual contact. Existing approved members are not emailed retroactively.
+
+The admin displays delivery status and offers an authenticated retry for pending or failed messages. Provider failure never reverses a committed approval. A delivery claim and stable provider idempotency key limit duplicate sends; sent means accepted by the provider, not confirmed mailbox delivery. Tests mock the provider and cover successful sending, duplicate approval, unauthorized retry, provider failure, recovery and phone-only applications.

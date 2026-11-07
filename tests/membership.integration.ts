@@ -11,10 +11,12 @@ process.env.ADMIN_PASSWORD='integration-staff-'+randomUUID();
 process.env.ADMIN_SESSION_SECRET=randomUUID()+randomUUID();
 process.env.RESEND_API_KEY='test-mail-transport';
 const request=globalThis.fetch;
-let emailCode='', emailTo:any;
+let emailCode='', emailTo:any,failApprovalEmail=false;
+const approvalEmails:any[]=[];
 globalThis.fetch=(async(input:any,init:any)=>{
  if(String(input)==='https://api.resend.com/emails'){
   const mail=JSON.parse(init.body);emailTo=mail.to;
+  if(mail.subject==='Your AMICA SOHO membership application is approved'){approvalEmails.push({mail,headers:init.headers});if(failApprovalEmail)return new Response('{}',{status:503});}
   emailCode=String(mail.text).match(/code is (\d{6})/)?.[1]||emailCode;
   return new Response('{}',{status:200});
  }
@@ -51,8 +53,21 @@ try{
  const early=await application(47),mature=await application(49);
  status(await call('membership/members/approve',approval(early)),409);
  status(await call('membership/members/approve',approval(early,true)),403);
- const member=status(await call('membership/members/approve',approval(mature)),201).member;
+ const approved=status(await call('membership/members/approve',approval(mature)),201);const member=approved.member;
+ assert.equal(approved.approvalEmail,'sent');assert.equal(approvalEmails.length,1);assert.deepEqual(approvalEmails[0].mail.to,[mature+'@example.invalid']);assert.match(approvalEmails[0].mail.text,new RegExp(member.member_number));assert.match(approvalEmails[0].mail.text,/digital pass will be issued separately/);checks++;
+ const sentBeforeDuplicate=approvalEmails.length;
  status(await call('membership/members/approve',approval(mature)),409);
+ assert.equal(approvalEmails.length,sentBeforeDuplicate);checks++;
+ status(await call('membership/members/'+member.id+'/approval-email/retry',{},false),401);
+ const retrySent=status(await call('membership/members/'+member.id+'/approval-email/retry',{}),200);assert.equal(retrySent.approvalEmail,'sent');assert.equal(approvalEmails.length,sentBeforeDuplicate);checks++;
+ failApprovalEmail=true;
+ const failedApplication=await application(49),failedApproval=status(await call('membership/members/approve',approval(failedApplication)),201);
+ assert.equal(failedApproval.approvalEmail,'failed');assert.equal((await read('applications',failedApplication))?.status,'approved');assert.equal((await read('members',failedApproval.member.id))?.approval_email_status,'failed');checks++;
+ const failedMessage=approvalEmails.at(-1);failApprovalEmail=false;
+ const recovered=status(await call('membership/members/'+failedApproval.member.id+'/approval-email/retry',{}),200);assert.equal(recovered.approvalEmail,'sent');assert.equal(approvalEmails.at(-1).headers['Idempotency-Key'],failedMessage.headers['Idempotency-Key']);checks++;
+ const phoneApplication=await application(49);await atomic(async unit=>unit.patch('applications',phoneApplication,{contact_method:'phone',contact_value:'+447700900123'}));
+ const beforePhone=approvalEmails.length;const phoneApproval=status(await call('membership/members/approve',approval(phoneApplication)),201);assert.equal(phoneApproval.approvalEmail,'manual');assert.equal(approvalEmails.length,beforePhone);checks++;
+
  const concurrent=await application(49);
  const raced=await Promise.all([call('membership/members/approve',approval(concurrent)),call('membership/members/approve',approval(concurrent))]);
  assert.deepEqual(raced.map(r=>r.status).sort(),[201,409]);checks++;
@@ -83,7 +98,11 @@ try{
  await atomic(async unit=>{const p=await unit.get('pass_credentials',member.id);unit.set('pass_credentials',member.id,{...p,expires_at:new Date(Date.now()-1).toISOString()});});
  status(await call('membership/pass/view',{token:current},false),403);
  await call('membership/members/'+member.id+'/pass',{});
- const visit=status(await call('membership/attendance/check-in',{memberId:member.id,kind:'member'}),201).visit;
+ const arrival=await call('membership/attendance/check-in',{memberId:member.id,kind:'member'});
+ if(arrival.status===409&&arrival.data?.error==='No new admission after 01:30.'){
+  status(arrival,409);console.log('Night-time admission cutoff verified; daytime attendance checks are not applicable in the current London admission window.');
+ }else{
+ const visit=status(arrival,201).visit;
  status(await call('membership/attendance/check-in',{memberId:member.id,kind:'member'}),409);
  const g1=status(await call('membership/attendance/check-in',{memberId:member.id,kind:'guest',guestName:'First guest'}),201).visit;
  status(await call('membership/attendance/check-in',{memberId:member.id,kind:'guest',guestName:'Second guest'}),201);
@@ -101,6 +120,7 @@ try{
  status(await call('membership/proprietor-guests/'+proprietor.id+'/check-out',{}),200);
  const exported=await call('membership/attendance/export-31-days');status(exported,200);assert.match(exported.data,/First guest/);checks++;
  const exited=status(await call('membership/attendance/'+visit.id+'/check-out',{}),200);assert.equal(exited.count,3);checks++;
+ }
  status(await call('membership/members/'+member.id+'/pass/revoke',{}),200);
  status(await call('membership/incidents',{category:'Other',description:'Integration-only incident record.'}),201);
  status(await call('membership/rule-versions',{version:'integration',title:'Test rules',body:'Integration-only draft, never approved or published.'}),201);

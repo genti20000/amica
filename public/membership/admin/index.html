@@ -297,6 +297,8 @@ function renderMembers(){
  addMeta(c,[['Member number',m.member_number],['Contact',m.contact_value],['Approved',date(m.approved_at)]]);
  const row=el('div','actions');
  if(m.status==='active'){
+  if(m.approval_email_status)c.append(kv('Approval confirmation',m.approval_email_status==='sent'?'Email sent':m.approval_email_status==='manual'?'Manual contact required':m.approval_email_status==='failed'?'Email failed · retry available':'Email pending'));
+  if(['failed','pending'].includes(m.approval_email_status))row.append(action('Retry approval email',async()=>{const result=await api('members/'+encodeURIComponent(m.id)+'/approval-email/retry','POST',{});await refresh('members');msg(approvalEmailMessage(result.approvalEmail));}));
   row.append(action('Issue / rotate digital pass',()=>issuePass(m),'btn sm primary'));
   row.append(action('Revoke pass',()=>revokePass(m),'btn sm danger'));
 }
@@ -306,6 +308,7 @@ function renderMembers(){
  c.append(row);root.append(c)}
  $('members').append(root);
 }
+function approvalEmailMessage(status){return status==='sent'?'Approval confirmation emailed to the registered member.':status==='failed'?'Membership approved, but confirmation email failed. Use Retry approval email in Members.':status==='manual'?'Membership approved. Contact this phone-only applicant manually.':'Membership approved. Confirmation email is pending; check Members before retrying.';}
 async function issuePass(m){
  if(!await askConfirm('Issue a new private digital pass for '+m.full_name+'? Any previously issued pass will stop working.'))return;
  const j=await api('members/'+encodeURIComponent(m.id)+'/pass','POST',{});
@@ -550,7 +553,7 @@ $('confirm-approval').addEventListener('click',async()=>{
  if(!confirmAge||!confirmEligibility||!confirmHospitality||!confirmLicence){$('approval-message').textContent='Complete all checks before approval.';return}
  $('confirm-approval').disabled=true;
  try{const j=await api('members/approve','POST',{applicationId:a.id,confirmAge,confirmEligibility,confirmHospitality,confirmLicence,superAdminOverride:pendingOverride});
- closeApproval();await refresh('all');nav('members');msg('Member '+j.member.member_number+' approved and added to the live member register.')}
+ closeApproval();await refresh('all');nav('members');msg('Member '+j.member.member_number+' approved. '+approvalEmailMessage(j.approvalEmail))}
  catch(e){$('approval-message').textContent=e.message}finally{$('confirm-approval').disabled=false}
 });
 $('cancel-approval').addEventListener('click',closeApproval);
