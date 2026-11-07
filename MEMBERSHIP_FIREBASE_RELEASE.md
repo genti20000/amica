@@ -28,9 +28,9 @@ Before promoting the preview, verify real staff sign-in, email-code delivery and
 
 ## Approval confirmation emails
 
-New approvals queue an email in the same Firestore transaction as membership creation, then send it through Resend to the application's registered email address. The message includes the membership number; issuing a digital pass remains a separate staff action. Phone-only applicants require manual contact. Existing approved members are not emailed retroactively.
+New approvals queue an email in the same Firestore transaction as membership creation, then send it through Resend to the application's registered email address. The same transaction creates a 90-day digital pass. The confirmation includes the membership number and private pass link. Phone-only applicants receive a pass link in the staff dialog for private sharing. Existing approved members are not emailed retroactively.
 
-The admin displays delivery status and offers an authenticated retry for pending or failed messages. Provider failure never reverses a committed approval. A delivery claim and stable provider idempotency key limit duplicate sends; sent means accepted by the provider, not confirmed mailbox delivery. Tests mock the provider and cover successful sending, duplicate approval, unauthorized retry, provider failure, recovery and phone-only applications.
+The admin displays delivery status and offers an authenticated retry for pending or failed messages. Provider failure never reverses a committed approval. The queued message is encrypted with a key derived from the persistent server session secret; credentials retain only token hashes. Retries reuse the same pass and encrypted message, and refuse to send a pending pass that has been rotated, revoked or expired. Rotating the session secret requires reissuing passes for any unsent encrypted messages. A delivery claim and stable provider idempotency key limit duplicate sends; sent means accepted by the provider, not confirmed mailbox delivery. Tests mock the provider and cover successful sending, duplicate approval, unauthorized retry, provider failure, recovery and phone-only applications.
 
 ## Legacy application recovery (7 November 2026)
 

@@ -54,7 +54,7 @@ try{
  status(await call('membership/members/approve',approval(early)),409);
  status(await call('membership/members/approve',approval(early,true)),403);
  const approved=status(await call('membership/members/approve',approval(mature)),201);const member=approved.member;
- assert.equal(approved.approvalEmail,'sent');assert.equal(approvalEmails.length,1);assert.deepEqual(approvalEmails[0].mail.to,[mature+'@example.invalid']);assert.match(approvalEmails[0].mail.text,new RegExp(member.member_number));assert.match(approvalEmails[0].mail.text,/digital pass will be issued separately/);checks++;
+ assert.equal(approved.approvalEmail,'sent');assert.equal(approvalEmails.length,1);assert.deepEqual(approvalEmails[0].mail.to,[mature+'@example.invalid']);assert.match(approvalEmails[0].mail.text,new RegExp(member.member_number));assert.ok(approvalEmails[0].mail.text.includes(approved.passUrl));const approvalToken=new URL(approved.passUrl).hash.slice(3);status(await call('membership/pass/view',{token:approvalToken},false),200);const approvalJob=await read('approval_emails',member.id);assert.equal(approvalJob?.text,undefined);assert.ok(!JSON.stringify(approvalJob).includes(approvalToken));checks++;
  const sentBeforeDuplicate=approvalEmails.length;
  status(await call('membership/members/approve',approval(mature)),409);
  assert.equal(approvalEmails.length,sentBeforeDuplicate);checks++;
@@ -64,9 +64,9 @@ try{
  const failedApplication=await application(49),failedApproval=status(await call('membership/members/approve',approval(failedApplication)),201);
  assert.equal(failedApproval.approvalEmail,'failed');assert.equal((await read('applications',failedApplication))?.status,'approved');assert.equal((await read('members',failedApproval.member.id))?.approval_email_status,'failed');checks++;
  const failedMessage=approvalEmails.at(-1);failApprovalEmail=false;
- const recovered=status(await call('membership/members/'+failedApproval.member.id+'/approval-email/retry',{}),200);assert.equal(recovered.approvalEmail,'sent');assert.equal(approvalEmails.at(-1).headers['Idempotency-Key'],failedMessage.headers['Idempotency-Key']);checks++;
+ const recovered=status(await call('membership/members/'+failedApproval.member.id+'/approval-email/retry',{}),200);assert.equal(recovered.approvalEmail,'sent');assert.equal(approvalEmails.at(-1).headers['Idempotency-Key'],failedMessage.headers['Idempotency-Key']);assert.equal(approvalEmails.at(-1).mail.text,failedMessage.mail.text);assert.ok(approvalEmails.at(-1).mail.text.includes(failedApproval.passUrl));checks++;
  const phoneApplication=await application(49);await atomic(async unit=>unit.patch('applications',phoneApplication,{contact_method:'phone',contact_value:'+447700900123'}));
- const beforePhone=approvalEmails.length;const phoneApproval=status(await call('membership/members/approve',approval(phoneApplication)),201);assert.equal(phoneApproval.approvalEmail,'manual');assert.equal(approvalEmails.length,beforePhone);checks++;
+ const beforePhone=approvalEmails.length;const phoneApproval=status(await call('membership/members/approve',approval(phoneApplication)),201);assert.equal(phoneApproval.approvalEmail,'manual');assert.equal(approvalEmails.length,beforePhone);status(await call('membership/pass/view',{token:new URL(phoneApproval.passUrl).hash.slice(3)},false),200);checks++;
 
  const concurrent=await application(49);
  const raced=await Promise.all([call('membership/members/approve',approval(concurrent)),call('membership/members/approve',approval(concurrent))]);
@@ -92,6 +92,7 @@ try{
  status(await call('membership/pass/view',{token},false),200);
  status(await call('membership/passes/verify',{token}),200);
  status(await call('membership/passes/verify',{token:'A'.repeat(43)}),403);
+ status(await call('membership/pass/view',{token:approvalToken},false),403);
  const rotated=status(await call('membership/members/'+member.id+'/pass',{}),200);const current=new URL(rotated.passUrl).hash.slice(3);
  status(await call('membership/pass/view',{token},false),403);
  status(await call('membership/pass/view',{token:current},false),200);

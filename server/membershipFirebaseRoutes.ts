@@ -68,20 +68,21 @@ export function installFirebaseMembership(app: Express) {
     if (!['confirmAge', 'confirmEligibility', 'confirmHospitality', 'confirmLicence'].every(key => req.body?.[key] === true)) deny('Confirm identity, age, hospitality, eligibility and licence requirements.', 400);
     const override = req.body?.superAdminOverride === true;
     if (override && !await isSuperAdmin(req)) deny('Verified super-admin sign-in required.', 403);
-    const member = await atomic(async unit => {
+    const approved = await atomic(async unit => {
       const a = pending(await unit.get('applications', applicationId));
       if (!a.is_adult || !a.rules_accepted_at || clean(a.hospitality_role).length < 3) deny('Application declarations and hospitality details are incomplete.');
       if (!override && Date.now() - Date.parse(a.verified_original_applied_at || a.created_at) < 48 * 3600000) deny('At least 48 full hours must elapse before membership approval.');
       // The application itself is the uniqueness lock; simultaneous approvals cannot create duplicates.
       const memberId = randomUUID(), now = instant();
       const m = {id: memberId, application_id: applicationId, member_number: 'AMC-' + randomBytes(5).toString('hex').toUpperCase(), full_name: a.full_name, contact_method: a.contact_method, contact_value: a.contact_value, status: 'active', approved_at: now, created_at: now, updated_at: now, approval_email_status: a.contact_method === 'email' ? 'pending' : 'manual'};
-      queueApprovalConfirmation(unit, m);
+      const pass = queueApprovalConfirmation(unit, m);
       unit.set('members', memberId, m); unit.set('applications', applicationId, {...a, status: 'approved', reviewed_at: now, updated_at: now});
       if (!override) unit.audit('MEMBER_APPROVED', memberId, 'Eligibility declarations checked; 48-hour waiting period completed.');
-      return m;
+      return {member: m, ...pass};
     });
+    const member = approved.member;
     const approvalEmail = await sendApprovalConfirmation(member.id);
-    res.status(201).json({success: true, member: {...member, approval_email_status: approvalEmail}, approvalEmail});
+    res.status(201).json({success: true, member: {...member, approval_email_status: approvalEmail}, approvalEmail, passUrl: approved.passUrl, expiresAt: approved.expiresAt});
   });
   route(app, 'post', 'members/:id/approval-email/retry', async (req, res) => {
     const memberId = id(req.params.id);
