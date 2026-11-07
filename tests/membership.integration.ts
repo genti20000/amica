@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,randomBytes,scryptSync} from 'node:crypto';
 import {once} from 'node:events';
 import express from 'express';
 
@@ -9,6 +9,8 @@ process.env.MEMBERSHIP_TEST_PREFIX='e2e_amica_'+Date.now()+'_';
 process.env.VERCEL='1';
 process.env.ADMIN_PASSWORD='integration-staff-'+randomUUID();
 process.env.ADMIN_SESSION_SECRET=randomUUID()+randomUUID();
+const superPassword='test-super-'+randomUUID(),passwordSalt=randomBytes(16).toString('hex');
+process.env.MEMBERSHIP_SUPERADMIN_PASSWORD_HASH='scrypt-v1:'+passwordSalt+':'+scryptSync(superPassword,passwordSalt,64).toString('hex');
 process.env.RESEND_API_KEY='test-mail-transport';
 const request=globalThis.fetch;
 let emailCode='', emailTo:any,failApprovalEmail=false;
@@ -71,6 +73,22 @@ try{
  const concurrent=await application(49);
  const raced=await Promise.all([call('membership/members/approve',approval(concurrent)),call('membership/members/approve',approval(concurrent))]);
  assert.deepEqual(raced.map(r=>r.status).sort(),[201,409]);checks++;
+ status(await call('membership/superadmin/password',{password:superPassword},false),401);
+ status(await call('membership/superadmin/password',{password:superPassword},true,{Origin:'https://evil.example'}),403);
+ status(await call('membership/superadmin/password',{password:process.env.ADMIN_PASSWORD}),403);
+ status(await call('membership/superadmin/password',{password:'wrong-super-password'}),403);
+ const passwordLogin=await call('membership/superadmin/password',{password:superPassword});status(passwordLogin,200);superCookie=passwordLogin.cookie;
+ assert.equal(status(await call('membership/identity'),200).superAdmin,true);checks++;
+ const configuredHash=process.env.MEMBERSHIP_SUPERADMIN_PASSWORD_HASH;process.env.MEMBERSHIP_SUPERADMIN_PASSWORD_HASH='rotated';
+ assert.equal(status(await call('membership/identity'),200).superAdmin,false);checks++;
+ process.env.MEMBERSHIP_SUPERADMIN_PASSWORD_HASH=configuredHash;
+ status(await call('membership/superadmin/logout',{}),200);assert.equal(status(await call('membership/identity'),200).superAdmin,false);checks++;
+ status(await call('membership/superadmin/password',{password:'wrong-super-password'}),403);
+ status(await call('membership/superadmin/password',{password:'wrong-super-password'}),403);
+ status(await call('membership/superadmin/password',{password:superPassword}),429);
+ await atomic(async unit=>unit.set('superadmin_limits','password',{attempts:5,reset_at:Date.now()-1}));
+ const unlocked=await call('membership/superadmin/password',{password:superPassword});status(unlocked,200);superCookie=unlocked.cookie;
+ status(await call('membership/superadmin/logout',{}),200);superCookie='';
  const challenge=status(await call('membership/superadmin/challenge',{}),200);assert.deepEqual(emailTo,['members@amicasoho.com']);assert.match(emailCode,/^\d{6}$/);checks++;
  status(await call('membership/superadmin/verify',{challenge:challenge.challenge,code:emailCode==='000000'?'111111':'000000'}),403);
  const verified=await call('membership/superadmin/verify',{challenge:challenge.challenge,code:emailCode});status(verified,200);superCookie=verified.cookie;

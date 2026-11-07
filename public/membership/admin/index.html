@@ -139,17 +139,17 @@ let tab='overview',pendingApproval=null,pendingEarlierApplication=null,superAdmi
 let data={overview:null,applications:[],members:[],attendance:[],incidents:[],activity:[],capacity:[],proprietor:[],rules:[]};
 const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=String(txt);return x};
 let pendingQuestion=null;
-function askQuestion(message,{confirmation=false,value='',code=false}={}){
+function askQuestion(message,{confirmation=false,value='',code=false,password=false}={}){
  if(pendingQuestion)return Promise.reject(new Error('Complete the open action first.'));
  const previous=document.activeElement;
  return new Promise(resolve=>{
   pendingQuestion=result=>{pendingQuestion=null;$('staff-question').classList.remove('open');$('staff-question').setAttribute('aria-hidden','true');$('staff-question-value').value='';previous?.focus();resolve(result)};
-  $('staff-question-title').textContent=confirmation?'Confirm action':code?'Verify super-admin sign-in':'Enter details';
+  $('staff-question-title').textContent=confirmation?'Confirm action':password?'Super-admin sign-in':code?'Verify super-admin sign-in':'Enter details';
   $('staff-question-message').textContent=message;
   $('staff-question-label').classList.toggle('hidden',confirmation);
-  const input=$('staff-question-value');input.value=value;input.required=!confirmation;input.maxLength=code?6:160;input.inputMode=code?'numeric':'text';input.autocomplete=code?'one-time-code':'off';
+  const input=$('staff-question-value');input.type=password?'password':'text';input.value=value;input.required=!confirmation;input.maxLength=code?6:password?256:160;input.inputMode=code?'numeric':'text';input.autocomplete=password?'current-password':code?'one-time-code':'off';
   if(code)input.pattern='[0-9]{6}';else input.removeAttribute('pattern');
-  $('staff-question-submit').textContent=confirmation?'Confirm':code?'Verify code':'Save';
+  $('staff-question-submit').textContent=confirmation?'Confirm':password?'Sign in':code?'Verify code':'Save';
   $('staff-question').classList.add('open');$('staff-question').setAttribute('aria-hidden','false');
   (confirmation?$('staff-question-submit'):input).focus();
  });
@@ -414,10 +414,9 @@ $('superadmin-signin').addEventListener('click',async()=>{
  const button=$('superadmin-signin');button.disabled=true;
  try{
   if(superAdmin){await api('superadmin/logout','POST',{});await refreshIdentity();return}
-  const challenge=await api('superadmin/challenge','POST',{});
-  const code=await askText('Enter the six-digit code sent to members@amicasoho.com. Never share this code.','',{code:true});
-  if(code===null)return;
-  await api('superadmin/verify','POST',{challenge:challenge.challenge,code:code.trim()});await refreshIdentity();msg('Super-admin session verified.');
+  const password=await askText('Enter the separate super-admin password.','',{password:true});
+  if(password===null)return;
+  await api('superadmin/password','POST',{password});await refreshIdentity();msg('Super-admin session verified.');
  }catch(e){msg(e.message,true)}finally{button.disabled=false}
 });
 $('refresh').addEventListener('click',()=>refresh('all').then(refreshIdentity));
