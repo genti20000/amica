@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test:membership": "tsx tests/membership.integration.ts"
+    "test:membership": "tsx tests/membership.integration.ts",
+    "recover:membership": "tsx scripts/recover-membership-applications.ts"
   },
   "dependencies": {
     "@google-cloud/firestore": "9.4.0",
