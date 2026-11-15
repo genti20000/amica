@@ -32,6 +32,7 @@ import {
   X,
   Trash2,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   Zap,
   Phone,
@@ -94,7 +95,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   // New manual booking form state
   const [newBooking, setNewBooking] = useState<BookingFormData>({
     date: todayStr,
-    timeSlot: '19:00 – Prime Vault Dining & Drinks',
+    timeSlot: '19:00',
     guests: 4,
     seatingArea: 'Arched Wine Vault Booth',
     name: '',
@@ -242,7 +243,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   const handleCreateManualBooking = async (e: React.FormEvent) => {
     try {
     e.preventDefault();
-    if (!newBooking.name || !newBooking.phone) return;
+    if (!newBooking.name.trim() || !newBooking.phone.trim()) { showToast('Enter the guest name and phone number.'); return; }
 
     const bookingId = 'AMICA-' + Math.floor(100000 + Math.random() * 900000);
 
@@ -250,22 +251,23 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       bookingId,
       formData: {
         ...newBooking,
-        email: newBooking.email || 'walkin@amicasoho.com'
+        email: newBooking.email.trim()
       },
       createdAt: new Date().toISOString(),
       qrCodeValue: `AMICA-SOHO-${bookingId}-${newBooking.date}-${newBooking.guests}PAX`,
       status: 'Confirmed'
     };
 
-    await saveBooking(created);
-    await loadData();
+    const saved = await saveBooking(created);
+    setBookings((current) => [saved, ...current.filter((booking) => booking.bookingId !== saved.bookingId)]);
+    fetchDatabaseStatus().then(setDbStats).catch(() => {});
     setIsAddModalOpen(false);
-    showToast(`Reservation #${bookingId} recorded and auto-confirmed in Supabase PostgreSQL!`);
+    showToast(`Reservation #${bookingId} saved (${saved.status || 'Confirmed'}).`);
 
     // Reset form
     setNewBooking({
       date: todayStr,
-      timeSlot: '19:00 – Prime Vault Dining & Drinks',
+      timeSlot: '19:00',
       guests: 4,
       seatingArea: 'Arched Wine Vault Booth',
       name: '',
@@ -1355,12 +1357,24 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       {selectedBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
           <div className="relative w-full max-w-xl bg-gradient-to-b from-[#180307] via-[#120205] to-[#0A0103] border-2 border-[#DFBE7B] rounded-xl p-6 sm:p-8 text-[#FDFBF7] shadow-2xl max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setSelectedBooking(null)}
-              className="absolute top-4 right-4 text-[#DFBE7B]/60 hover:text-[#DFBE7B] p-1 cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center justify-between mb-4">
+              <button
+                type="button"
+                onClick={() => setSelectedBooking(null)}
+                className="inline-flex items-center gap-2 rounded border border-[#DFBE7B]/40 px-3 py-2 text-xs font-sans font-semibold text-[#DFBE7B] hover:bg-[#200A0E] transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to reservations</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedBooking(null)}
+                aria-label="Close reservation details"
+                className="text-[#DFBE7B]/70 hover:text-[#DFBE7B] p-2 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
             <div className="text-center mb-5">
               <span className="text-[10px] uppercase font-sans tracking-widest text-emerald-400 font-bold block mb-1">
@@ -1704,25 +1718,25 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                   onChange={(e) => setNewBooking({ ...newBooking, timeSlot: e.target.value })}
                   className="w-full py-2 px-3 bg-[#0A0103] border border-[#DFBE7B]/40 rounded text-xs text-[#FDFBF7]"
                 >
-                  <option value="17:00 – Opening Aperitivo Hour">17:00 – Opening Aperitivo Hour</option>
-                  <option value="17:30 – Spritz & Early Cicchetti">17:30 – Spritz & Early Cicchetti</option>
-                  <option value="18:00 – Golden Hour Aperitivo">18:00 – Golden Hour Aperitivo</option>
-                  <option value="18:30 – Twilight Cocktails & Cicchetti">18:30 – Twilight Cocktails & Cicchetti</option>
-                  <option value="19:00 – Prime Vault Dining & Drinks">19:00 – Prime Vault Dining & Drinks</option>
-                  <option value="19:30 – Dinner & Fine Wine Service">19:30 – Dinner & Fine Wine Service</option>
-                  <option value="20:00 – Prime Dinner & Cocktails">20:00 – Prime Dinner & Cocktails</option>
-                  <option value="20:30 – Vinyl Jazz & Dining">20:30 – Vinyl Jazz & Dining</option>
-                  <option value="21:00 – Late Dinner & Vinyl Selectors">21:00 – Late Dinner & Vinyl Selectors</option>
-                  <option value="21:30 – Late Evening Banquette">21:30 – Late Evening Banquette</option>
-                  <option value="22:00 – Nightcap & Ambient Jazz">22:00 – Nightcap & Ambient Jazz</option>
-                  <option value="22:30 – Late Night Vault Sessions">22:30 – Late Night Vault Sessions</option>
-                  <option value="23:00 – Midnight Vinyl & Digestivi">23:00 – Midnight Vinyl & Digestivi</option>
-                  <option value="23:30 – Vault Beats & Cocktails">23:30 – Vault Beats & Cocktails</option>
-                  <option value="00:00 – Subterranean Midnight Service">00:00 – Subterranean Midnight Service</option>
-                  <option value="00:30 – Late Night Selectors">00:30 – Late Night Selectors</option>
-                  <option value="01:00 – Deep Night Sanctuary">01:00 – Deep Night Sanctuary</option>
-                  <option value="01:30 – Late Night Vault Sanctuary">01:30 – Late Night Vault Sanctuary</option>
-                  <option value="02:00 – Final Service Cocktail Seating">02:00 – Final Service Cocktail Seating</option>
+                  <option value="17:00">17:00 – Opening Aperitivo Hour</option>
+                  <option value="17:30">17:30 – Spritz & Early Cicchetti</option>
+                  <option value="18:00">18:00 – Golden Hour Aperitivo</option>
+                  <option value="18:30">18:30 – Twilight Cocktails & Cicchetti</option>
+                  <option value="19:00">19:00 – Prime Vault Dining & Drinks</option>
+                  <option value="19:30">19:30 – Dinner & Fine Wine Service</option>
+                  <option value="20:00">20:00 – Prime Dinner & Cocktails</option>
+                  <option value="20:30">20:30 – Vinyl Jazz & Dining</option>
+                  <option value="21:00">21:00 – Late Dinner & Vinyl Selectors</option>
+                  <option value="21:30">21:30 – Late Evening Banquette</option>
+                  <option value="22:00">22:00 – Nightcap & Ambient Jazz</option>
+                  <option value="22:30">22:30 – Late Night Vault Sessions</option>
+                  <option value="23:00">23:00 – Midnight Vinyl & Digestivi</option>
+                  <option value="23:30">23:30 – Vault Beats & Cocktails</option>
+                  <option value="00:00">00:00 – Subterranean Midnight Service</option>
+                  <option value="00:30">00:30 – Late Night Selectors</option>
+                  <option value="01:00">01:00 – Deep Night Sanctuary</option>
+                  <option value="01:30">01:30 – Late Night Vault Sanctuary</option>
+                  <option value="02:00">02:00 – Final Service Cocktail Seating</option>
                 </select>
               </div>
 

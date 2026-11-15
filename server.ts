@@ -172,6 +172,73 @@ async function configureServer() {
     }
   });
 
+  // Admin-created reservations use the authenticated admin session and can bypass the public lead-time cutoff.
+  app.post('/api/admin/bookings', async (req, res) => {
+    try {
+      const { formData, bookingId } = req.body || {};
+      if (!formData || typeof formData.name !== 'string' || !formData.name.trim() ||
+          typeof formData.phone !== 'string' || !formData.phone.trim()) {
+        return res.status(400).json({ success: false, error: 'Enter a guest name and phone number.' });
+      }
+      const guests = Number(formData.guests);
+      const validSlots = ['17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30','23:00','23:30','00:00','00:30','01:00','01:30','02:00'];
+      if (!Number.isInteger(guests) || guests < 1 || guests > 20 ||
+          !/^\\d{4}-\\d{2}-\\d{2}$/.test(formData.date || '') || !validSlots.includes(formData.timeSlot) ||
+          (!!formData.email && (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(formData.email) || formData.email.length > 128)) ||
+          formData.name.trim().length > 100 || formData.phone.trim().length > 30 ||
+          typeof formData.dietaryNotes !== 'undefined' && (typeof formData.dietaryNotes !== 'string' || formData.dietaryNotes.length > 2000) ||
+          typeof formData.specialOccasion !== 'undefined' && (typeof formData.specialOccasion !== 'string' || formData.specialOccasion.length > 150) ||
+          typeof formData.seatingArea !== 'undefined' && (typeof formData.seatingArea !== 'string' || formData.seatingArea.length > 100)) {
+        return res.status(400).json({ success: false, error: 'Please check the reservation date, time, party size and contact details.' });
+      }
+      const date = new Date(formData.date + 'T12:00:00Z');
+      const todayLondon = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
+      if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== formData.date ||
+          formData.date < todayLondon || ![3,4,5,6].includes(date.getUTCDay())) {
+        return res.status(400).json({ success: false, error: 'Choose a Wednesday to Saturday service date from today onwards.' });
+      }
+      const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+      const created = await createReservation({
+        booking_id: typeof bookingId === 'string' && /^[A-Za-z0-9-]{6,80}$/.test(bookingId) ? bookingId : undefined,
+        guest_name: formData.name,
+        email: formData.email?.trim() || '',
+        phone: formData.phone,
+        guests,
+        reservation_date: formData.date,
+        time_slot: formData.timeSlot,
+        seating_area: formData.seatingArea || 'Vault Dining',
+        special_occasion: formData.specialOccasion || 'Casual Dining & Drinks',
+        dietary_notes: formData.dietaryNotes || '',
+        ip_address: clientIp,
+        actor: 'ADMIN_PORTAL',
+        bypassCutoff: true
+      });
+      const booking = {
+        bookingId: created.booking_id,
+        createdAt: created.created_at,
+        status: created.status,
+        qrCodeValue: created.qr_code_value,
+        formData: {
+          name: created.guest_name,
+          email: created.email,
+          phone: created.phone,
+          guests: created.guests,
+          date: created.reservation_date,
+          timeSlot: created.time_slot,
+          seatingArea: created.seating_area,
+          dietaryNotes: created.dietary_notes || '',
+          specialOccasion: created.special_occasion || 'Casual Dining & Drinks'
+        }
+      };
+      return res.status(201).json({ success: true, booking });
+    } catch (error: any) {
+      return res.status(error instanceof BookingValidationError ? 400 : 500).json({
+        success: false,
+        error: error instanceof BookingValidationError ? error.message : 'The reservation could not be saved. Please try again.'
+      });
+    }
+  });
+
   // Get all reservations with optional query params
   app.get('/api/bookings', async (req, res) => {
     try {

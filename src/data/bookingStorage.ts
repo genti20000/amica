@@ -33,7 +33,7 @@ export const fetchBookingsFromDb = async (): Promise<BookingConfirmation[]> => {
 };
 
 export const saveBooking = async (booking: BookingConfirmation): Promise<BookingConfirmation> => {
-  const res = await fetch('/api/bookings', {
+  const res = await fetch('/api/admin/bookings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ bookingId: booking.bookingId, formData: booking.formData })

@@ -80,7 +80,7 @@ async function assertCapacity(client: pg.PoolClient, candidate: Pick<Reservation
     AND status = ANY($2::text[]) AND booking_id <> $3`, [candidate.reservation_date, occupyingStatuses, excludeId]);
   if (!fitsBookingCapacity(candidate, rows.rows)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
 }
-export async function createReservation(data: { booking_id?: string; guest_name: string; email: string; phone: string; guests: number; reservation_date: string; time_slot: string; seating_area: string; special_occasion?: string; dietary_notes?: string; ip_address?: string; actor?: string }): Promise<ReservationRow> {
+export async function createReservation(data: { booking_id?: string; guest_name: string; email: string; phone: string; guests: number; reservation_date: string; time_slot: string; seating_area: string; special_occasion?: string; dietary_notes?: string; ip_address?: string; actor?: string; bypassCutoff?: boolean }): Promise<ReservationRow> {
   return transaction(async client => {
     // Serialize booking creation with blackout changes to avoid a check/write race.
     await client.query('SELECT pg_advisory_xact_lock(230017)');
@@ -94,7 +94,7 @@ export async function createReservation(data: { booking_id?: string; guest_name:
     const status=settings.auto_confirm==='false'?'Pending':'Confirmed';
     const id = data.booking_id || 'AMICA-'+randomUUID(); const now=new Date().toISOString();
     const result = await client.query(`INSERT INTO reservations (booking_id, guest_name, email, phone, guests, reservation_date, time_slot, seating_area, special_occasion, dietary_notes, status, qr_code_value, ip_address, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$14,$11,$12,$13,$13) RETURNING *`,[id,data.guest_name.trim(),data.email.trim(),data.phone.trim(),data.guests,data.reservation_date,data.time_slot,data.seating_area,data.special_occasion||'',data.dietary_notes||'',`AMICA-SOHO-${id}`,data.ip_address||null,now,status]);
-    await logAudit(id,status==='Pending'?'RESERVATION_PENDING':'RESERVATION_CONFIRMED','GUEST_WEB_BOOKING',`Reservation saved for ${data.guests} guests.`,client);
+    await logAudit(id,status==='Pending'?'RESERVATION_PENDING':'RESERVATION_CONFIRMED',data.actor||'GUEST_WEB_BOOKING',`Reservation saved for ${data.guests} guests.`,client);
     return result.rows[0];
   });
 }
