@@ -285,7 +285,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
           Wednesday – Saturday · 5:00 PM – 3:00 AM
         </p>
         {isKaraokeBooking && <p className="text-sm text-[#FDFBF7]/80 font-sans">One private room · 8–15 guests · 2-hour minimum</p>}
-        <a href={isKaraokeBooking ? '/?book=true' : '/karaoke-booking'} className="inline-flex min-h-10 items-center text-xs text-[#DFBE7B] underline underline-offset-4 hover:text-[#FFEAA7]">{isKaraokeBooking ? 'Looking for a table? Book here' : 'Booking the karaoke room? Book it here'}</a>
+        {isKaraokeBooking && <a href="/?book=true" className="inline-flex min-h-10 items-center text-xs text-[#DFBE7B] underline underline-offset-4 hover:text-[#FFEAA7]">Looking for a table? Book here</a>}
 
         {savedPairingsCount > 0 && (
           <div className="inline-flex items-center gap-2 px-3 py-0.5 bg-[#200A0E] border border-[#C5A059] text-[#DFBE7B] text-xs rounded-full mt-1">
