@@ -90,11 +90,19 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   const [dbStats, setDbStats] = useState<any>(null);
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const defaultBookingDate = useMemo(() => {
+    const nextServiceDate = new Date();
+    nextServiceDate.setHours(12, 0, 0, 0);
+    while (![3, 4, 5, 6].includes(nextServiceDate.getDay())) {
+      nextServiceDate.setDate(nextServiceDate.getDate() + 1);
+    }
+    return nextServiceDate.toISOString().split('T')[0];
+  }, []);
   const tomorrowStr = useMemo(() => new Date(Date.now() + 86400000).toISOString().split('T')[0], []);
 
   // New manual booking form state
   const [newBooking, setNewBooking] = useState<BookingFormData>({
-    date: todayStr,
+    date: defaultBookingDate,
     timeSlot: '19:00',
     guests: 4,
     seatingArea: 'Arched Wine Vault Booth',
