@@ -5,7 +5,7 @@ import { AdminCalendarView } from '../components/AdminCalendarView';
 import {
   getStoredBookings,
   fetchBookingsFromDb,
-  saveBooking,
+  saveAdminBooking,
   updateBookingStatus,
   deleteBooking,
   fetchBookingAuditLogs,
@@ -266,7 +266,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       status: 'Confirmed'
     };
 
-    const saved = await saveBooking(created);
+    const saved = await saveAdminBooking(created);
     setBookings((current) => [saved, ...current.filter((booking) => booking.bookingId !== saved.bookingId)]);
     fetchDatabaseStatus().then(setDbStats).catch(() => {});
     setIsAddModalOpen(false);

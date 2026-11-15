@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { supabaseCa } from './supabaseCa.js';
 import { serviceInstant } from '../src/lib/serviceTime.js';
-import { fitsBookingCapacity, occupyingStatuses } from '../src/lib/bookingCapacity.js';
+import { fitsBookingCapacity, fitsKaraokeCapacity, occupyingStatuses } from '../src/lib/bookingCapacity.js';
 export class BookingValidationError extends Error { name = 'BookingValidationError'; }
 
 // Vercel Marketplace provides the Supabase transaction-pooler URL server-side.
@@ -74,11 +74,14 @@ export async function getReservationById(bookingId: string): Promise<{ reservati
   const [booking, audit] = await Promise.all([db.query('SELECT * FROM reservations WHERE booking_id=$1',[bookingId]), db.query('SELECT * FROM booking_audit_logs WHERE booking_id=$1 ORDER BY id DESC',[bookingId])]);
   return {reservation: booking.rows[0] || null, auditLogs: audit.rows};
 }
-async function assertCapacity(client: pg.PoolClient, candidate: Pick<ReservationRow, 'guests' | 'reservation_date' | 'time_slot'>, excludeId = '') {
-  const rows = await client.query(`SELECT guests, reservation_date, time_slot FROM reservations
+async function assertCapacity(client: pg.PoolClient, candidate: Pick<ReservationRow, 'guests' | 'reservation_date' | 'time_slot'> & Partial<Pick<ReservationRow, 'seating_area'>>, excludeId = '') {
+  const rows = await client.query(`SELECT guests, reservation_date, time_slot, seating_area FROM reservations
     WHERE reservation_date BETWEEN (($1::date - 1)::text) AND (($1::date + 1)::text)
     AND status = ANY($2::text[]) AND booking_id <> $3`, [candidate.reservation_date, occupyingStatuses, excludeId]);
-  if (!fitsBookingCapacity(candidate, rows.rows)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
+  const isKaraoke = candidate.seating_area === 'Karaoke Room';
+  const relevant = rows.rows.filter((row) => (row.seating_area === 'Karaoke Room') === isKaraoke);
+  if (isKaraoke && !fitsKaraokeCapacity(candidate, relevant)) throw new BookingValidationError('The karaoke room is already reserved during this two-hour period. Please choose another time.');
+  if (!isKaraoke && !fitsBookingCapacity(candidate, relevant)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
 }
 export async function createReservation(data: { booking_id?: string; guest_name: string; email: string; phone: string; guests: number; reservation_date: string; time_slot: string; seating_area: string; special_occasion?: string; dietary_notes?: string; ip_address?: string; actor?: string; bypassCutoff?: boolean }): Promise<ReservationRow> {
   return transaction(async client => {

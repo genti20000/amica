@@ -29,3 +29,15 @@ export function fitsBookingCapacity(candidate: Occupancy, existing: Occupancy[])
   }
   return true;
 }
+
+// The venue has one karaoke room, reserved exclusively for a two-hour slot.
+export function fitsKaraokeCapacity(candidate: Occupancy, existing: Occupancy[]): boolean {
+  if (!Number.isInteger(candidate.guests) || candidate.guests < 1 || candidate.guests > 15) return false;
+  const start = serviceInstant(candidate.reservation_date, candidate.time_slot);
+  const end = start + BOOKING_POLICY.minutes * 60000;
+  return !existing.some((row) => {
+    const rowStart = serviceInstant(row.reservation_date, row.time_slot);
+    const rowEnd = rowStart + BOOKING_POLICY.minutes * 60000;
+    return rowStart < end && rowEnd > start;
+  });
+}

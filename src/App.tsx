@@ -38,6 +38,7 @@ export default function App() {
     try {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
+      if (window.location.pathname.replace(/\/$/, '') === '/karaoke-booking') return 'book';
       if (params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve') {
         return 'book';
       }
@@ -71,7 +72,8 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
 
-      const isDirectBook = params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve';
+      const isKaraokeBooking = window.location.pathname.replace(/\/$/, '') === '/karaoke-booking';
+      const isDirectBook = isKaraokeBooking || params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve';
       if (isDirectBook) {
         setCurrentPage('book');
         return;
@@ -202,6 +204,7 @@ export default function App() {
 
         {currentPage === 'book' && (
           <BookPage
+            isKaraokeBooking={window.location.pathname.replace(/\/$/, '') === '/karaoke-booking'}
             key={bookingFormRevision}
             onNavigate={handleNavigate}
             onBookingComplete={(confirmation) => setBookingConfirmation(confirmation)}

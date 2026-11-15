@@ -314,14 +314,16 @@ async function configureServer() {
   // Create new reservation (auto-confirm 1 to 20 pax)
   app.post('/api/bookings', async (req, res) => {
     try {
-      const { formData, actor, bookingId } = req.body;
+      const { formData, bookingType = 'table', bookingId } = req.body;
+      if (!['table', 'karaoke'].includes(bookingType)) return res.status(400).json({ success: false, error: 'Choose a valid booking type.' });
+      const isKaraokeBooking = bookingType === 'karaoke';
       if (!formData || !formData.name || !formData.phone) {
         return res.status(400).json({ success: false, error: 'Missing required guest contact information' });
       }
 
       const guests = Number(formData.guests);
-      if (!Number.isInteger(guests) || guests < 1 || guests > 20) {
-        return res.status(400).json({ success: false, error: 'Online reservations accept between 1 and 20 guests' });
+      if (!Number.isInteger(guests) || guests < 1 || guests > (isKaraokeBooking ? 15 : 20)) {
+        return res.status(400).json({ success: false, error: isKaraokeBooking ? 'The karaoke room accepts 1 to 15 guests.' : 'Online reservations accept between 1 and 20 guests' });
       }
 
       if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date || '') || !/^\d{2}:\d{2}$/.test(formData.timeSlot || '') ||
@@ -358,11 +360,11 @@ async function configureServer() {
         guests: guests,
         reservation_date: formData.date,
         time_slot: formData.timeSlot,
-        seating_area: formData.seatingArea || 'Vault Dining',
+        seating_area: isKaraokeBooking ? 'Karaoke Room' : (formData.seatingArea || 'Vault Dining'),
         special_occasion: formData.specialOccasion || 'Casual Dining & Drinks',
         dietary_notes: formData.dietaryNotes || '',
         ip_address: clientIp,
-        actor: 'GUEST_WEB_BOOKING'
+        actor: isKaraokeBooking ? 'GUEST_KARAOKE_BOOKING' : 'GUEST_WEB_BOOKING'
       });
 
       // Prepare confirmation object (clean without room/table allocation)

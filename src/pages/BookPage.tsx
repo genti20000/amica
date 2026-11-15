@@ -26,16 +26,17 @@ interface BookPageProps {
   onNavigate: (page: PageId) => void;
   onBookingComplete: (confirmation: BookingConfirmation) => void;
   savedPairingsCount: number;
+  isKaraokeBooking?: boolean;
 }
 
-export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPairingsCount }) => {
+export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPairingsCount, isKaraokeBooking = false }) => {
   const todayStr = useMemo(() => londonDate(), []);
 
   const [formData, setFormData] = useState<BookingFormData>({
     date: nextDefaultServiceDate(),
     timeSlot: '19:00',
     guests: 2,
-    seatingArea: 'Vault Dining',
+    seatingArea: isKaraokeBooking ? 'Karaoke Room' : 'Vault Dining',
     name: '',
     email: '',
     phone: '',
@@ -198,7 +199,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
       bookingId,
       formData: {
         ...formData,
-        seatingArea: 'Vault Dining'
+        seatingArea: isKaraokeBooking ? 'Karaoke Room' : 'Vault Dining'
       },
       createdAt: new Date().toISOString(),
       qrCodeValue: `AMICA-SOHO-${bookingId}-${formData.date}-${formData.guests}PAX`,
@@ -207,7 +208,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
     setIsSubmitting(true);
     // Show confirmation only after the server has saved the reservation.
-    saveBooking(confirmation).then((saved) => {
+    saveBooking(confirmation, isKaraokeBooking ? 'karaoke' : 'table').then((saved) => {
       onBookingComplete(saved);
     }).catch((error) => {
       setErrorMessage(error instanceof Error ? error.message : 'Reservation could not be saved. Please try again.');
@@ -220,11 +221,13 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
       {/* Compact Header with H1 Fade-In */}
       <div className="text-center space-y-1">
         <h1 className="font-['Cinzel',serif] text-2xl sm:text-4xl text-[#FDFBF7] tracking-wider font-light animate-hero-fade-in">
-          Reserve a Table at <span className="text-[#E8CCA0]">AMICA SOHO</span>
+          {isKaraokeBooking ? 'Book the Karaoke Room' : 'Reserve a Table at'} <span className="text-[#E8CCA0]">AMICA SOHO</span>
         </h1>
         <p className="text-xs text-[#DFBE7B]/85 font-sans">
           Wednesday – Saturday · 5:00 PM – 3:00 AM
         </p>
+        {isKaraokeBooking && <p className="text-sm text-[#FDFBF7]/80 font-sans">Private room · One room · Up to 15 guests</p>}
+        <a href={isKaraokeBooking ? '/?book=true' : '/karaoke-booking'} className="inline-flex min-h-10 items-center text-xs text-[#DFBE7B] underline underline-offset-4 hover:text-[#FFEAA7]">{isKaraokeBooking ? 'Looking for a table? Book here' : 'Booking the karaoke room? Book it here'}</a>
 
         {savedPairingsCount > 0 && (
           <div className="inline-flex items-center gap-2 px-3 py-0.5 bg-[#200A0E] border border-[#C5A059] text-[#DFBE7B] text-xs rounded-full mt-1">
@@ -509,7 +512,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                 onChange={(e) => setFormData({ ...formData, guests: Number(e.target.value) })}
                 className="w-full px-4 py-3 bg-[#0D0204] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] rounded-lg text-sm sm:text-base text-[#FFEAA7] focus:outline-none focus:border-[#DFBE7B] font-['Cinzel',serif] font-semibold appearance-none cursor-pointer shadow-inner transition-all pr-10"
               >
-                {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                {Array.from({ length: isKaraokeBooking ? 15 : 20 }, (_, i) => i + 1).map((num) => (
                   <option key={num} value={num} className="bg-[#120205] text-[#FFEAA7]">
                     {num} {num === 1 ? 'Guest' : 'Guests'}
                   </option>
@@ -686,7 +689,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
             ) : (
               <>
                 <CalendarIcon className="w-4 h-4" />
-                <span>Reserve Table</span>
+                <span>{isKaraokeBooking ? 'Reserve Karaoke Room' : 'Reserve Table'}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -694,7 +697,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
           <div className="flex items-center justify-center gap-1 text-[10px] text-[#DFBE7B]/70 font-sans text-center">
             <ShieldCheck className="w-3.5 h-3.5 text-[#DFBE7B]" />
-            <span>Tables reserved for 2 hours · No deposit required</span>
+            <span>{isKaraokeBooking ? 'One private karaoke room · 2-hour reservation' : 'Tables reserved for 2 hours · No deposit required'}</span>
           </div>
         </div>
 
