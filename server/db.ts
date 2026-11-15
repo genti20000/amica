@@ -31,6 +31,8 @@ export interface ReservationRow {
   time_slot: string;
   duration_minutes: number;
   total_price_pence: number | null;
+  payment_status: string;
+  payment_session_id: string | null;
   seating_area: string;
   special_occasion: string | null;
   dietary_notes: string | null;
@@ -91,11 +93,13 @@ async function ensureReservationPricingColumns() {
     pricingColumnsReady = (async () => {
       await db.query('ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS duration_minutes smallint NOT NULL DEFAULT 120');
       await db.query('ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS total_price_pence integer');
+      await db.query("ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS payment_status varchar(20) NOT NULL DEFAULT 'unpaid'");
+      await db.query('ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS payment_session_id text');
     })().catch((error) => { pricingColumnsReady = undefined; throw error; });
   }
   await pricingColumnsReady;
 }
-export async function createReservation(data: { booking_id?: string; guest_name: string; email: string; phone: string; guests: number; reservation_date: string; time_slot: string; seating_area: string; special_occasion?: string; dietary_notes?: string; ip_address?: string; actor?: string; bypassCutoff?: boolean; duration_minutes?: number; total_price_pence?: number }): Promise<ReservationRow> {
+export async function createReservation(data: { booking_id?: string; guest_name: string; email: string; phone: string; guests: number; reservation_date: string; time_slot: string; seating_area: string; special_occasion?: string; dietary_notes?: string; ip_address?: string; actor?: string; bypassCutoff?: boolean; duration_minutes?: number; total_price_pence?: number; statusOverride?: string; paymentStatus?: string }): Promise<ReservationRow> {
   await ensureReservationPricingColumns();
   return transaction(async client => {
     // Serialize booking creation with blackout changes to avoid a check/write race.
@@ -109,13 +113,56 @@ export async function createReservation(data: { booking_id?: string; guest_name:
     const durationMinutes = data.duration_minutes ?? 120;
     if (!Number.isInteger(durationMinutes) || durationMinutes < 120 || durationMinutes > 600 || durationMinutes % 60 !== 0) throw new BookingValidationError('Reservation duration must be at least two hours.');
     await assertCapacity(client, { ...data, duration_minutes: durationMinutes });
-    const status=settings.auto_confirm==='false'?'Pending':'Confirmed';
+    const status=data.statusOverride || (settings.auto_confirm==='false'?'Pending':'Confirmed');
+    const paymentStatus=data.paymentStatus || 'unpaid';
     const id = data.booking_id || 'AMICA-'+randomUUID(); const now=new Date().toISOString();
-    const result = await client.query(`INSERT INTO reservations (booking_id, guest_name, email, phone, guests, reservation_date, time_slot, seating_area, special_occasion, dietary_notes, status, qr_code_value, ip_address, created_at, updated_at, duration_minutes, total_price_pence) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$14,$11,$12,$13,$13,$15,$16) RETURNING *`,[id,data.guest_name.trim(),data.email.trim(),data.phone.trim(),data.guests,data.reservation_date,data.time_slot,data.seating_area,data.special_occasion||'',data.dietary_notes||'',`AMICA-SOHO-${id}`,data.ip_address||null,now,status,durationMinutes,data.total_price_pence??null]);
-    await logAudit(id,status==='Pending'?'RESERVATION_PENDING':'RESERVATION_CONFIRMED',data.actor||'GUEST_WEB_BOOKING',`Reservation saved for ${data.guests} guests.`,client);
+    const result = await client.query(`INSERT INTO reservations (booking_id, guest_name, email, phone, guests, reservation_date, time_slot, seating_area, special_occasion, dietary_notes, status, qr_code_value, ip_address, created_at, updated_at, duration_minutes, total_price_pence, payment_status, payment_session_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$14,$11,$12,$13,$13,$15,$16,$17,NULL) RETURNING *`,[id,data.guest_name.trim(),data.email.trim(),data.phone.trim(),data.guests,data.reservation_date,data.time_slot,data.seating_area,data.special_occasion||'',data.dietary_notes||'',`AMICA-SOHO-${id}`,data.ip_address||null,now,status,durationMinutes,data.total_price_pence??null,paymentStatus]);
+    await logAudit(id,status==='Pending Payment'?'RESERVATION_PENDING_PAYMENT':status==='Pending'?'RESERVATION_PENDING':'RESERVATION_CONFIRMED',data.actor||'GUEST_WEB_BOOKING',status==='Pending Payment'?'Karaoke reservation is awaiting secure payment.':`Reservation saved for ${data.guests} guests.`,client);
     return result.rows[0];
   });
 }
+export async function attachKaraokePaymentSession(bookingId: string, sessionId: string): Promise<void> {
+  await ensureReservationPricingColumns();
+  const result = await db.query("UPDATE reservations SET payment_session_id=$1, updated_at=$2 WHERE booking_id=$3 AND status='Pending Payment' AND payment_status='pending' RETURNING booking_id", [sessionId,new Date().toISOString(),bookingId]);
+  if (!result.rows.length) throw new Error('The pending karaoke reservation could not be linked to checkout.');
+}
+export async function getReservationByPaymentSession(sessionId: string): Promise<ReservationRow | null> {
+  await ensureReservationPricingColumns();
+  return (await db.query('SELECT * FROM reservations WHERE payment_session_id=$1 LIMIT 1',[sessionId])).rows[0] || null;
+}
+export async function changeKaraokePaymentState(sessionId: string, state: 'paid' | 'expired' | 'failed'): Promise<{reservation: ReservationRow | null; changed: boolean}> {
+  await ensureReservationPricingColumns();
+  return transaction(async client => {
+    await client.query('SELECT pg_advisory_xact_lock(230017)');
+    const current=(await client.query('SELECT * FROM reservations WHERE payment_session_id=$1 FOR UPDATE',[sessionId])).rows[0] as ReservationRow | undefined;
+    if(!current) return {reservation:null,changed:false};
+    if(current.payment_status!=='pending' || current.status!=='Pending Payment') return {reservation:current,changed:false};
+    const paid=state==='paid';
+    const status=paid?'Confirmed':'Cancelled';
+    const result=await client.query('UPDATE reservations SET status=$1,payment_status=$2,updated_at=$3 WHERE booking_id=$4 RETURNING *',[status,state,new Date().toISOString(),current.booking_id]);
+    await logAudit(current.booking_id,paid?'KARAOKE_PAYMENT_CONFIRMED':'KARAOKE_PAYMENT_'+state.toUpperCase(),'STRIPE_WEBHOOK',paid?'Stripe payment completed.':'Stripe checkout did not complete.',client);
+    return {reservation:result.rows[0],changed:true};
+  });
+}
+export async function failKaraokeCheckout(bookingId: string): Promise<void> {
+  await ensureReservationPricingColumns();
+  await transaction(async client => {
+    await client.query('SELECT pg_advisory_xact_lock(230017)');
+    const result=await client.query("UPDATE reservations SET status='Cancelled',payment_status='failed',updated_at=$1 WHERE booking_id=$2 AND status='Pending Payment' AND payment_status='pending' RETURNING booking_id",[new Date().toISOString(),bookingId]);
+    if(result.rows.length) await logAudit(bookingId,'KARAOKE_CHECKOUT_FAILED','STRIPE_CHECKOUT','Checkout session could not be created.',client);
+  });
+}
+export async function cancelPendingKaraokePayment(bookingId: string, actor='GUEST_KARAOKE_CHECKOUT'): Promise<ReservationRow | null> {
+  await ensureReservationPricingColumns();
+  return transaction(async client => {
+    await client.query('SELECT pg_advisory_xact_lock(230017)');
+    const result=await client.query("UPDATE reservations SET status='Cancelled',payment_status='expired',updated_at=$1 WHERE booking_id=$2 AND status='Pending Payment' AND payment_status='pending' RETURNING *",[new Date().toISOString(),bookingId]);
+    if(!result.rows.length)return null;
+    await logAudit(bookingId,'KARAOKE_CHECKOUT_CANCELLED',actor,'Guest returned from Stripe without completing payment.',client);
+    return result.rows[0];
+  });
+}
+
 export async function updateReservationStatus(id: string, status: string, actor='ADMIN_PORTAL', notes=''): Promise<ReservationRow | null> {
   if (!['Confirmed','Auto-Confirmed','Pending','Seated','Completed','Cancelled','No-Show'].includes(status)) throw new Error('Invalid reservation status.');
   return transaction(async client => {

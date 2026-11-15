@@ -1,7 +1,7 @@
 import { serviceInstant } from './serviceTime.js';
 
 export const BOOKING_POLICY = { guests: 80, tables: 18, minutes: 120, minimumTableSeats: 4 } as const;
-export const occupyingStatuses = ['Pending', 'Confirmed', 'Auto-Confirmed', 'Seated'];
+export const occupyingStatuses = ['Pending', 'Pending Payment', 'Confirmed', 'Auto-Confirmed', 'Seated'];
 type Occupancy = { guests: number; reservation_date: string; time_slot: string; duration_minutes?: number };
 
 // Until the 4/6-seat table mix is recorded, reserve enough four-seat tables.
@@ -32,7 +32,7 @@ export function fitsBookingCapacity(candidate: Occupancy, existing: Occupancy[])
 
 // The venue has one karaoke room, reserved exclusively for a two-hour slot.
 export function fitsKaraokeCapacity(candidate: Occupancy, existing: Occupancy[]): boolean {
-  if (!Number.isInteger(candidate.guests) || candidate.guests < 1 || candidate.guests > 15) return false;
+  if (!Number.isInteger(candidate.guests) || candidate.guests < 8 || candidate.guests > 15) return false;
   const start = serviceInstant(candidate.reservation_date, candidate.time_slot);
   const end = start + (candidate.duration_minutes ?? BOOKING_POLICY.minutes) * 60000;
   return !existing.some((row) => {

@@ -7,6 +7,10 @@ import {
   BookingValidationError,
   getAllReservations,
   getReservationById,
+  attachKaraokePaymentSession,
+  getReservationByPaymentSession,
+  changeKaraokePaymentState,
+  failKaraokeCheckout,
   createReservation,
   updateReservationStatus,
   deleteReservation,
@@ -33,7 +37,9 @@ const __dirname = path.dirname(__filename);
 export const app = express();
 async function configureServer() {
 
-  app.use(express.json({ limit: '32kb' }));
+  app.use(express.json({ limit: '32kb', verify: (req, _res, buffer) => {
+    if (req.url?.startsWith('/api/stripe/webhook')) (req as any).rawBody = Buffer.from(buffer);
+  }}));
   app.post('/api/admin/logout', (req, res) => { res.clearCookie('amica_admin', {path:'/api'}); res.json({success:true}); });
 
   // Admin authorization is enforced on the server, independent of the preview lock.
@@ -59,8 +65,9 @@ async function configureServer() {
   });
   app.use('/api', (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
-    const publicRead = req.method === 'GET' && ['/health', '/system/settings', '/system/blocked-dates'].includes(req.path);
-    if (publicRead || (req.method === 'POST' && req.path === '/bookings')) return next();
+    const publicRead = req.method === 'GET' && ['/health', '/system/settings', '/system/blocked-dates', '/bookings/payment-status'].includes(req.path);
+    const publicWrite = req.method === 'POST' && ['/bookings', '/bookings/karaoke/checkout', '/bookings/karaoke/cancel-checkout', '/stripe/webhook'].includes(req.path);
+    if (publicRead || publicWrite) return next();
     const cookie = (req.headers.cookie || '').split(';').map(v => v.trim()).find(v => v.startsWith('amica_admin='))?.slice(12) || '';
     const [expires, signature] = cookie.split('.');
     if (adminPasswords.length === 0 || !expires || !signature || Number(expires) < Date.now() || !equal(signature, sign(expires))) {
@@ -280,6 +287,19 @@ async function configureServer() {
   });
 
   // Get single booking with audit trail
+  app.get('/api/bookings/payment-status', async (req,res) => {
+    const sessionId=typeof req.query.session_id==='string'?req.query.session_id:'';
+    if(!/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId))return res.status(400).json({success:false,error:'Invalid checkout reference.'});
+    try {
+      const booking=await getReservationByPaymentSession(sessionId);
+      if(!booking||booking.seating_area!=='Karaoke Room')return res.status(404).json({success:false,error:'Checkout booking not found.'});
+      const state=booking.payment_status==='paid'?'paid':booking.payment_status==='expired'||booking.payment_status==='failed'?'expired':'pending';
+      return res.json({success:true,state,booking:{bookingId:booking.booking_id,createdAt:booking.created_at,status:booking.status,qrCodeValue:booking.qr_code_value,
+        formData:{name:booking.guest_name,email:booking.email,phone:booking.phone,guests:booking.guests,date:booking.reservation_date,timeSlot:booking.time_slot,
+          seatingArea:booking.seating_area,durationHours:(booking.duration_minutes||120)/60,totalPricePence:booking.total_price_pence,dietaryNotes:booking.dietary_notes||'',specialOccasion:booking.special_occasion||'Private Karaoke Room'}}});
+    } catch { return res.status(503).json({success:false,error:'Payment status is temporarily unavailable.'}); }
+  });
+
   app.get('/api/bookings/:id', async (req, res) => {
     try {
       const { reservation, auditLogs } = await getReservationById(req.params.id);
@@ -316,12 +336,128 @@ async function configureServer() {
     }
   });
 
+  // Karaoke checkout is paid in full before the single room is confirmed.
+  app.post('/api/bookings/karaoke/checkout', async (req, res) => {
+    const secret = process.env.STRIPE_SECRET_KEY;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!secret || !webhookSecret) return res.status(503).json({ success:false, error:'Secure online payment is not configured yet. Please contact AMICA SOHO to book.' });
+    let bookingId = '';
+    try {
+      const formData = req.body?.formData;
+      if (!formData || typeof formData.name !== 'string' || !formData.name.trim() || typeof formData.phone !== 'string' || !formData.phone.trim())
+        return res.status(400).json({success:false,error:'Enter the lead guest name and mobile number.'});
+      const guests=Number(formData.guests),durationHours=Number(formData.durationHours ?? 2);
+      if(!Number.isInteger(guests)||guests<8||guests>15) return res.status(400).json({success:false,error:'The karaoke room has an 8-guest minimum and a 15-guest maximum.'});
+      if(!Number.isInteger(durationHours)||durationHours<2||durationHours>10) return res.status(400).json({success:false,error:'Choose a session of at least two whole hours.'});
+      const validSlots=['17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30','23:00','23:30','00:00','00:30','01:00'];
+      if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(formData.date||'')||!validSlots.includes(formData.timeSlot)||
+        (formData.email && (typeof formData.email!=='string'||! /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(formData.email)||formData.email.length>128))||
+        formData.name.trim().length>100||formData.phone.trim().length>30||
+        (formData.dietaryNotes && (typeof formData.dietaryNotes!=='string'||formData.dietaryNotes.length>2000)))
+        return res.status(400).json({success:false,error:'Check the date, time and contact details.'});
+      const date=new Date(formData.date+'T12:00:00Z');
+      const todayLondon=new Date().toLocaleDateString('en-CA',{timeZone:'Europe/London'});
+      if(Number.isNaN(date.getTime())||date.toISOString().slice(0,10)!==formData.date||formData.date<todayLondon||![3,4,5,6].includes(date.getUTCDay()))
+        return res.status(400).json({success:false,error:'Choose a Wednesday to Saturday service date from today onwards.'});
+      if(serviceInstant(formData.date,formData.timeSlot)+durationHours*3600000>serviceInstant(formData.date,'03:00'))
+        return res.status(400).json({success:false,error:'This session would run past 3:00 AM. Choose an earlier time or shorter session.'});
+      const blocked=await isDateBlocked(formData.date,formData.timeSlot);
+      if(blocked.blocked) return res.status(400).json({success:false,error:'This date or time is unavailable. Please choose another slot.'});
+
+      bookingId='AMICA-'+randomUUID();
+      const totalPricePence=guests*1500+(durationHours-2)*9000;
+      const created=await createReservation({booking_id:bookingId,guest_name:formData.name,email:formData.email||'',phone:formData.phone,guests,
+        reservation_date:formData.date,time_slot:formData.timeSlot,duration_minutes:durationHours*60,total_price_pence:totalPricePence,
+        seating_area:'Karaoke Room',special_occasion:'Private Karaoke Room',dietary_notes:formData.dietaryNotes||'',
+        ip_address:(req.headers['x-forwarded-for'] as string)||req.socket.remoteAddress||'127.0.0.1',actor:'GUEST_KARAOKE_CHECKOUT',
+        statusOverride:'Pending Payment',paymentStatus:'pending'});
+
+      const baseUrl='https://www.amicasoho.com';
+      const params=new URLSearchParams();
+      params.set('mode','payment'); params.set('client_reference_id',created.booking_id);
+      params.set('success_url',baseUrl+'/karaoke-booking?payment=success&session_id={CHECKOUT_SESSION_ID}');
+      params.set('cancel_url',baseUrl+'/karaoke-booking?payment=cancelled&booking_id='+encodeURIComponent(created.booking_id));
+      params.set('expires_at',String(Math.floor(Date.now()/1000)+35*60));
+      params.set('metadata[booking_id]',created.booking_id); params.set('metadata[booking_type]','karaoke');
+      params.set('line_items[0][price_data][currency]','gbp'); params.set('line_items[0][price_data][unit_amount]',String(totalPricePence));
+      params.set('line_items[0][price_data][product_data][name]','AMICA SOHO Private Karaoke Room');
+      params.set('line_items[0][price_data][product_data][description]',guests+' guests · '+durationHours+' hours · £15 per guest for the first 2 hours, then £90 per extra hour');
+      params.set('line_items[0][quantity]','1'); if(formData.email)params.set('customer_email',formData.email);
+      const stripeResponse=await fetch('https://api.stripe.com/v1/checkout/sessions',{method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/x-www-form-urlencoded'},body:params.toString()});
+      const session=await stripeResponse.json().catch(()=>null);
+      if(!stripeResponse.ok||!session?.id||!session?.url) throw new Error('Stripe checkout could not be created.');
+      try { await attachKaraokePaymentSession(created.booking_id,session.id); }
+      catch (error) {
+        await fetch('https://api.stripe.com/v1/checkout/sessions/'+encodeURIComponent(session.id)+'/expire',{method:'POST',headers:{Authorization:'Bearer '+secret}}).catch(()=>{});
+        throw error;
+      }
+      return res.status(201).json({success:true,bookingId:created.booking_id,checkoutUrl:session.url,totalPricePence});
+    } catch(error:any) {
+      if(bookingId) await failKaraokeCheckout(bookingId).catch(()=>{});
+      return res.status(error instanceof BookingValidationError?400:503).json({success:false,error:error instanceof BookingValidationError?error.message:'Secure checkout is temporarily unavailable. Please try again or contact AMICA SOHO.'});
+    }
+  });
+
+  app.post('/api/bookings/karaoke/cancel-checkout', async (req,res) => {
+    const bookingId=String(req.body?.bookingId||'');
+    if(!/^AMICA-[A-Za-z0-9-]{6,80}$/.test(bookingId))return res.status(400).json({success:false,error:'Invalid booking reference.'});
+    try {
+      const {reservation}=await getReservationById(bookingId);
+      if(!reservation||reservation.seating_area!=='Karaoke Room')return res.json({success:true});
+      if(reservation.status!=='Pending Payment'||reservation.payment_status!=='pending'||!reservation.payment_session_id)return res.json({success:true});
+      const secret=process.env.STRIPE_SECRET_KEY;
+      if(!secret)return res.status(503).json({success:false,error:'Checkout cancellation is unavailable.'});
+      const expired=await fetch('https://api.stripe.com/v1/checkout/sessions/'+encodeURIComponent(reservation.payment_session_id)+'/expire',{method:'POST',headers:{Authorization:'Bearer '+secret}});
+      if(expired.ok)await changeKaraokePaymentState(reservation.payment_session_id,'expired');
+      return res.json({success:true});
+    } catch { return res.status(503).json({success:false,error:'Unable to close the checkout session.'}); }
+  });
+
+
+
+  app.post('/api/stripe/webhook', async (req,res) => {
+    const webhookSecret=process.env.STRIPE_WEBHOOK_SECRET;
+    const rawBody=(req as any).rawBody as Buffer|undefined;
+    const signature=req.headers['stripe-signature'];
+    if(!webhookSecret||!rawBody||typeof signature!=='string')return res.status(400).json({success:false,error:'Invalid webhook request.'});
+    try {
+      const parts=Object.fromEntries(signature.split(',').map((part)=>{const i=part.indexOf('=');return [part.slice(0,i),part.slice(i+1)]}));
+      const timestamp=parts.t;
+      if(!timestamp||Math.abs(Date.now()/1000-Number(timestamp))>300)return res.status(400).json({success:false,error:'Expired webhook signature.'});
+      const expected=createHmac('sha256',webhookSecret).update(timestamp+'.').update(rawBody).digest();
+      const signatures=signature.split(',').filter(p=>p.startsWith('v1=')).map(p=>p.slice(3));
+      const valid=signatures.some(value=>{try{const candidate=Buffer.from(value,'hex');return candidate.length===expected.length&&timingSafeEqual(candidate,expected)}catch{return false}});
+      if(!valid)return res.status(400).json({success:false,error:'Invalid webhook signature.'});
+      const event=req.body;
+      if(event?.type==='checkout.session.completed') {
+        const session=event.data?.object; const sessionId=String(session?.id||'');
+        if(session?.metadata?.booking_type!=='karaoke')return res.json({received:true});
+        const booking=await getReservationByPaymentSession(sessionId);
+        if(!booking||booking.booking_id!==session.metadata.booking_id||booking.total_price_pence!==session.amount_total||session.currency!=='gbp'||session.payment_status!=='paid')
+          return res.status(400).json({success:false,error:'Checkout details do not match the pending reservation.'});
+        const changed=await changeKaraokePaymentState(sessionId,'paid');
+        if(changed.changed&&changed.reservation?.email) {
+          const result=await sendReservationEmail(changed.reservation);
+          if(!result.success)console.error('Paid karaoke confirmation email was not delivered.');
+        }
+      } else if(event?.type==='checkout.session.expired') {
+        const session=event.data?.object;
+        if(session?.metadata?.booking_type==='karaoke')await changeKaraokePaymentState(String(session.id),'expired');
+      }
+      return res.json({received:true});
+    } catch(error) {
+      console.error('Stripe webhook processing failed:',error instanceof Error?error.message:'Unknown error');
+      return res.status(500).json({success:false,error:'Webhook processing failed.'});
+    }
+  });
+
   // Create new reservation (auto-confirm 1 to 20 pax)
   app.post('/api/bookings', async (req, res) => {
     try {
       const { formData, bookingType = 'table', bookingId } = req.body;
       if (!['table', 'karaoke'].includes(bookingType)) return res.status(400).json({ success: false, error: 'Choose a valid booking type.' });
       const isKaraokeBooking = bookingType === 'karaoke';
+      if (isKaraokeBooking) return res.status(400).json({success:false,error:'Karaoke bookings must be completed through secure Stripe checkout.'});
       if (!formData || !formData.name || !formData.phone) {
         return res.status(400).json({ success: false, error: 'Missing required guest contact information' });
       }
