@@ -88,7 +88,7 @@ export async function createReservation(data: { booking_id?: string; guest_name:
     if (blocked.blocked) throw new BookingValidationError('This service date or time is unavailable.');
     const settings=Object.fromEntries((await client.query('SELECT key,value FROM venue_settings')).rows.map(r=>[r.key,r.value]));
     const cutoff=Number(settings.cutoff_hours ?? 1);
-    if (serviceInstant(data.reservation_date,data.time_slot)<Date.now()+(Number.isFinite(cutoff)&&cutoff>=0?cutoff:1)*3600000) throw new BookingValidationError('Please choose a later reservation time. The booking cutoff has passed.');
+    if (!data.bypassCutoff && serviceInstant(data.reservation_date,data.time_slot)<Date.now()+(Number.isFinite(cutoff)&&cutoff>=0?cutoff:1)*3600000) throw new BookingValidationError('Please choose a later reservation time. The booking cutoff has passed.');
     if(data.guests < Number(settings.min_pax||1) || data.guests > Number(settings.max_pax||20)) throw new BookingValidationError('Please choose a supported party size.');
     await assertCapacity(client, data);
     const status=settings.auto_confirm==='false'?'Pending':'Confirmed';

@@ -183,8 +183,8 @@ async function configureServer() {
       const guests = Number(formData.guests);
       const validSlots = ['17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30','23:00','23:30','00:00','00:30','01:00','01:30','02:00'];
       if (!Number.isInteger(guests) || guests < 1 || guests > 20 ||
-          !/^\\d{4}-\\d{2}-\\d{2}$/.test(formData.date || '') || !validSlots.includes(formData.timeSlot) ||
-          (!!formData.email && (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(formData.email) || formData.email.length > 128)) ||
+          !/^\d{4}-\d{2}-\d{2}$/.test(formData.date || '') || !validSlots.includes(formData.timeSlot) ||
+          (!!formData.email && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) || formData.email.length > 128)) ||
           formData.name.trim().length > 100 || formData.phone.trim().length > 30 ||
           typeof formData.dietaryNotes !== 'undefined' && (typeof formData.dietaryNotes !== 'string' || formData.dietaryNotes.length > 2000) ||
           typeof formData.specialOccasion !== 'undefined' && (typeof formData.specialOccasion !== 'string' || formData.specialOccasion.length > 150) ||
