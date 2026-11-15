@@ -74,7 +74,7 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
             <a key={href} href={href} target="_blank" rel="noopener noreferrer" className="btn-brass-outline px-4 py-2 rounded text-xs uppercase tracking-wider">{label}</a>
           ))}
         </div>
-        <p className="text-xs text-[#DFBE7B]/80">Small plates: 3 for 11 · 6 for 20 · 25ml available on request. Please ask our team about allergens.</p>
+        <p className="text-xs text-[#DFBE7B]/80">25ml available on request. Dietary labels are provisional; please confirm ingredients and preparation with our team.</p>
         {/* Quiz Banner */}
         <div className="pt-2">
           <button

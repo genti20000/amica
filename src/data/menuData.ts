@@ -142,161 +142,237 @@ const MENU_BASE: MenuItem[] = [
     "id": "olives",
     "name": "Mixed olives",
     "category": "small-plates",
-    "price": "4",
+    "price": "£4",
     "description": "Mixed olives",
-    "tastingNotes": ""
+    "tags": [
+      "VG",
+      "DF"
+    ]
+  },
+  {
+    "id": "fries",
+    "name": "Fries",
+    "category": "small-plates",
+    "price": "£4",
+    "description": "Fries",
+    "tags": [
+      "VG"
+    ]
+  },
+  {
+    "id": "truffle-parmesan-fries",
+    "name": "Truffle and Parmesan fries",
+    "category": "small-plates",
+    "price": "£5",
+    "description": "Truffle and Parmesan fries",
+    "tags": [
+      "V"
+    ]
+  },
+  {
+    "id": "padron-peppers",
+    "name": "Padron peppers",
+    "category": "small-plates",
+    "price": "£5",
+    "description": "Padron peppers",
+    "tags": [
+      "VG"
+    ]
   },
   {
     "id": "bruschetta-classic",
     "name": "Classic bruschetta",
     "category": "small-plates",
-    "price": "4",
-    "description": "With tomato and basil",
-    "tastingNotes": ""
+    "price": "£4",
+    "description": "Tomato, basil, red onion and seasoning",
+    "tags": [
+      "VG",
+      "DF"
+    ]
   },
   {
-    "id": "bruschetta-mushroom",
+    "id": "bruschetta-mushroom-goat-cheese",
     "name": "Mushroom and goat’s cheese bruschetta",
     "category": "small-plates",
-    "price": "5",
-    "description": "Mushroom and goat’s cheese",
-    "tastingNotes": ""
+    "price": "£5",
+    "description": "Pan-seared mushrooms, goat’s cheese, cherry tomatoes and truffle seasoning",
+    "tags": [
+      "V"
+    ]
   },
   {
-    "id": "bresaola-affair",
-    "name": "Bruschetta",
+    "id": "burrata",
+    "name": "Burrata",
     "category": "small-plates",
-    "price": "5",
-    "description": "Rocket, stracciatella cheese & bresaola (cured beef)",
-    "tastingNotes": ""
+    "price": "£6",
+    "description": "Burratina served with rocket salad, cherry tomatoes and Italian seasoning",
+    "tags": [
+      "V"
+    ]
   },
   {
-    "id": "zucchini-fritte",
+    "id": "zucchini-fritti",
     "name": "Zucchini fritti",
     "category": "small-plates",
-    "price": "5",
-    "description": "Courgette tempura with aioli sauce",
-    "tastingNotes": ""
-  },
-  {
-    "id": "fries-benefits",
-    "name": "Fries",
-    "category": "small-plates",
-    "price": "4",
-    "description": "Add truffle paste and Parmesan +1",
-    "tastingNotes": ""
+    "price": "£5",
+    "description": "Courgette tempura served with aioli sauce and Parmesan shavings",
+    "tags": [
+      "V"
+    ]
   },
   {
     "id": "tenderstem-broccoli",
     "name": "Tenderstem broccoli",
     "category": "small-plates",
-    "price": "4",
-    "description": "With chilli and white wine",
-    "tastingNotes": ""
+    "price": "£4",
+    "description": "Steamed in garlic and butter sauce",
+    "tags": [
+      "V",
+      "GF"
+    ]
   },
   {
     "id": "penne-arrabbiata",
     "name": "Penne arrabbiata",
     "category": "small-plates",
-    "price": "5",
+    "price": "£5",
     "description": "Penne pasta cooked in tomato, chilli and garlic sauce",
-    "tastingNotes": ""
+    "tags": [
+      "VG",
+      "DF"
+    ]
   },
   {
-    "id": "pan-fried-mushrooms",
+    "id": "pan-seared-mushrooms",
     "name": "Pan-seared mushrooms",
     "category": "small-plates",
-    "price": "4",
+    "price": "£5",
     "description": "In garlic, chilli and white wine sauce",
-    "tastingNotes": ""
+    "tags": [
+      "VG",
+      "DF"
+    ]
   },
   {
-    "id": "pan-fried-brie",
-    "name": "Pan-fried brie",
+    "id": "deep-fried-brie",
+    "name": "Deep-fried brie",
     "category": "small-plates",
-    "price": "5",
-    "description": "Served with slow-cooked pear and homemade jam",
-    "tastingNotes": ""
+    "price": "£6",
+    "description": "Served with homemade jam",
+    "tags": [
+      "V"
+    ]
   },
   {
-    "id": "goats-cheese",
-    "name": "Goat’s cheese",
+    "id": "burrata-pinca",
+    "name": "Burrata Pinca",
     "category": "small-plates",
-    "price": "5",
-    "description": "Served with toasted ciabatta, mixed salad and red onion caramel",
-    "tastingNotes": ""
+    "price": "£6",
+    "description": "Neapolitan pinca with seasoned tomato sauce and burrata cheese",
+    "tags": [
+      "V"
+    ]
   },
   {
     "id": "gnocchi",
     "name": "Gnocchi",
     "category": "small-plates",
-    "price": "5",
+    "price": "£5",
     "description": "Cooked in chilli, garlic, tomato and creamy white wine sauce",
-    "tastingNotes": ""
+    "tags": [
+      "V"
+    ]
   },
   {
-    "id": "ravioli",
+    "id": "spinach-ricotta-ravioli",
     "name": "Spinach and ricotta ravioli",
     "category": "small-plates",
-    "price": "5",
+    "price": "£7",
     "description": "Served in creamy tomato sauce",
-    "tastingNotes": ""
+    "tags": [
+      "V"
+    ]
   },
   {
-    "id": "calamari",
+    "id": "calamari-fritti",
     "name": "Calamari fritti",
     "category": "small-plates",
-    "price": "6",
+    "price": "£7",
     "description": "Served with homemade tartare sauce",
-    "tastingNotes": ""
+    "tags": [
+      "DF"
+    ]
   },
   {
-    "id": "king-prawns",
+    "id": "butterflied-king-prawns",
     "name": "Butterflied king prawns",
     "category": "small-plates",
-    "price": "6",
+    "price": "£9",
     "description": "In garlic, chilli and white wine sauce",
-    "tastingNotes": ""
+    "tags": [
+      "GF"
+    ]
   },
   {
-    "id": "chicken-popcorn",
-    "name": "Chicken popcorn",
+    "id": "beef-tagliata",
+    "name": "Beef tagliata",
     "category": "small-plates",
-    "price": "5",
-    "description": "Served with homemade vegetable sauce",
-    "tastingNotes": ""
+    "price": "£9.90",
+    "description": "Sliced rib-eye steak, rocket and shaved Parmesan",
+    "tags": [
+      "GF"
+    ]
   },
   {
-    "id": "chicken-satay",
-    "name": "Chicken skewers",
+    "id": "lamb-cutlets",
+    "name": "Lamb cutlets",
     "category": "small-plates",
-    "price": "5",
-    "description": "Served with dipping sauce",
-    "tastingNotes": ""
+    "price": "£9.90",
+    "description": "Pan-seared with rosemary seasoning",
+    "tags": [
+      "GF",
+      "DF"
+    ]
   },
   {
-    "id": "bresaola",
+    "id": "cheese-meat-platter",
     "name": "Cheese & meat platter",
     "category": "small-plates",
-    "price": "8",
+    "price": "£9.90",
     "description": "Bresaola, Gorgonzola, goat’s cheese and Grana Padano, served with toasted ciabatta and rocket",
-    "tastingNotes": ""
+    "tags": [
+      "ASK"
+    ]
+  },
+  {
+    "id": "goats-cheese-salad",
+    "name": "Goat’s cheese salad",
+    "category": "small-plates",
+    "price": "£7",
+    "description": "Served with mixed salad and Italian dressing",
+    "tags": [
+      "V"
+    ]
   },
   {
     "id": "affogato",
     "name": "Affogato",
     "category": "desserts",
-    "price": "5",
-    "description": "Fior di latte gelato, espresso",
-    "tastingNotes": ""
+    "price": "£5",
+    "description": "Fior di latte gelato, espresso and cantuccine almond biscuit",
+    "tags": [
+      "V"
+    ]
   },
   {
-    "id": "tiramisu",
+    "id": "classic-tiramisu",
     "name": "Classic tiramisu",
     "category": "desserts",
-    "price": "5",
+    "price": "£5",
     "description": "Espresso-soaked ladyfingers, creamy mascarpone and a dusting of cocoa",
-    "tastingNotes": ""
+    "tags": [
+      "V"
+    ]
   }
 ];
 export const MENU_ITEMS: MenuItem[] = [...MENU_BASE, ...WINE_ITEMS];
