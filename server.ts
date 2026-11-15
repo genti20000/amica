@@ -19,6 +19,7 @@ import {
   updateVenueSettingsBatch,
   db
 } from './server/db.js';
+import { serviceInstant } from './src/lib/serviceTime.js';
 import {
   sendReservationEmail,
   generateConfirmationEmailHtml,
@@ -264,6 +265,8 @@ async function configureServer() {
           guests: r.guests,
           date: r.reservation_date,
           timeSlot: r.time_slot,
+          durationHours: (r.duration_minutes || 120) / 60,
+          totalPricePence: r.total_price_pence,
           seatingArea: r.seating_area,
           dietaryNotes: r.dietary_notes || '',
           specialOccasion: r.special_occasion || 'None / Casual Aperitivo'
@@ -299,6 +302,8 @@ async function configureServer() {
             guests: reservation.guests,
             date: reservation.reservation_date,
             timeSlot: reservation.time_slot,
+            durationHours: (reservation.duration_minutes || 120) / 60,
+            totalPricePence: reservation.total_price_pence,
             seatingArea: reservation.seating_area,
             dietaryNotes: reservation.dietary_notes || '',
             specialOccasion: reservation.special_occasion || 'None'
@@ -341,6 +346,15 @@ async function configureServer() {
         return res.status(400).json({ success: false, error: 'Please select an available Wednesday to Saturday service date and time.' });
       }
 
+      const durationHours = isKaraokeBooking ? Number(formData.durationHours ?? 2) : 2;
+      if (!Number.isInteger(durationHours) || durationHours < 2 || durationHours > 10) {
+        return res.status(400).json({ success: false, error: 'Choose a karaoke session of at least two whole hours.' });
+      }
+      const closeTime = serviceInstant(formData.date, '03:00');
+      if (serviceInstant(formData.date, formData.timeSlot) + durationHours * 3600000 > closeTime) {
+        return res.status(400).json({ success: false, error: 'This session length would extend beyond the 3:00 AM closing time. Choose an earlier time or a shorter session.' });
+      }
+
       // Check if date or slot is blocked by admin / buyout
       const blockCheck = await isDateBlocked(formData.date, formData.timeSlot);
       if (blockCheck.blocked) {
@@ -360,8 +374,10 @@ async function configureServer() {
         guests: guests,
         reservation_date: formData.date,
         time_slot: formData.timeSlot,
+        duration_minutes: durationHours * 60,
+        total_price_pence: isKaraokeBooking ? guests * 1500 + (durationHours - 2) * 9000 : undefined,
         seating_area: isKaraokeBooking ? 'Karaoke Room' : (formData.seatingArea || 'Vault Dining'),
-        special_occasion: formData.specialOccasion || 'Casual Dining & Drinks',
+        special_occasion: isKaraokeBooking ? 'Private Karaoke Room' : (formData.specialOccasion || 'Casual Dining & Drinks'),
         dietary_notes: formData.dietaryNotes || '',
         ip_address: clientIp,
         actor: isKaraokeBooking ? 'GUEST_KARAOKE_BOOKING' : 'GUEST_WEB_BOOKING'
@@ -380,6 +396,8 @@ async function configureServer() {
           guests: created.guests,
           date: created.reservation_date,
           timeSlot: created.time_slot,
+          durationHours: (created.duration_minutes || 120) / 60,
+          totalPricePence: created.total_price_pence,
           seatingArea: created.seating_area,
           dietaryNotes: created.dietary_notes || '',
           specialOccasion: created.special_occasion || 'Casual Dining & Drinks'

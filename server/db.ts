@@ -29,6 +29,8 @@ export interface ReservationRow {
   guests: number;
   reservation_date: string;
   time_slot: string;
+  duration_minutes: number;
+  total_price_pence: number | null;
   seating_area: string;
   special_occasion: string | null;
   dietary_notes: string | null;
@@ -74,8 +76,8 @@ export async function getReservationById(bookingId: string): Promise<{ reservati
   const [booking, audit] = await Promise.all([db.query('SELECT * FROM reservations WHERE booking_id=$1',[bookingId]), db.query('SELECT * FROM booking_audit_logs WHERE booking_id=$1 ORDER BY id DESC',[bookingId])]);
   return {reservation: booking.rows[0] || null, auditLogs: audit.rows};
 }
-async function assertCapacity(client: pg.PoolClient, candidate: Pick<ReservationRow, 'guests' | 'reservation_date' | 'time_slot'> & Partial<Pick<ReservationRow, 'seating_area'>>, excludeId = '') {
-  const rows = await client.query(`SELECT guests, reservation_date, time_slot, seating_area FROM reservations
+async function assertCapacity(client: pg.PoolClient, candidate: Pick<ReservationRow, 'guests' | 'reservation_date' | 'time_slot'> & Partial<Pick<ReservationRow, 'seating_area' | 'duration_minutes'>>, excludeId = '') {
+  const rows = await client.query(`SELECT guests, reservation_date, time_slot, seating_area, duration_minutes FROM reservations
     WHERE reservation_date BETWEEN (($1::date - 1)::text) AND (($1::date + 1)::text)
     AND status = ANY($2::text[]) AND booking_id <> $3`, [candidate.reservation_date, occupyingStatuses, excludeId]);
   const isKaraoke = candidate.seating_area === 'Karaoke Room';
@@ -83,7 +85,18 @@ async function assertCapacity(client: pg.PoolClient, candidate: Pick<Reservation
   if (isKaraoke && !fitsKaraokeCapacity(candidate, relevant)) throw new BookingValidationError('The karaoke room is already reserved during this two-hour period. Please choose another time.');
   if (!isKaraoke && !fitsBookingCapacity(candidate, relevant)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
 }
-export async function createReservation(data: { booking_id?: string; guest_name: string; email: string; phone: string; guests: number; reservation_date: string; time_slot: string; seating_area: string; special_occasion?: string; dietary_notes?: string; ip_address?: string; actor?: string; bypassCutoff?: boolean }): Promise<ReservationRow> {
+let pricingColumnsReady: Promise<void> | undefined;
+async function ensureReservationPricingColumns() {
+  if (!pricingColumnsReady) {
+    pricingColumnsReady = (async () => {
+      await db.query('ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS duration_minutes smallint NOT NULL DEFAULT 120');
+      await db.query('ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS total_price_pence integer');
+    })().catch((error) => { pricingColumnsReady = undefined; throw error; });
+  }
+  await pricingColumnsReady;
+}
+export async function createReservation(data: { booking_id?: string; guest_name: string; email: string; phone: string; guests: number; reservation_date: string; time_slot: string; seating_area: string; special_occasion?: string; dietary_notes?: string; ip_address?: string; actor?: string; bypassCutoff?: boolean; duration_minutes?: number; total_price_pence?: number }): Promise<ReservationRow> {
+  await ensureReservationPricingColumns();
   return transaction(async client => {
     // Serialize booking creation with blackout changes to avoid a check/write race.
     await client.query('SELECT pg_advisory_xact_lock(230017)');
@@ -93,10 +106,12 @@ export async function createReservation(data: { booking_id?: string; guest_name:
     const cutoff=Number(settings.cutoff_hours ?? 1);
     if (!data.bypassCutoff && serviceInstant(data.reservation_date,data.time_slot)<Date.now()+(Number.isFinite(cutoff)&&cutoff>=0?cutoff:1)*3600000) throw new BookingValidationError('Please choose a later reservation time. The booking cutoff has passed.');
     if(data.guests < Number(settings.min_pax||1) || data.guests > Number(settings.max_pax||20)) throw new BookingValidationError('Please choose a supported party size.');
-    await assertCapacity(client, data);
+    const durationMinutes = data.duration_minutes ?? 120;
+    if (!Number.isInteger(durationMinutes) || durationMinutes < 120 || durationMinutes > 600 || durationMinutes % 60 !== 0) throw new BookingValidationError('Reservation duration must be at least two hours.');
+    await assertCapacity(client, { ...data, duration_minutes: durationMinutes });
     const status=settings.auto_confirm==='false'?'Pending':'Confirmed';
     const id = data.booking_id || 'AMICA-'+randomUUID(); const now=new Date().toISOString();
-    const result = await client.query(`INSERT INTO reservations (booking_id, guest_name, email, phone, guests, reservation_date, time_slot, seating_area, special_occasion, dietary_notes, status, qr_code_value, ip_address, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$14,$11,$12,$13,$13) RETURNING *`,[id,data.guest_name.trim(),data.email.trim(),data.phone.trim(),data.guests,data.reservation_date,data.time_slot,data.seating_area,data.special_occasion||'',data.dietary_notes||'',`AMICA-SOHO-${id}`,data.ip_address||null,now,status]);
+    const result = await client.query(`INSERT INTO reservations (booking_id, guest_name, email, phone, guests, reservation_date, time_slot, seating_area, special_occasion, dietary_notes, status, qr_code_value, ip_address, created_at, updated_at, duration_minutes, total_price_pence) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$14,$11,$12,$13,$13,$15,$16) RETURNING *`,[id,data.guest_name.trim(),data.email.trim(),data.phone.trim(),data.guests,data.reservation_date,data.time_slot,data.seating_area,data.special_occasion||'',data.dietary_notes||'',`AMICA-SOHO-${id}`,data.ip_address||null,now,status,durationMinutes,data.total_price_pence??null]);
     await logAudit(id,status==='Pending'?'RESERVATION_PENDING':'RESERVATION_CONFIRMED',data.actor||'GUEST_WEB_BOOKING',`Reservation saved for ${data.guests} guests.`,client);
     return result.rows[0];
   });

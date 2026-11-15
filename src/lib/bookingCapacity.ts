@@ -2,7 +2,7 @@ import { serviceInstant } from './serviceTime.js';
 
 export const BOOKING_POLICY = { guests: 80, tables: 18, minutes: 120, minimumTableSeats: 4 } as const;
 export const occupyingStatuses = ['Pending', 'Confirmed', 'Auto-Confirmed', 'Seated'];
-type Occupancy = { guests: number; reservation_date: string; time_slot: string };
+type Occupancy = { guests: number; reservation_date: string; time_slot: string; duration_minutes?: number };
 
 // Until the 4/6-seat table mix is recorded, reserve enough four-seat tables.
 export function fitsBookingCapacity(candidate: Occupancy, existing: Occupancy[]): boolean {
@@ -34,10 +34,10 @@ export function fitsBookingCapacity(candidate: Occupancy, existing: Occupancy[])
 export function fitsKaraokeCapacity(candidate: Occupancy, existing: Occupancy[]): boolean {
   if (!Number.isInteger(candidate.guests) || candidate.guests < 1 || candidate.guests > 15) return false;
   const start = serviceInstant(candidate.reservation_date, candidate.time_slot);
-  const end = start + BOOKING_POLICY.minutes * 60000;
+  const end = start + (candidate.duration_minutes ?? BOOKING_POLICY.minutes) * 60000;
   return !existing.some((row) => {
     const rowStart = serviceInstant(row.reservation_date, row.time_slot);
-    const rowEnd = rowStart + BOOKING_POLICY.minutes * 60000;
+    const rowEnd = rowStart + (row.duration_minutes ?? BOOKING_POLICY.minutes) * 60000;
     return rowStart < end && rowEnd > start;
   });
 }

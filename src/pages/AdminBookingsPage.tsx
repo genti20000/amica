@@ -1473,6 +1473,9 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                     <p className="text-xs text-[#FDFBF7] mt-0.5">
                       <strong>Occasion:</strong> {selectedBooking.formData.specialOccasion}
                     </p>
+                    {selectedBooking.formData.durationHours && selectedBooking.formData.seatingArea === 'Karaoke Room' && (
+                      <p className="text-xs text-[#DFBE7B] mt-0.5"><strong>Session:</strong> {selectedBooking.formData.durationHours} hours · <strong>Total:</strong> {selectedBooking.formData.totalPricePence == null ? 'Not set' : new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(selectedBooking.formData.totalPricePence / 100)}</p>
+                    )}
                     <p className="text-xs text-[#DFBE7B] mt-0.5">
                       <strong>Dietary:</strong> {selectedBooking.formData.dietaryNotes || 'None specified'}
                     </p>

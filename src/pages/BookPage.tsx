@@ -22,6 +22,9 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+const maxKaraokeDurationHours = (date: string, timeSlot: string) => Math.floor((serviceInstant(date, '03:00') - serviceInstant(date, timeSlot)) / 3600000);
+const formatPounds = (pence: number) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(pence / 100);
+
 interface BookPageProps {
   onNavigate: (page: PageId) => void;
   onBookingComplete: (confirmation: BookingConfirmation) => void;
@@ -36,6 +39,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
     date: nextDefaultServiceDate(),
     timeSlot: '19:00',
     guests: 2,
+    durationHours: 2,
     seatingArea: isKaraokeBooking ? 'Karaoke Room' : 'Vault Dining',
     name: '',
     email: '',
@@ -50,6 +54,15 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Custom Pop-Up Date Picker State
+  const maxDurationHours = useMemo(() => maxKaraokeDurationHours(formData.date, formData.timeSlot), [formData.date, formData.timeSlot]);
+  const karaokeTotalPence = formData.guests * 1500 + Math.max(0, (formData.durationHours ?? 2) - 2) * 9000;
+
+  useEffect(() => {
+    if (isKaraokeBooking && (formData.durationHours ?? 2) > maxDurationHours) {
+      setFormData((current) => ({ ...current, durationHours: maxDurationHours }));
+    }
+  }, [isKaraokeBooking, maxDurationHours, formData.durationHours]);
+
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [pickerMonth, setPickerMonth] = useState<Date>(() => new Date(formData.date + 'T00:00:00'));
 
@@ -199,7 +212,8 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
       bookingId,
       formData: {
         ...formData,
-        seatingArea: isKaraokeBooking ? 'Karaoke Room' : 'Vault Dining'
+        seatingArea: isKaraokeBooking ? 'Karaoke Room' : 'Vault Dining',
+        ...(isKaraokeBooking ? { durationHours: formData.durationHours ?? 2, totalPricePence: karaokeTotalPence, specialOccasion: 'Private Karaoke Room' } : {})
       },
       createdAt: new Date().toISOString(),
       qrCodeValue: `AMICA-SOHO-${bookingId}-${formData.date}-${formData.guests}PAX`,
@@ -475,7 +489,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
             <div className="relative">
               <select
                 value={formData.timeSlot}
-                onChange={(e) => setFormData({ ...formData, timeSlot: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, timeSlot: e.target.value, durationHours: Math.min(formData.durationHours ?? 2, maxKaraokeDurationHours(formData.date, e.target.value)) })}
                 className="w-full px-4 py-3 bg-[#0D0204] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] rounded-lg text-sm sm:text-base text-[#FFEAA7] focus:outline-none focus:border-[#DFBE7B] font-['Cinzel',serif] font-semibold appearance-none cursor-pointer shadow-inner transition-all pr-10"
               >
                 {allTimeSlots.map((slot) => (
@@ -524,6 +538,18 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
             </div>
           </div>
         </div>
+
+        {isKaraokeBooking && (
+          <div className="space-y-3 rounded-xl border border-[#DFBE7B]/25 bg-[#0D0204]/80 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="karaoke-duration" className="text-xs font-sans text-[#DFBE7B] uppercase tracking-wider font-semibold">Session length</label>
+              <select id="karaoke-duration" value={formData.durationHours ?? 2} onChange={(e) => setFormData({ ...formData, durationHours: Number(e.target.value) })} className="min-h-11 rounded-lg border border-[#DFBE7B]/40 bg-[#0D0204] px-3 text-sm text-[#FDFBF7] font-sans">
+                {Array.from({ length: Math.max(1, maxDurationHours - 1) }, (_, i) => i + 2).map((hours) => <option key={hours} value={hours}>{hours} hours</option>)}
+              </select>
+            </div>
+            <p className="text-xs font-sans text-[#FDFBF7]/75">2-hour minimum: £15 per guest. Each additional hour: £90 for the room.</p>
+          </div>
+        )}
 
         {/* =========================================================================
             4. GUEST CONTACT & OCCASION
@@ -661,7 +687,9 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                   </span>
                   <p className="text-[#FDFBF7]/90 text-[11px]">
                     {formData.date} · {formData.timeSlot} · {formData.guests} {formData.guests === 1 ? 'Guest' : 'Guests'}
+                    {isKaraokeBooking && <> · {formData.durationHours ?? 2} hours</>}
                   </p>
+                  {isKaraokeBooking && <p className="mt-1 text-sm font-semibold text-[#FFEAA7]">Estimated total: {formatPounds(karaokeTotalPence)}</p>}
                 </>
               )}
             </div>
@@ -697,7 +725,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
           <div className="flex items-center justify-center gap-1 text-[10px] text-[#DFBE7B]/70 font-sans text-center">
             <ShieldCheck className="w-3.5 h-3.5 text-[#DFBE7B]" />
-            <span>{isKaraokeBooking ? 'One private karaoke room · 2-hour reservation' : 'Tables reserved for 2 hours · No deposit required'}</span>
+            <span>{isKaraokeBooking ? 'Room booking · 2-hour minimum · £90 per extra hour' : 'Tables reserved for 2 hours · No deposit required'}</span>
           </div>
         </div>
 
