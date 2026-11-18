@@ -301,7 +301,6 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
           Wednesday – Saturday · 5:00 PM – 3:00 AM
         </p>
         {isKaraokeBooking && <p className="text-sm text-[#FDFBF7]/80 font-sans">One private room · 8–15 guests · 2-hour minimum</p>}
-        {!isKaraokeBooking && <aside className="my-4 rounded-xl border border-[#DFBE7B]/30 p-4 text-left"><strong>Private karaoke room</strong><p className="text-sm">23 Frith Street · 8–15 guests · From £15 per person for two hours.</p><a className="inline-block py-2 underline text-[#DFBE7B]" href="/karaoke-booking">Check room availability</a></aside>}
         {isKaraokeBooking && <a href="/?book=true" className="inline-flex min-h-10 items-center text-xs text-[#DFBE7B] underline underline-offset-4 hover:text-[#FFEAA7]">Looking for a table? Book here</a>}
 
         {savedPairingsCount > 0 && (

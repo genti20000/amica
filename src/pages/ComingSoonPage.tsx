@@ -47,7 +47,6 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ onNavigate }) =>
           </div>
         </nav>
       </div>
-      <section aria-label="Private karaoke room" className="bg-[#18090d] text-center px-5 py-6 border-y border-[#D4B887]/30"><h2 className="text-xl text-[#F0D7A7]">Private karaoke room</h2><p className="mt-1 text-sm text-[#E9D6B6]">8–15 guests · Two hours from £15 per person</p><a href="/karaoke-booking" className="mt-3 inline-flex min-h-11 items-center border border-[#D4B887] px-5 text-sm text-[#F0D7A7]">Check room availability</a></section>
       <footer className="bg-[#080505] px-4 py-5 text-center">
         <a href="mailto:info@amicasoho.com" className="text-xs text-[#E9D6B6] hover:underline">info@amicasoho.com</a>
         <span className="mx-3 text-[#D4B887]/50">·</span><a href="/membership" className="text-xs text-[#E9D6B6] hover:underline">Apply for Membership</a>

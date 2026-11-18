@@ -1,3 +1,4 @@
+import { KaraokeRoomCalendar } from '../components/KaraokeRoomCalendar';
 import React, { useState, useMemo, useEffect } from 'react';
 import { PageId, BookingConfirmation, BookingFormData } from '../types';
 import { MonthlyCalendarWidget } from '../components/MonthlyCalendarWidget';
@@ -64,6 +65,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   // Navigation Tabs
   const [activeAdminTab, setActiveAdminTab] = useState<'bookings' | 'calendar' | 'blocked-dates' | 'settings'>('calendar');
 
+  const [roomView,setRoomView]=useState(false);
   // Bookings state
   const [bookings, setBookings] = useState<BookingConfirmation[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -913,7 +915,8 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
          ========================================================================= */}
       {activeAdminTab === 'calendar' && (
         <div className="max-w-7xl mx-auto space-y-6">
-          <AdminCalendarView
+          <div role="group" aria-label="Calendar view" className="flex flex-wrap gap-2">{[['Venue calendar',false],['Private karaoke room',true]].map(([label,room])=><button key={String(label)} aria-pressed={roomView===room} className="min-h-11 rounded-lg border px-4" type="button" onClick={()=>setRoomView(room===true)}>{String(label)}</button>)}</div>
+          {roomView ? <KaraokeRoomCalendar onSelect={handleSelectBooking}/> : <AdminCalendarView
             bookings={bookings}
             blockedDates={blockedDates}
             onSelectBooking={handleSelectBooking}
@@ -925,7 +928,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
               setNewBlock((prev) => ({ ...prev, date: dateStr }));
               setIsBlockModalOpen(true);
             }}
-          />
+          />}
         </div>
       )}
 
