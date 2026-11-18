@@ -54,7 +54,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
-  const [room,setRoom]=useState<{key:string,slots:string[]}|null>(null);
+  const [room,setRoom]=useState<{key:string,slots:string[],online:boolean}|null>(null);
   const [roomError,setRoomError]=useState(false);
   const roomKey=formData.date+':'+(formData.durationHours??2);
   useEffect(()=>{
@@ -63,13 +63,13 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
     const check=async()=>{try{
       const r=await fetch('/api/karaoke/availability?date='+encodeURIComponent(formData.date)+'&hours='+(formData.durationHours??2),{cache:'no-store',signal:controller.signal});
       if(!r.ok) throw Error();const data=await r.json(); if(!Array.isArray(data.slots))throw Error();
-      if(!controller.signal.aborted){setRoom({key:roomKey,slots:data.slots});setRoomError(false);}
+      if(!controller.signal.aborted){setRoom({key:roomKey,slots:data.slots,online:data.checkoutEnabled===true});setRoomError(false);}
     }catch{if(!controller.signal.aborted){setRoom(null);setRoomError(true);}}};
     setRoomError(false);void check();const timer=setInterval(check,30000);window.addEventListener('focus',check);
     return ()=>{controller.abort();clearInterval(timer);window.removeEventListener('focus',check);};
   },[isKaraokeBooking,roomKey]);
   const available=room?.key===roomKey?room.slots:null;
-  const roomUnavailable=isKaraokeBooking&&!available?.includes(formData.timeSlot);
+  const roomUnavailable=isKaraokeBooking&&(!available?.includes(formData.timeSlot)||!room?.online);
   // Custom Pop-Up Date Picker State
   const maxDurationHours = useMemo(() => maxKaraokeDurationHours(formData.date, formData.timeSlot), [formData.date, formData.timeSlot]);
   const karaokeTotalPence = formData.guests * 1500 + Math.max(0, (formData.durationHours ?? 2) - 2) * 9000;
@@ -312,6 +312,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
       </div>
 
       {isKaraokeBooking && <p role="status" className="rounded-lg border border-[#DFBE7B]/30 p-3 text-sm">{roomError?'Availability could not be loaded. Please retry shortly.':available===null?'Checking the private room…':!available.length?'No available starts for this date and duration. Choose another date or a shorter session.':'Available starts: '+available.join(' · ')}</p>}
+      {isKaraokeBooking && available && room?.online===false && <aside className="rounded-lg border border-[#D4B887]/40 p-4 text-sm"><strong>Reserve with our team</strong><p>Online payment is not available yet. Email us your preferred session. The room is reserved when our team confirms.</p><a className="inline-block py-2 underline" href={'mailto:reservations@amicasoho.com?subject='+encodeURIComponent('Private karaoke room enquiry')+'&body='+encodeURIComponent('Preferred date: '+formData.date+'\nStart: '+formData.timeSlot+'\nDuration: '+(formData.durationHours??2)+' hours\nGuests: '+formData.guests)}>Email reservations</a></aside>}
       {/* Main Form starting directly with Date, Time, and Guests */}
       <form onSubmit={handleSubmit} className="bg-gradient-to-b from-[#180307] via-[#120205] to-[#0A0103] border border-[#DFBE7B]/40 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-6 relative overflow-hidden">
         
@@ -783,7 +784,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
             ) : (
               <>
                 <CalendarIcon className="w-4 h-4" />
-                <span>{isVerifyingPayment ? 'Verifying payment…' : isKaraokeBooking ? 'Continue to secure payment' : 'Reserve Table'}</span>
+                <span>{isVerifyingPayment ? 'Verifying payment…' : isKaraokeBooking ? (room?.online===false?'Reserve by email above':'Continue to secure payment') : 'Reserve Table'}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

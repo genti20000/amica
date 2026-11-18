@@ -292,7 +292,7 @@ async function configureServer() {
     res.set('Cache-Control','no-store');
     const date=String(req.query.date||''),hours=Number(req.query.hours??2);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T12:00:00Z'))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date||!Number.isInteger(hours)||hours<2||hours>10)return res.status(400).json({error:'Invalid date or session length.'});
-    try{return res.json({room:'amica-frith-karaoke',date,hours,slots:await karaokeSlots(date,hours)});}catch{return res.status(503).json({error:'Room availability unavailable.'});}
+    try{return res.json({room:'amica-frith-karaoke',date,hours,checkoutEnabled:Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),slots:await karaokeSlots(date,hours)});}catch{return res.status(503).json({error:'Room availability unavailable.'});}
   });
   app.get('/api/bookings/payment-status', async (req,res) => {
     const sessionId=typeof req.query.session_id==='string'?req.query.session_id:'';
