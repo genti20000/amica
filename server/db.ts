@@ -78,12 +78,30 @@ export async function getReservationById(bookingId: string): Promise<{ reservati
   const [booking, audit] = await Promise.all([db.query('SELECT * FROM reservations WHERE booking_id=$1',[bookingId]), db.query('SELECT * FROM booking_audit_logs WHERE booking_id=$1 ORDER BY id DESC',[bookingId])]);
   return {reservation: booking.rows[0] || null, auditLogs: audit.rows};
 }
+
+const karaokeBlockClashes=(rows:any[],slot:string,hours:number)=>rows.some(r=>Number(r.is_full_day)===1 || (r.start_time && r.end_time && serviceMinutes(slot)<=serviceMinutes(r.end_time) && serviceMinutes(slot)+hours*60>serviceMinutes(r.start_time)));
+export async function karaokeSlots(date:string,hours:number):Promise<string[]> {
+  if (![3,4,5,6].includes(new Date(date+'T12:00:00Z').getUTCDay())) return [];
+  await ensureReservationPricingColumns();
+  const [booked,blocks,settings]=await Promise.all([
+    db.query('SELECT guests,reservation_date,time_slot,duration_minutes FROM reservations WHERE seating_area=$1 AND reservation_date=$2 AND status=ANY($3::text[])',['Karaoke Room',date,occupyingStatuses]),
+    db.query('SELECT is_full_day,start_time,end_time FROM blocked_dates WHERE blocked_date=$1',[date]),getVenueSettings()
+  ]);
+  const cutoff=Number(settings.cutoff_hours??1);
+  const close=serviceInstant(date,'03:00');
+  return Array.from({length:17},(_,i)=>String((17+Math.floor(i/2))%24).padStart(2,'0')+':'+(i%2?'30':'00')).filter(slot=>{
+    const start=serviceInstant(date,slot);
+    return start>=Date.now()+(Number.isFinite(cutoff)&&cutoff>=0?cutoff:1)*3600000 && start+hours*3600000<=close && !karaokeBlockClashes(blocks.rows,slot,hours) && fitsKaraokeCapacity({reservation_date:date,time_slot:slot,guests:8,duration_minutes:hours*60},booked.rows);
+  });
+}
+
 async function assertCapacity(client: pg.PoolClient, candidate: Pick<ReservationRow, 'guests' | 'reservation_date' | 'time_slot'> & Partial<Pick<ReservationRow, 'seating_area' | 'duration_minutes'>>, excludeId = '') {
   const rows = await client.query(`SELECT guests, reservation_date, time_slot, seating_area, duration_minutes FROM reservations
     WHERE reservation_date BETWEEN (($1::date - 1)::text) AND (($1::date + 1)::text)
     AND status = ANY($2::text[]) AND booking_id <> $3`, [candidate.reservation_date, occupyingStatuses, excludeId]);
   const isKaraoke = candidate.seating_area === 'Karaoke Room';
   const relevant = rows.rows.filter((row) => (row.seating_area === 'Karaoke Room') === isKaraoke);
+  if(isKaraoke && karaokeBlockClashes((await client.query('SELECT is_full_day,start_time,end_time FROM blocked_dates WHERE blocked_date=$1',[candidate.reservation_date])).rows,candidate.time_slot,(candidate.duration_minutes??120)/60)) throw new BookingValidationError('The room is blocked during this session.');
   if (isKaraoke && !fitsKaraokeCapacity(candidate, relevant)) throw new BookingValidationError('The karaoke room is already reserved during this two-hour period. Please choose another time.');
   if (!isKaraoke && !fitsBookingCapacity(candidate, relevant)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
 }

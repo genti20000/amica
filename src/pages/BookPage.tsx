@@ -54,6 +54,22 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
+  const [room,setRoom]=useState<{key:string,slots:string[]}|null>(null);
+  const [roomError,setRoomError]=useState(false);
+  const roomKey=formData.date+':'+(formData.durationHours??2);
+  useEffect(()=>{
+    if(!isKaraokeBooking)return;
+    const controller=new AbortController();
+    const check=async()=>{try{
+      const r=await fetch('/api/karaoke/availability?date='+encodeURIComponent(formData.date)+'&hours='+(formData.durationHours??2),{cache:'no-store',signal:controller.signal});
+      if(!r.ok) throw Error();const data=await r.json(); if(!Array.isArray(data.slots))throw Error();
+      if(!controller.signal.aborted){setRoom({key:roomKey,slots:data.slots});setRoomError(false);}
+    }catch{if(!controller.signal.aborted){setRoom(null);setRoomError(true);}}};
+    setRoomError(false);void check();const timer=setInterval(check,30000);window.addEventListener('focus',check);
+    return ()=>{controller.abort();clearInterval(timer);window.removeEventListener('focus',check);};
+  },[isKaraokeBooking,roomKey]);
+  const available=room?.key===roomKey?room.slots:null;
+  const roomUnavailable=isKaraokeBooking&&!available?.includes(formData.timeSlot);
   // Custom Pop-Up Date Picker State
   const maxDurationHours = useMemo(() => maxKaraokeDurationHours(formData.date, formData.timeSlot), [formData.date, formData.timeSlot]);
   const karaokeTotalPence = formData.guests * 1500 + Math.max(0, (formData.durationHours ?? 2) - 2) * 9000;
@@ -226,7 +242,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || roomUnavailable) return;
     setErrorMessage(null);
 
     if (!formData.name.trim() || !formData.phone.trim()) return;
@@ -285,6 +301,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
           Wednesday – Saturday · 5:00 PM – 3:00 AM
         </p>
         {isKaraokeBooking && <p className="text-sm text-[#FDFBF7]/80 font-sans">One private room · 8–15 guests · 2-hour minimum</p>}
+        {!isKaraokeBooking && <aside className="my-4 rounded-xl border border-[#DFBE7B]/30 p-4 text-left"><strong>Private karaoke room</strong><p className="text-sm">23 Frith Street · 8–15 guests · From £15 per person for two hours.</p><a className="inline-block py-2 underline text-[#DFBE7B]" href="/karaoke-booking">Check room availability</a></aside>}
         {isKaraokeBooking && <a href="/?book=true" className="inline-flex min-h-10 items-center text-xs text-[#DFBE7B] underline underline-offset-4 hover:text-[#FFEAA7]">Looking for a table? Book here</a>}
 
         {savedPairingsCount > 0 && (
@@ -294,6 +311,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
         )}
       </div>
 
+      {isKaraokeBooking && <p role="status" className="rounded-lg border border-[#DFBE7B]/30 p-3 text-sm">{roomError?'Availability could not be loaded. Please retry shortly.':available===null?'Checking the private room…':!available.length?'No available starts for this date and duration. Choose another date or a shorter session.':'Available starts: '+available.join(' · ')}</p>}
       {/* Main Form starting directly with Date, Time, and Guests */}
       <form onSubmit={handleSubmit} className="bg-gradient-to-b from-[#180307] via-[#120205] to-[#0A0103] border border-[#DFBE7B]/40 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-6 relative overflow-hidden">
         
@@ -537,8 +555,8 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                 className="w-full px-4 py-3 bg-[#0D0204] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] rounded-lg text-sm sm:text-base text-[#FFEAA7] focus:outline-none focus:border-[#DFBE7B] font-['Cinzel',serif] font-semibold appearance-none cursor-pointer shadow-inner transition-all pr-10"
               >
                 {allTimeSlots.map((slot) => (
-                  <option disabled={serviceInstant(formData.date,slot)<Date.now()+Number(settings.cutoff_hours||1)*3600000} key={slot} value={slot} className="bg-[#120205] text-[#FFEAA7]">
-                    {slot}
+                  <option disabled={(isKaraokeBooking && !available?.includes(slot)) || serviceInstant(formData.date,slot)<Date.now()+Number(settings.cutoff_hours||1)*3600000} key={slot} value={slot} className="bg-[#120205] text-[#FFEAA7]">
+                    {slot}{isKaraokeBooking && available && !available.includes(slot) ? ' — unavailable' : ''}
                   </option>
                 ))}
               </select>
@@ -745,7 +763,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
           <button
             type="submit"
-            disabled={isSubmitting || isVerifyingPayment || isClosedDay || isSelectedDateBlocked}
+            disabled={roomUnavailable || isSubmitting || isVerifyingPayment || isClosedDay || isSelectedDateBlocked}
             className={`w-full py-3.5 px-6 rounded-lg font-sans font-bold text-xs sm:text-sm tracking-[0.24em] uppercase transition-all duration-200 flex items-center justify-center gap-2.5 ${
               isClosedDay || isSelectedDateBlocked
                 ? 'bg-zinc-800 text-zinc-500 border border-zinc-700 cursor-not-allowed'

@@ -4,6 +4,7 @@ import { installMemberOperations } from './server/membershipOps.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {
+  karaokeSlots,
   BookingValidationError,
   getAllReservations,
   getReservationById,
@@ -65,7 +66,7 @@ async function configureServer() {
   });
   app.use('/api', (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
-    const publicRead = req.method === 'GET' && ['/health', '/system/settings', '/system/blocked-dates', '/bookings/payment-status'].includes(req.path);
+    const publicRead = req.method === 'GET' && ['/health', '/system/settings', '/system/blocked-dates', '/bookings/payment-status','/karaoke/availability'].includes(req.path);
     const publicWrite = req.method === 'POST' && ['/bookings', '/bookings/karaoke/checkout', '/bookings/karaoke/cancel-checkout', '/stripe/webhook'].includes(req.path);
     if (publicRead || publicWrite) return next();
     const cookie = (req.headers.cookie || '').split(';').map(v => v.trim()).find(v => v.startsWith('amica_admin='))?.slice(12) || '';
@@ -287,6 +288,12 @@ async function configureServer() {
   });
 
   // Get single booking with audit trail
+  app.get('/api/karaoke/availability',async(req,res)=>{
+    res.set('Cache-Control','no-store');
+    const date=String(req.query.date||''),hours=Number(req.query.hours??2);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T12:00:00Z'))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date||!Number.isInteger(hours)||hours<2||hours>10)return res.status(400).json({error:'Invalid date or session length.'});
+    try{return res.json({room:'amica-frith-karaoke',date,hours,slots:await karaokeSlots(date,hours)});}catch{return res.status(503).json({error:'Room availability unavailable.'});}
+  });
   app.get('/api/bookings/payment-status', async (req,res) => {
     const sessionId=typeof req.query.session_id==='string'?req.query.session_id:'';
     if(!/^cs_(test|live)_[A-Za-z0-9]+$/.test(sessionId))return res.status(400).json({success:false,error:'Invalid checkout reference.'});
@@ -350,8 +357,8 @@ async function configureServer() {
       if(!Number.isInteger(guests)||guests<8||guests>15) return res.status(400).json({success:false,error:'The karaoke room has an 8-guest minimum and a 15-guest maximum.'});
       if(!Number.isInteger(durationHours)||durationHours<2||durationHours>10) return res.status(400).json({success:false,error:'Choose a session of at least two whole hours.'});
       const validSlots=['17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30','23:00','23:30','00:00','00:30','01:00'];
-      if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(formData.date||'')||!validSlots.includes(formData.timeSlot)||
-        (formData.email && (typeof formData.email!=='string'||! /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(formData.email)||formData.email.length>128))||
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(formData.date||'')||!validSlots.includes(formData.timeSlot)||
+        (formData.email && (typeof formData.email!=='string'||! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)||formData.email.length>128))||
         formData.name.trim().length>100||formData.phone.trim().length>30||
         (formData.dietaryNotes && (typeof formData.dietaryNotes!=='string'||formData.dietaryNotes.length>2000)))
         return res.status(400).json({success:false,error:'Check the date, time and contact details.'});
