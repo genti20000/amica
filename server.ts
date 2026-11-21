@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual, randomBytes, randomUUID } from 'node:crypto';
 import express from 'express';
 import { installMemberOperations } from './server/membershipOps.js';
+import { installJobsAdmin } from './server/jobsOps.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {
@@ -91,6 +92,7 @@ async function configureServer() {
 
   // All membership operations inherit the server-side admin auth above.
   installMemberOperations(app);
+  installJobsAdmin(app);
 
   // Membership review is intentionally separate from booking records.
   // This route is behind the existing signed, httpOnly admin session middleware above.
