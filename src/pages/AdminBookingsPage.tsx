@@ -431,6 +431,9 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
 
         {/* Action Buttons */}
         <div className="admin-top-actions flex flex-wrap items-center gap-2.5">
+          <a href="/jobs/admin" className="inline-flex items-center gap-1.5 px-3 py-2 rounded bg-[#2D1420] hover:bg-[#48233B] border border-[#DFBE7B]/50 text-[#F6DBAC] text-xs font-sans tracking-wider uppercase transition-colors" title="Manage AMICA job vacancies and applications">
+            Jobs Admin ↗
+          </a>
           <button
             onClick={handleCopyAdminLink}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded bg-[#1A0509] hover:bg-[#2A080F] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] text-[#DFBE7B] text-xs font-sans tracking-wider uppercase transition-colors cursor-pointer shadow-sm"
