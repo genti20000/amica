@@ -33,7 +33,7 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
   onAddBookingForDate,
   onBlockDate
 }) => {
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('day');
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
@@ -68,19 +68,17 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
     return `${y}-${m}-${d}`;
   }, [currentDate]);
 
-  // Week Days calculation (Monday through Sunday)
+  // Service week calculation (Wednesday through Saturday)
   const weekDays = useMemo(() => {
     const curr = new Date(currentDate);
-    let dayOfWeek = curr.getDay() - 1; // 0 = Mon, 6 = Sun
-    if (dayOfWeek === -1) dayOfWeek = 6;
-
-    const monday = new Date(curr);
-    monday.setDate(curr.getDate() - dayOfWeek);
+    const daysSinceWednesday = (curr.getDay() + 4) % 7;
+    const wednesday = new Date(curr);
+    wednesday.setDate(curr.getDate() - daysSinceWednesday);
 
     const days = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(wednesday);
+      d.setDate(wednesday.getDate() + i);
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, '0');
       const dateNum = String(d.getDate()).padStart(2, '0');
@@ -185,7 +183,7 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
             </h3>
           </div>
           <p className="text-xs text-[#DFBE7B]/80 font-sans mt-0.5">
-            Real-time visual schedule view across Day, Week, and Month views.
+            Live bookings and availability · Wednesday to Saturday
           </p>
         </div>
 
@@ -228,7 +226,7 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
 
               <span className="font-['Cinzel',serif] text-xs sm:text-sm font-semibold text-[#FFEAA7] px-3 min-w-[140px] text-center">
                 {viewMode === 'day' && currentDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                {viewMode === 'week' && `Week of ${weekDays[0]?.formattedDate} – ${weekDays[6]?.formattedDate}`}
+                {viewMode === 'week' && `${weekDays[0]?.formattedDate} – ${weekDays[3]?.formattedDate}`}
                 {viewMode === 'month' && currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </span>
 
@@ -243,6 +241,25 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
           </div>
         </div>
       </div>
+
+      <nav className="admin-date-strip" aria-label="Service dates">
+        {weekDays.map((day) => {
+          const dayCount = bookings.filter((booking) => booking.formData.date === day.dateStr).length;
+          return (
+            <button
+              key={day.dateStr}
+              type="button"
+              aria-pressed={currentDateStr === day.dateStr}
+              onClick={() => { setCurrentDate(day.dateObj); setViewMode('day'); }}
+              className={currentDateStr === day.dateStr ? 'is-selected' : ''}
+            >
+              <span>{day.dayName}</span>
+              <strong>{day.dateObj.getDate()}</strong>
+              <small>{dayCount} {dayCount === 1 ? 'booking' : 'bookings'}</small>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* =========================================================================
           VIEW MODE 1: DAY VIEW (TIMELINE & SLOTS)
@@ -344,10 +361,10 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
       )}
 
       {/* =========================================================================
-          VIEW MODE 2: WEEK VIEW (7 COLUMNS)
+          VIEW MODE 2: WEEK VIEW (WEDNESDAY–SATURDAY)
          ========================================================================= */}
       {viewMode === 'week' && (
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {weekDays.map((day) => {
             const dayBookings = bookings.filter((b) => b.formData.date === day.dateStr);
             const totalCovers = dayBookings.reduce((acc, b) => acc + (b.formData.guests || 0), 0);

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { supabaseCa } from './supabaseCa.js';
 import { serviceInstant } from '../src/lib/serviceTime.js';
-import { fitsBookingCapacity, occupyingStatuses } from '../src/lib/bookingCapacity.js';
+import { fitsBookingCapacity, fitsKaraokeCapacity, occupyingStatuses } from '../src/lib/bookingCapacity.js';
 export class BookingValidationError extends Error { name = 'BookingValidationError'; }
 
 // Vercel Marketplace provides the Supabase transaction-pooler URL server-side.
@@ -29,6 +29,10 @@ export interface ReservationRow {
   guests: number;
   reservation_date: string;
   time_slot: string;
+  duration_minutes: number;
+  total_price_pence: number | null;
+  payment_status: string;
+  payment_session_id: string | null;
   seating_area: string;
   special_occasion: string | null;
   dietary_notes: string | null;
@@ -74,13 +78,47 @@ export async function getReservationById(bookingId: string): Promise<{ reservati
   const [booking, audit] = await Promise.all([db.query('SELECT * FROM reservations WHERE booking_id=$1',[bookingId]), db.query('SELECT * FROM booking_audit_logs WHERE booking_id=$1 ORDER BY id DESC',[bookingId])]);
   return {reservation: booking.rows[0] || null, auditLogs: audit.rows};
 }
-async function assertCapacity(client: pg.PoolClient, candidate: Pick<ReservationRow, 'guests' | 'reservation_date' | 'time_slot'>, excludeId = '') {
-  const rows = await client.query(`SELECT guests, reservation_date, time_slot FROM reservations
+
+const karaokeBlockClashes=(rows:any[],slot:string,hours:number)=>rows.some(r=>Number(r.is_full_day)===1 || (r.start_time && r.end_time && serviceMinutes(slot)<=serviceMinutes(r.end_time) && serviceMinutes(slot)+hours*60>serviceMinutes(r.start_time)));
+export async function karaokeSlots(date:string,hours:number):Promise<string[]> {
+  if (![3,4,5,6].includes(new Date(date+'T12:00:00Z').getUTCDay())) return [];
+  await ensureReservationPricingColumns();
+  const [booked,blocks,settings]=await Promise.all([
+    db.query('SELECT guests,reservation_date,time_slot,duration_minutes FROM reservations WHERE seating_area=$1 AND reservation_date=$2 AND status=ANY($3::text[])',['Karaoke Room',date,occupyingStatuses]),
+    db.query('SELECT is_full_day,start_time,end_time FROM blocked_dates WHERE blocked_date=$1',[date]),getVenueSettings()
+  ]);
+  const cutoff=Number(settings.cutoff_hours??1);
+  const close=serviceInstant(date,'03:00');
+  return Array.from({length:17},(_,i)=>String((17+Math.floor(i/2))%24).padStart(2,'0')+':'+(i%2?'30':'00')).filter(slot=>{
+    const start=serviceInstant(date,slot);
+    return start>=Date.now()+(Number.isFinite(cutoff)&&cutoff>=0?cutoff:1)*3600000 && start+hours*3600000<=close && !karaokeBlockClashes(blocks.rows,slot,hours) && fitsKaraokeCapacity({reservation_date:date,time_slot:slot,guests:8,duration_minutes:hours*60},booked.rows);
+  });
+}
+
+async function assertCapacity(client: pg.PoolClient, candidate: Pick<ReservationRow, 'guests' | 'reservation_date' | 'time_slot'> & Partial<Pick<ReservationRow, 'seating_area' | 'duration_minutes'>>, excludeId = '') {
+  const rows = await client.query(`SELECT guests, reservation_date, time_slot, seating_area, duration_minutes FROM reservations
     WHERE reservation_date BETWEEN (($1::date - 1)::text) AND (($1::date + 1)::text)
     AND status = ANY($2::text[]) AND booking_id <> $3`, [candidate.reservation_date, occupyingStatuses, excludeId]);
-  if (!fitsBookingCapacity(candidate, rows.rows)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
+  const isKaraoke = candidate.seating_area === 'Karaoke Room';
+  const relevant = rows.rows.filter((row) => (row.seating_area === 'Karaoke Room') === isKaraoke);
+  if(isKaraoke && karaokeBlockClashes((await client.query('SELECT is_full_day,start_time,end_time FROM blocked_dates WHERE blocked_date=$1',[candidate.reservation_date])).rows,candidate.time_slot,(candidate.duration_minutes??120)/60)) throw new BookingValidationError('The room is blocked during this session.');
+  if (isKaraoke && !fitsKaraokeCapacity(candidate, relevant)) throw new BookingValidationError('The karaoke room is already reserved during this two-hour period. Please choose another time.');
+  if (!isKaraoke && !fitsBookingCapacity(candidate, relevant)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
 }
-export async function createReservation(data: { booking_id?: string; guest_name: string; email: string; phone: string; guests: number; reservation_date: string; time_slot: string; seating_area: string; special_occasion?: string; dietary_notes?: string; ip_address?: string; actor?: string }): Promise<ReservationRow> {
+let pricingColumnsReady: Promise<void> | undefined;
+async function ensureReservationPricingColumns() {
+  if (!pricingColumnsReady) {
+    pricingColumnsReady = (async () => {
+      await db.query('ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS duration_minutes smallint NOT NULL DEFAULT 120');
+      await db.query('ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS total_price_pence integer');
+      await db.query("ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS payment_status varchar(20) NOT NULL DEFAULT 'unpaid'");
+      await db.query('ALTER TABLE public.reservations ADD COLUMN IF NOT EXISTS payment_session_id text');
+    })().catch((error) => { pricingColumnsReady = undefined; throw error; });
+  }
+  await pricingColumnsReady;
+}
+export async function createReservation(data: { booking_id?: string; guest_name: string; email: string; phone: string; guests: number; reservation_date: string; time_slot: string; seating_area: string; special_occasion?: string; dietary_notes?: string; ip_address?: string; actor?: string; bypassCutoff?: boolean; duration_minutes?: number; total_price_pence?: number; statusOverride?: string; paymentStatus?: string }): Promise<ReservationRow> {
+  await ensureReservationPricingColumns();
   return transaction(async client => {
     // Serialize booking creation with blackout changes to avoid a check/write race.
     await client.query('SELECT pg_advisory_xact_lock(230017)');
@@ -88,16 +126,61 @@ export async function createReservation(data: { booking_id?: string; guest_name:
     if (blocked.blocked) throw new BookingValidationError('This service date or time is unavailable.');
     const settings=Object.fromEntries((await client.query('SELECT key,value FROM venue_settings')).rows.map(r=>[r.key,r.value]));
     const cutoff=Number(settings.cutoff_hours ?? 1);
-    if (serviceInstant(data.reservation_date,data.time_slot)<Date.now()+(Number.isFinite(cutoff)&&cutoff>=0?cutoff:1)*3600000) throw new BookingValidationError('Please choose a later reservation time. The booking cutoff has passed.');
+    if (!data.bypassCutoff && serviceInstant(data.reservation_date,data.time_slot)<Date.now()+(Number.isFinite(cutoff)&&cutoff>=0?cutoff:1)*3600000) throw new BookingValidationError('Please choose a later reservation time. The booking cutoff has passed.');
     if(data.guests < Number(settings.min_pax||1) || data.guests > Number(settings.max_pax||20)) throw new BookingValidationError('Please choose a supported party size.');
-    await assertCapacity(client, data);
-    const status=settings.auto_confirm==='false'?'Pending':'Confirmed';
+    const durationMinutes = data.duration_minutes ?? 120;
+    if (!Number.isInteger(durationMinutes) || durationMinutes < 120 || durationMinutes > 600 || durationMinutes % 60 !== 0) throw new BookingValidationError('Reservation duration must be at least two hours.');
+    await assertCapacity(client, { ...data, duration_minutes: durationMinutes });
+    const status=data.statusOverride || (settings.auto_confirm==='false'?'Pending':'Confirmed');
+    const paymentStatus=data.paymentStatus || 'unpaid';
     const id = data.booking_id || 'AMICA-'+randomUUID(); const now=new Date().toISOString();
-    const result = await client.query(`INSERT INTO reservations (booking_id, guest_name, email, phone, guests, reservation_date, time_slot, seating_area, special_occasion, dietary_notes, status, qr_code_value, ip_address, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$14,$11,$12,$13,$13) RETURNING *`,[id,data.guest_name.trim(),data.email.trim(),data.phone.trim(),data.guests,data.reservation_date,data.time_slot,data.seating_area,data.special_occasion||'',data.dietary_notes||'',`AMICA-SOHO-${id}`,data.ip_address||null,now,status]);
-    await logAudit(id,status==='Pending'?'RESERVATION_PENDING':'RESERVATION_CONFIRMED','GUEST_WEB_BOOKING',`Reservation saved for ${data.guests} guests.`,client);
+    const result = await client.query(`INSERT INTO reservations (booking_id, guest_name, email, phone, guests, reservation_date, time_slot, seating_area, special_occasion, dietary_notes, status, qr_code_value, ip_address, created_at, updated_at, duration_minutes, total_price_pence, payment_status, payment_session_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$14,$11,$12,$13,$13,$15,$16,$17,NULL) RETURNING *`,[id,data.guest_name.trim(),data.email.trim(),data.phone.trim(),data.guests,data.reservation_date,data.time_slot,data.seating_area,data.special_occasion||'',data.dietary_notes||'',`AMICA-SOHO-${id}`,data.ip_address||null,now,status,durationMinutes,data.total_price_pence??null,paymentStatus]);
+    await logAudit(id,status==='Pending Payment'?'RESERVATION_PENDING_PAYMENT':status==='Pending'?'RESERVATION_PENDING':'RESERVATION_CONFIRMED',data.actor||'GUEST_WEB_BOOKING',status==='Pending Payment'?'Karaoke reservation is awaiting secure payment.':`Reservation saved for ${data.guests} guests.`,client);
     return result.rows[0];
   });
 }
+export async function attachKaraokePaymentSession(bookingId: string, sessionId: string): Promise<void> {
+  await ensureReservationPricingColumns();
+  const result = await db.query("UPDATE reservations SET payment_session_id=$1, updated_at=$2 WHERE booking_id=$3 AND status='Pending Payment' AND payment_status='pending' RETURNING booking_id", [sessionId,new Date().toISOString(),bookingId]);
+  if (!result.rows.length) throw new Error('The pending karaoke reservation could not be linked to checkout.');
+}
+export async function getReservationByPaymentSession(sessionId: string): Promise<ReservationRow | null> {
+  await ensureReservationPricingColumns();
+  return (await db.query('SELECT * FROM reservations WHERE payment_session_id=$1 LIMIT 1',[sessionId])).rows[0] || null;
+}
+export async function changeKaraokePaymentState(sessionId: string, state: 'paid' | 'expired' | 'failed'): Promise<{reservation: ReservationRow | null; changed: boolean}> {
+  await ensureReservationPricingColumns();
+  return transaction(async client => {
+    await client.query('SELECT pg_advisory_xact_lock(230017)');
+    const current=(await client.query('SELECT * FROM reservations WHERE payment_session_id=$1 FOR UPDATE',[sessionId])).rows[0] as ReservationRow | undefined;
+    if(!current) return {reservation:null,changed:false};
+    if(current.payment_status!=='pending' || current.status!=='Pending Payment') return {reservation:current,changed:false};
+    const paid=state==='paid';
+    const status=paid?'Confirmed':'Cancelled';
+    const result=await client.query('UPDATE reservations SET status=$1,payment_status=$2,updated_at=$3 WHERE booking_id=$4 RETURNING *',[status,state,new Date().toISOString(),current.booking_id]);
+    await logAudit(current.booking_id,paid?'KARAOKE_PAYMENT_CONFIRMED':'KARAOKE_PAYMENT_'+state.toUpperCase(),'STRIPE_WEBHOOK',paid?'Stripe payment completed.':'Stripe checkout did not complete.',client);
+    return {reservation:result.rows[0],changed:true};
+  });
+}
+export async function failKaraokeCheckout(bookingId: string): Promise<void> {
+  await ensureReservationPricingColumns();
+  await transaction(async client => {
+    await client.query('SELECT pg_advisory_xact_lock(230017)');
+    const result=await client.query("UPDATE reservations SET status='Cancelled',payment_status='failed',updated_at=$1 WHERE booking_id=$2 AND status='Pending Payment' AND payment_status='pending' RETURNING booking_id",[new Date().toISOString(),bookingId]);
+    if(result.rows.length) await logAudit(bookingId,'KARAOKE_CHECKOUT_FAILED','STRIPE_CHECKOUT','Checkout session could not be created.',client);
+  });
+}
+export async function cancelPendingKaraokePayment(bookingId: string, actor='GUEST_KARAOKE_CHECKOUT'): Promise<ReservationRow | null> {
+  await ensureReservationPricingColumns();
+  return transaction(async client => {
+    await client.query('SELECT pg_advisory_xact_lock(230017)');
+    const result=await client.query("UPDATE reservations SET status='Cancelled',payment_status='expired',updated_at=$1 WHERE booking_id=$2 AND status='Pending Payment' AND payment_status='pending' RETURNING *",[new Date().toISOString(),bookingId]);
+    if(!result.rows.length)return null;
+    await logAudit(bookingId,'KARAOKE_CHECKOUT_CANCELLED',actor,'Guest returned from Stripe without completing payment.',client);
+    return result.rows[0];
+  });
+}
+
 export async function updateReservationStatus(id: string, status: string, actor='ADMIN_PORTAL', notes=''): Promise<ReservationRow | null> {
   if (!['Confirmed','Auto-Confirmed','Pending','Seated','Completed','Cancelled','No-Show'].includes(status)) throw new Error('Invalid reservation status.');
   return transaction(async client => {

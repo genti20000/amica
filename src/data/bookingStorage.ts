@@ -32,17 +32,28 @@ export const fetchBookingsFromDb = async (): Promise<BookingConfirmation[]> => {
   return Array.isArray(json.data) ? json.data : [];
 };
 
-export const saveBooking = async (booking: BookingConfirmation): Promise<BookingConfirmation> => {
+export const saveBooking = async (booking: BookingConfirmation, bookingType: 'table' | 'karaoke' = 'table'): Promise<BookingConfirmation> => {
   const res = await fetch('/api/bookings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ bookingId: booking.bookingId, formData: booking.formData })
+    body: JSON.stringify({ bookingId: booking.bookingId, bookingType, formData: booking.formData })
   });
   const json = await res.json().catch(() => null);
   if (!res.ok || !json?.success || !json.booking) {
     throw new Error(json?.error || 'Your reservation could not be saved. Please try again or contact reservations@amicasoho.com.');
   }
-  return json.booking;
+  return { ...json.booking, emailSent: json.emailSent === true };
+};
+
+export const saveAdminBooking = async (booking: BookingConfirmation): Promise<BookingConfirmation> => {
+  const res = await fetch('/api/admin/bookings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bookingId: booking.bookingId, formData: booking.formData })
+  });
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json?.success || !json.booking) throw new Error(json?.error || 'The reservation could not be saved. Please try again.');
+  return { ...json.booking, emailSent: json.emailSent === true };
 };
 
 export const sendBookingConfirmationEmail = async (bookingId: string) => {
