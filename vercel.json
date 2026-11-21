@@ -120,19 +120,27 @@
     },
     {
       "source": "/careers/bar-staff",
-      "destination": "/careers/bar-staff/index.html"
+      "destination": "/api/job-page?role=bar-staff"
     },
     {
       "source": "/careers/bar-staff/",
-      "destination": "/careers/bar-staff/index.html"
+      "destination": "/api/job-page?role=bar-staff"
     },
     {
       "source": "/careers/floor-staff",
-      "destination": "/careers/floor-staff/index.html"
+      "destination": "/api/job-page?role=floor-staff"
     },
     {
       "source": "/careers/floor-staff/",
-      "destination": "/careers/floor-staff/index.html"
+      "destination": "/api/job-page?role=floor-staff"
+    },
+    {
+      "source": "/jobs/admin",
+      "destination": "/jobs/admin/index.html"
+    },
+    {
+      "source": "/jobs/admin/",
+      "destination": "/jobs/admin/index.html"
     },
     {
       "source": "/careers",
