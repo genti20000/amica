@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { saveJobApplication, roleIsOpen, setJobEmailStatus, type JobApplicationRole } from '../server/jobsStore.js';
 
 const ROLES = new Set(['Bar Staff', 'Floor Staff', 'Either / Both']);
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
@@ -32,7 +33,10 @@ export default async function careers(req: Request, res: Response) {
         first.length > 60 || last.length > 60 || phone.length < 6) {
       return res.status(400).json({ success: false, error: 'Please check your contact details and selected position.' });
     }
+    const roleSlug: JobApplicationRole = role === 'Bar Staff' ? 'bar-staff' : role === 'Floor Staff' ? 'floor-staff' : 'either';
     let attachments: Array<{ filename: string; content: string }> = [];
+    let cvName: string | undefined;
+    let cvBytes: Buffer | undefined;
     if (b.cv) {
       if (typeof b.cv !== 'object' || typeof b.cv.name !== 'string' || typeof b.cv.base64 !== 'string') {
         return res.status(400).json({ success: false, error: 'Invalid CV attachment.' });
@@ -51,12 +55,24 @@ export default async function careers(req: Request, res: Response) {
       if (file.length === 0 || file.length > MAX_FILE_BYTES || !valid) {
         return res.status(400).json({ success: false, error: 'The CV format or size is not supported.' });
       }
-      attachments = [{ filename: filename.replace(/[^a-zA-Z0-9._ -]/g, '_'), content: b.cv.base64 }];
+      cvName = filename.replace(/[^a-zA-Z0-9._ -]/g, '_');
+      cvBytes = file;
+      attachments = [{ filename: cvName, content: b.cv.base64 }];
     }
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       console.error('Careers applications: RESEND_API_KEY missing');
       return res.status(503).json({ success: false, error: 'Applications are temporarily unavailable. Please contact info@amicasoho.com.' });
+    }
+    // A vacancy can be closed from Jobs Admin; closed roles must reject applications.
+    try {
+      const accepting = roleSlug === 'either'
+        ? (await roleIsOpen('bar-staff')) || (await roleIsOpen('floor-staff'))
+        : await roleIsOpen(roleSlug);
+      if (!accepting) return res.status(410).json({ success: false, error: 'This vacancy is no longer accepting applications.' });
+    } catch (error) {
+      console.error('Careers vacancy lookup unavailable', error instanceof Error ? error.message : 'Unknown');
+      return res.status(503).json({ success: false, error: 'Applications are temporarily unavailable. Please try again later.' });
     }
     const from = process.env.FROM_EMAIL || 'AMICA SOHO <noreply@amicasoho.com>';
     const subject = 'AMICA SOHO · ' + role + ' application · ' + first + ' ' + last;
@@ -71,6 +87,14 @@ export default async function careers(req: Request, res: Response) {
       '<h2 style="color:#592b3a">New AMICA SOHO careers application</h2>' +
       entries.map(([label, val]) => '<p><strong>' + esc(label) + ':</strong> ' + esc(val).replace(/\n/g, '<br>') + '</p>').join('') +
       '<hr><small>Submitted via amicasoho.com/careers with recruitment contact consent.</small></div>';
+    // Preserve a searchable private record including optional CV before sending email.
+    let applicationId: string;
+    try {
+      applicationId = await saveJobApplication({ first, last, email, phone, role: roleSlug, experience, availability, about, cvName, cvBytes });
+    } catch (error) {
+      console.error('Careers application storage failed:', error instanceof Error ? error.message : 'Unknown');
+      return res.status(503).json({ success: false, error: 'We could not save your application. Please try again.' });
+    }
     const sent = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
@@ -83,9 +107,11 @@ export default async function careers(req: Request, res: Response) {
     if (!sent.ok) {
       const issue = await sent.text();
       console.error('Careers email dispatch failed:', sent.status, issue.slice(0, 250));
-      return res.status(503).json({ success: false, error: 'We could not send your application. Please try again or email info@amicasoho.com.' });
+      await setJobEmailStatus(applicationId, 'failed').catch(() => undefined);
+      return res.status(200).json({ success: true, message: 'Your application has been received by the Amica Soho recruitment team.', notificationSent: false });
     }
-    return res.status(200).json({ success: true, message: 'Your application has been sent to the Amica Soho team.' });
+    await setJobEmailStatus(applicationId, 'sent').catch(() => undefined);
+    return res.status(200).json({ success: true, message: 'Your application has been received by the Amica Soho team.', notificationSent: true });
   } catch (error) {
     console.error('Careers application error:', error instanceof Error ? error.message : 'Unknown error');
     return res.status(500).json({ success: false, error: 'We could not send your application. Please try again shortly.' });
