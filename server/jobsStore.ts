@@ -32,7 +32,7 @@ export async function ensureJobsTables(): Promise<void> {
         email_status varchar(20) NOT NULL DEFAULT 'pending',
         created_at timestamptz NOT NULL DEFAULT now(),
         updated_at timestamptz NOT NULL DEFAULT now(),
-        CONSTRAINT amica_job_role_valid CHECK(role_slug IN ('bar-staff','floor-staff')),
+        CONSTRAINT amica_job_role_valid CHECK(role_slug IN ('bar-staff','floor-staff','either')),
         CONSTRAINT amica_job_status_valid CHECK(status IN ('new','reviewing','shortlisted','interview','hired','declined'))
       )`);
       await client.query('CREATE INDEX IF NOT EXISTS amica_jobs_created_idx ON public.amica_job_applications (created_at DESC)');
@@ -54,6 +54,7 @@ export async function ensureJobsTables(): Promise<void> {
 
 export type JobSlug = 'bar-staff' | 'floor-staff';
 export const JOB_SLUGS: JobSlug[] = ['bar-staff', 'floor-staff'];
+export const JOB_APPLICATION_ROLES = ['bar-staff','floor-staff','either'] as const;
 export const JOB_STATUSES = ['new','reviewing','shortlisted','interview','hired','declined'] as const;
 
 export async function roleIsOpen(slug: JobSlug): Promise<boolean> {
@@ -62,8 +63,9 @@ export async function roleIsOpen(slug: JobSlug): Promise<boolean> {
   return result.rows[0]?.is_open === true;
 }
 
+export type JobApplicationRole = JobSlug | 'either';
 export interface NewJobApplication {
-  first:string;last:string;email:string;phone:string;role:JobSlug;
+  first:string;last:string;email:string;phone:string;role:JobApplicationRole;
   experience:string;availability:string;about:string;cvName?:string;cvBytes?:Buffer;
 }
 export async function saveJobApplication(data: NewJobApplication): Promise<string> {
