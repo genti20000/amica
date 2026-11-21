@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from 'express';
 import { db } from './db.js';
-import { ensureJobsTables, JOB_SLUGS, JOB_STATUSES } from './jobsStore.js';
+import { ensureJobsTables, JOB_SLUGS, JOB_APPLICATION_ROLES, JOB_STATUSES } from './jobsStore.js';
 
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const failure=(res:Response,e:unknown)=> {
@@ -28,7 +28,7 @@ export function installJobsAdmin(app:Express):void {
       const search=typeof req.query.search==='string'?req.query.search.trim().slice(0,100):'';
       if(status!=='all'&&!JOB_STATUSES.includes(status as typeof JOB_STATUSES[number]))
         return res.status(400).json({success:false,error:'Unknown application status.'});
-      if(role!=='all'&&!JOB_SLUGS.includes(role as typeof JOB_SLUGS[number]))
+      if(role!=='all'&&!JOB_APPLICATION_ROLES.includes(role as typeof JOB_APPLICATION_ROLES[number]))
         return res.status(400).json({success:false,error:'Unknown job role.'});
       const rows=await db.query(`SELECT id,role_slug,first_name,last_name,email,phone,experience,
         availability,about,status,notes,cv_filename,email_status,created_at,updated_at
