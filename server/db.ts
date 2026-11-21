@@ -80,14 +80,14 @@ export async function getReservationById(bookingId: string): Promise<{ reservati
 }
 
 const karaokeBlockClashes=(rows:any[],slot:string,hours:number)=>rows.some(r=>Number(r.is_full_day)===1 || (r.start_time && r.end_time && serviceMinutes(slot)<=serviceMinutes(r.end_time) && serviceMinutes(slot)+hours*60>serviceMinutes(r.start_time)));
-export async function karaokeSlots(date:string,hours:number):Promise<string[]> {
+export async function karaokeSlots(date:string,hours:number,staff=false):Promise<string[]> {
   if (![3,4,5,6].includes(new Date(date+'T12:00:00Z').getUTCDay())) return [];
   await ensureReservationPricingColumns();
   const [booked,blocks,settings]=await Promise.all([
     db.query('SELECT guests,reservation_date,time_slot,duration_minutes FROM reservations WHERE seating_area=$1 AND reservation_date=$2 AND status=ANY($3::text[])',['Karaoke Room',date,occupyingStatuses]),
     db.query('SELECT is_full_day,start_time,end_time FROM blocked_dates WHERE blocked_date=$1',[date]),getVenueSettings()
   ]);
-  const cutoff=Number(settings.cutoff_hours??1);
+  const cutoff=staff?0:Number(settings.cutoff_hours??1);
   const close=serviceInstant(date,'03:00');
   return Array.from({length:17},(_,i)=>String((17+Math.floor(i/2))%24).padStart(2,'0')+':'+(i%2?'30':'00')).filter(slot=>{
     const start=serviceInstant(date,slot);
@@ -102,7 +102,7 @@ async function assertCapacity(client: pg.PoolClient, candidate: Pick<Reservation
   const isKaraoke = candidate.seating_area === 'Karaoke Room';
   const relevant = rows.rows.filter((row) => (row.seating_area === 'Karaoke Room') === isKaraoke);
   if(isKaraoke && karaokeBlockClashes((await client.query('SELECT is_full_day,start_time,end_time FROM blocked_dates WHERE blocked_date=$1',[candidate.reservation_date])).rows,candidate.time_slot,(candidate.duration_minutes??120)/60)) throw new BookingValidationError('The room is blocked during this session.');
-  if (isKaraoke && !fitsKaraokeCapacity(candidate, relevant)) throw new BookingValidationError('The karaoke room is already reserved during this two-hour period. Please choose another time.');
+  if (isKaraoke && !fitsKaraokeCapacity(candidate, relevant)) throw new BookingValidationError('The karaoke room is already reserved during this session. Please choose another time.');
   if (!isKaraoke && !fitsBookingCapacity(candidate, relevant)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
 }
 let pricingColumnsReady: Promise<void> | undefined;
@@ -127,7 +127,7 @@ export async function createReservation(data: { booking_id?: string; guest_name:
     const settings=Object.fromEntries((await client.query('SELECT key,value FROM venue_settings')).rows.map(r=>[r.key,r.value]));
     const cutoff=Number(settings.cutoff_hours ?? 1);
     if (!data.bypassCutoff && serviceInstant(data.reservation_date,data.time_slot)<Date.now()+(Number.isFinite(cutoff)&&cutoff>=0?cutoff:1)*3600000) throw new BookingValidationError('Please choose a later reservation time. The booking cutoff has passed.');
-    if(data.guests < Number(settings.min_pax||1) || data.guests > Number(settings.max_pax||20)) throw new BookingValidationError('Please choose a supported party size.');
+    if(data.seating_area!=='Karaoke Room' && (data.guests < Number(settings.min_pax||1) || data.guests > Number(settings.max_pax||20))) throw new BookingValidationError('Please choose a supported party size.');
     const durationMinutes = data.duration_minutes ?? 120;
     if (!Number.isInteger(durationMinutes) || durationMinutes < 120 || durationMinutes > 600 || durationMinutes % 60 !== 0) throw new BookingValidationError('Reservation duration must be at least two hours.');
     await assertCapacity(client, { ...data, duration_minutes: durationMinutes });

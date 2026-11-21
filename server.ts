@@ -208,6 +208,12 @@ async function configureServer() {
           formData.date < todayLondon || ![3,4,5,6].includes(date.getUTCDay())) {
         return res.status(400).json({ success: false, error: 'Choose a Wednesday to Saturday service date from today onwards.' });
       }
+      const karaoke=formData.seatingArea==='Karaoke Room';
+      const hours=Number(formData.durationHours??2);
+      if(karaoke && (guests<8 || guests>15 || !Number.isInteger(hours) || hours<2 || hours>10 ||
+        serviceInstant(formData.date,formData.timeSlot)<Date.now() ||
+        serviceInstant(formData.date,formData.timeSlot)+hours*3600000>serviceInstant(formData.date,'03:00')))
+        return res.status(400).json({success:false,error:'Select 8–15 guests and a future session of at least two whole hours ending by 03:00.'});
       const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
       const created = await createReservation({
         booking_id: typeof bookingId === 'string' && /^[A-Za-z0-9-]{6,80}$/.test(bookingId) ? bookingId : undefined,
@@ -221,6 +227,7 @@ async function configureServer() {
         special_occasion: formData.specialOccasion || 'Casual Dining & Drinks',
         dietary_notes: formData.dietaryNotes || '',
         ip_address: clientIp,
+        ...(karaoke ? {duration_minutes:hours*60,total_price_pence:guests*1500+(hours-2)*9000,statusOverride:'Confirmed'} : {}),
         actor: 'ADMIN_PORTAL',
         bypassCutoff: true
       });
@@ -236,6 +243,7 @@ async function configureServer() {
           guests: created.guests,
           date: created.reservation_date,
           timeSlot: created.time_slot,
+          durationHours:(created.duration_minutes||120)/60,totalPricePence:created.total_price_pence,
           seatingArea: created.seating_area,
           dietaryNotes: created.dietary_notes || '',
           specialOccasion: created.special_occasion || 'Casual Dining & Drinks'
@@ -290,11 +298,11 @@ async function configureServer() {
   });
 
   // Get single booking with audit trail
-  app.get('/api/karaoke/availability',async(req,res)=>{
+  app.get(['/api/karaoke/availability','/api/admin/karaoke/availability'],async(req,res)=>{
     res.set('Cache-Control','no-store');
     const date=String(req.query.date||''),hours=Number(req.query.hours??2);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T12:00:00Z'))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date||!Number.isInteger(hours)||hours<2||hours>10)return res.status(400).json({error:'Invalid date or session length.'});
-    try{return res.json({room:'amica-frith-karaoke',date,hours,checkoutEnabled:Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),slots:await karaokeSlots(date,hours)});}catch{return res.status(503).json({error:'Room availability unavailable.'});}
+    try{return res.json({room:'amica-frith-karaoke',date,hours,checkoutEnabled:Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET),slots:await karaokeSlots(date,hours,req.path==='/api/admin/karaoke/availability')});}catch{return res.status(503).json({error:'Room availability unavailable.'});}
   });
   app.get('/api/bookings/payment-status', async (req,res) => {
     const sessionId=typeof req.query.session_id==='string'?req.query.session_id:'';

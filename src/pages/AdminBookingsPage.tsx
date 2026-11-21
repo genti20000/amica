@@ -919,7 +919,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       {activeAdminTab === 'calendar' && (
         <div className="max-w-7xl mx-auto space-y-6">
           <div role="group" aria-label="Calendar view" className="flex flex-wrap gap-2">{[['Venue calendar',false],['Private karaoke room',true]].map(([label,room])=><button key={String(label)} aria-pressed={roomView===room} className="min-h-11 rounded-lg border px-4" type="button" onClick={()=>setRoomView(room===true)}>{String(label)}</button>)}</div>
-          {roomView ? <KaraokeRoomCalendar onSelect={handleSelectBooking}/> : <AdminCalendarView
+          {roomView ? <KaraokeRoomCalendar onSelect={handleSelectBooking} onSaved={()=>{void loadData().catch(()=>{});}}/> : <AdminCalendarView
             bookings={bookings}
             blockedDates={blockedDates}
             onSelectBooking={handleSelectBooking}
