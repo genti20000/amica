@@ -78,6 +78,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button onClick={() => onNavigate('book')} className="text-[#DFBE7B] font-display font-bold hover:underline py-1 text-left cursor-pointer tracking-wider">Book A Table Online →</button>
               </li>
+              <li><a href="/membership" className="hover:text-[#DFBE7B] transition-colors py-1 text-left font-sans">Apply for Membership ↗</a></li>
               <li className="pt-2 border-t border-[#4A0E17]/60">
                 <button onClick={() => onNavigate('admin-bookings')} className="text-xs text-[#DFBE7B]/60 hover:text-[#DFBE7B] transition-colors py-1 text-left cursor-pointer font-sans tracking-wide">
                   Staff: Admin Bookings Portal →

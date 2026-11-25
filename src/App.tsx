@@ -38,6 +38,7 @@ export default function App() {
     try {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
+      if (window.location.pathname.replace(/\/$/, '') === '/karaoke-booking') return 'book';
       if (params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve') {
         return 'book';
       }
@@ -46,7 +47,7 @@ export default function App() {
       if (!isSessionUnlocked) {
         return 'coming-soon';
       }
-      if (params.get('admin') === 'true' || hash === '#admin' || hash === '#admin-bookings') {
+      if (window.location.pathname.replace(/\/$/, '') === '/admin' || params.get('admin') === 'true' || hash === '#admin' || hash === '#admin-bookings') {
         return 'admin-bookings';
       }
       return 'home';
@@ -60,6 +61,7 @@ export default function App() {
   const [savedPairings, setSavedPairings] = useState<string[]>([]);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [bookingConfirmation, setBookingConfirmation] = useState<BookingConfirmation | null>(null);
+  const [bookingFormRevision, setBookingFormRevision] = useState(0);
 
   // Direct URL support for ?book=true, #book, ?admin=true, or #admin
   useEffect(() => {
@@ -70,13 +72,14 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
 
-      const isDirectBook = params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve';
+      const isKaraokeBooking = window.location.pathname.replace(/\/$/, '') === '/karaoke-booking';
+      const isDirectBook = isKaraokeBooking || params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve';
       if (isDirectBook) {
         setCurrentPage('book');
         return;
       }
 
-      const isDirectAdmin = params.get('admin') === 'true' || hash === '#admin' || hash === '#admin-bookings';
+      const isDirectAdmin = window.location.pathname.replace(/\/$/, '') === '/admin' || params.get('admin') === 'true' || hash === '#admin' || hash === '#admin-bookings';
       if (isDirectAdmin) {
         setPostLoginTarget('admin-bookings');
         setIsLoginModalOpen(true);
@@ -201,6 +204,8 @@ export default function App() {
 
         {currentPage === 'book' && (
           <BookPage
+            isKaraokeBooking={window.location.pathname.replace(/\/$/, '') === '/karaoke-booking'}
+            key={bookingFormRevision}
             onNavigate={handleNavigate}
             onBookingComplete={(confirmation) => setBookingConfirmation(confirmation)}
             savedPairingsCount={savedPairings.length}
@@ -238,7 +243,13 @@ export default function App() {
       {/* Booking Confirmation Pass Modal */}
       <BookingConfirmationModal
         confirmation={bookingConfirmation}
-        onClose={() => setBookingConfirmation(null)}
+        onClose={() => {
+          setBookingConfirmation(null);
+          setBookingFormRevision((revision) => revision + 1);
+          setCurrentPage(isUnlocked ? 'home' : 'coming-soon');
+          window.history.replaceState(null, '', '/');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
     </div>
   );

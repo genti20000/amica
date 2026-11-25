@@ -25,13 +25,15 @@ export function generateConfirmationEmailHtml(reservation: ReservationRow): stri
     month: 'long',
     year: 'numeric'
   });
+  const isKaraoke = reservation.seating_area === 'Karaoke Room';
+  const karaokePrice = reservation.total_price_pence == null ? '' : new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(reservation.total_price_pence / 100);
 
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>AMICA SOHO · Table Reservation Confirmation</title>
+  <title>AMICA SOHO · ${isKaraoke ? 'Karaoke Room' : 'Table'} Reservation Confirmation</title>
   <style>
     body { margin: 0; padding: 0; background-color: #0B0B0C; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #FDFBF7; }
     .email-container { max-width: 600px; margin: 30px auto; background: linear-gradient(180deg, #1C0409 0%, #120205 50%, #0A0103 100%); border: 1.5px solid #DFBE7B; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
@@ -62,13 +64,13 @@ export function generateConfirmationEmailHtml(reservation: ReservationRow): stri
     <div class="header">
       <div class="brand-eyebrow">Subterranean Speakeasy & Dining</div>
       <h1 class="brand-title">AMICA <span class="brand-gold">SOHO</span></h1>
-      <div class="badge">Table Reservation Confirmed</div>
+      <div class="badge">${isKaraoke ? 'Private Karaoke Room Confirmed' : 'Table Reservation Confirmed'}</div>
     </div>
 
     <div class="content">
       <div class="salutation">Dear ${escapeHtml(reservation.guest_name)},</div>
       <p class="lead-text">
-        We are delighted to confirm your table reservation at <strong>AMICA SOHO</strong>. Your reservation request has been registered in our guestbook.
+        We are delighted to confirm your ${isKaraoke ? 'private karaoke room booking' : 'table reservation'} at <strong>AMICA SOHO</strong>. Your reservation request has been registered in our guestbook.
       </p>
 
       <div class="reference-box">
@@ -89,6 +91,7 @@ export function generateConfirmationEmailHtml(reservation: ReservationRow): stri
           <span class="detail-label">Party Size</span>
           <span class="detail-value">${reservation.guests} ${reservation.guests === 1 ? 'Guest' : 'Guests'}</span>
         </div>
+        ${isKaraoke ? `<div class="detail-row"><span class="detail-label">Session</span><span class="detail-value">${(reservation.duration_minutes || 120) / 60} hours</span></div><div class="detail-row"><span class="detail-label">Booking Total</span><span class="detail-value">${karaokePrice}</span></div>` : ''}
         <div class="detail-row">
           <span class="detail-label">Occasion</span>
           <span class="detail-value">${escapeHtml(reservation.special_occasion || 'Casual Dining & Drinks')}</span>
@@ -107,9 +110,9 @@ export function generateConfirmationEmailHtml(reservation: ReservationRow): stri
 
       <div class="policy-box">
         <strong>Important Information For Your Visit:</strong><br>
-        • <strong>Arrival Window:</strong> Tables are held for 15 minutes past your booked time.<br>
+        • <strong>Arrival Window:</strong> ${isKaraoke ? 'Please arrive at your booked time.' : 'Tables are held for 15 minutes past your booked time.'}<br>
         • <strong>Opening Hours:</strong> Wednesday to Saturday from 5:00 PM to 3:00 AM (17:00 – 03:00).<br>
-        • <strong>No Deposit Required:</strong> Enjoy full complimentary booking. If your plans change, cancellations are free up to 2 hours prior.
+        ${isKaraoke ? '<strong>Session Price:</strong> £15 per guest for the first two hours, then £90 per additional hour.' : '<strong>No Deposit Required:</strong> Enjoy full complimentary booking. If your plans change, cancellations are free up to 2 hours prior.'}
       </div>
     </div>
 
@@ -131,26 +134,28 @@ export function generateConfirmationEmailText(reservation: ReservationRow): stri
     month: 'long',
     year: 'numeric'
   });
+  const isKaraoke = reservation.seating_area === 'Karaoke Room';
+  const karaokePrice = reservation.total_price_pence == null ? '' : new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(reservation.total_price_pence / 100);
 
   return `
-AMICA SOHO · TABLE RESERVATION CONFIRMATION
+AMICA SOHO · ${isKaraoke ? 'PRIVATE KARAOKE ROOM' : 'TABLE'} RESERVATION CONFIRMATION
 ==================================================
 
 Dear ${reservation.guest_name},
 
-Thank you for reserving a table at AMICA SOHO. Your reservation is confirmed:
+Thank you for reserving ${isKaraoke ? 'the private karaoke room' : 'a table'} at AMICA SOHO. Your reservation is confirmed:
 
 Reference:    ${reservation.booking_id}
 Date:         ${formattedDate}
 Time:         ${reservation.time_slot}
 Party Size:   ${reservation.guests} ${reservation.guests === 1 ? 'Guest' : 'Guests'}
-Occasion:     ${reservation.special_occasion || 'Casual Dining & Drinks'}
+${isKaraoke ? `Session:      ${(reservation.duration_minutes || 120) / 60} hours\nTotal:        ${karaokePrice}\n` : ''}Occasion:     ${reservation.special_occasion || 'Casual Dining & Drinks'}
 ${reservation.dietary_notes ? `Notes:        ${reservation.dietary_notes}\n` : ''}Venue:        AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR
 Hours:        Wednesday to Saturday, 5:00 PM – 3:00 AM
 
 IMPORTANT INFORMATION:
-- Your table is held for 15 minutes past your booked time.
-- No deposit required. Free cancellations up to 2 hours prior.
+- ${isKaraoke ? 'Please arrive at your booked time.' : 'Your table is held for 15 minutes past your booked time.'}
+${isKaraoke ? '- Price: £15 per guest for the first two hours, then £90 per additional hour.' : '- No deposit required. Free cancellations up to 2 hours prior.'}
 - Contact: reservations@amicasoho.com
 
 We look forward to welcoming you to Soho.
@@ -172,18 +177,26 @@ function escapeHtml(str: string): string {
 
 // Dispatches confirmation email using Resend, SendGrid, or SMTP, with simulated fallback
 export async function sendReservationEmail(reservation: ReservationRow): Promise<EmailDispatchResult> {
-  const subject = `AMICA SOHO · Table Reservation Confirmed (${reservation.booking_id})`;
+  const subject = `AMICA SOHO · ${reservation.seating_area === 'Karaoke Room' ? 'Karaoke Room' : 'Table'} Reservation Confirmed (${reservation.booking_id})`;
   const previewHtml = generateConfirmationEmailHtml(reservation);
   const textBody = generateConfirmationEmailText(reservation);
   const dispatchedAt = new Date().toISOString();
 
   // Sender address: reservations@amicasoho.com
   const fromEmail = process.env.FROM_EMAIL || 'AMICA SOHO <reservations@amicasoho.com>';
+  const notificationEmail = process.env.BOOKING_NOTIFICATION_EMAIL || 'reservations@amicasoho.com';
+  const venueCopy = notificationEmail.toLowerCase() === reservation.email.toLowerCase() ? [] : [notificationEmail];
 
   // Create mailto fallback URL
   const mailtoSubject = encodeURIComponent(subject);
   const mailtoBody = encodeURIComponent(textBody);
   const mailtoUrl = `mailto:${encodeURIComponent(reservation.email)}?subject=${mailtoSubject}&body=${mailtoBody}`;
+
+  if (!['Confirmed', 'Auto-Confirmed'].includes(reservation.status)) {
+    return { success: false, mode: 'simulated', provider: 'Not dispatched', bookingId: reservation.booking_id,
+      recipient: reservation.email, sender: fromEmail, subject, previewHtml, textBody, mailtoUrl,
+      message: 'A confirmation email can only be sent for a confirmed reservation.', dispatchedAt };
+  }
 
   const resendApiKey = process.env.RESEND_API_KEY;
   const sendgridApiKey = process.env.SENDGRID_API_KEY;
@@ -207,9 +220,12 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
           'Authorization': `Bearer ${resendApiKey}`,
           'Content-Type': 'application/json'
         },
+        signal: AbortSignal.timeout(15000),
         body: JSON.stringify({
           from: activeSender,
           to: [reservation.email],
+          ...(venueCopy.length ? { bcc: venueCopy } : {}),
+          reply_to: notificationEmail,
           subject,
           html: previewHtml,
           text: textBody
@@ -217,27 +233,6 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
       });
 
       let resendData = await resendRes.json();
-
-      // If custom domain is not yet verified on Resend, retry with onboarding@resend.dev
-      if (!resendRes.ok && typeof resendData.message === 'string' && resendData.message.includes('not verified')) {
-        console.warn('amicasoho.com domain not verified on Resend. Trying fallback to onboarding@resend.dev...');
-        activeSender = 'AMICA SOHO <onboarding@resend.dev>';
-        resendRes = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: activeSender,
-            to: [reservation.email],
-            subject,
-            html: previewHtml,
-            text: textBody
-          })
-        });
-        resendData = await resendRes.json();
-      }
 
       if (!resendRes.ok) {
         throw new Error(resendData.message || JSON.stringify(resendData));
@@ -264,7 +259,8 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          personalizations: [{ to: [{ email: reservation.email }] }],
+          personalizations: [{ to: [{ email: reservation.email }], ...(venueCopy.length ? { bcc: venueCopy.map(email => ({ email })) } : {}) }],
+          reply_to: { email: notificationEmail },
           from: { email: 'reservations@amicasoho.com', name: 'AMICA SOHO' },
           subject,
           content: [
@@ -305,6 +301,8 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
       const info = await transporter.sendMail({
         from: fromEmail,
         to: reservation.email,
+        bcc: venueCopy,
+        replyTo: notificationEmail,
         subject,
         text: textBody,
         html: previewHtml
@@ -330,7 +328,7 @@ export async function sendReservationEmail(reservation: ReservationRow): Promise
 
   // Record dispatch log in database
   try {
-    await logAudit(reservation.booking_id, mode === 'simulated' ? 'EMAIL_NOT_SENT' : 'EMAIL_CONFIRMATION_DISPATCHED', 'EMAIL_SERVICE', JSON.stringify({mode,provider,externalId:externalId||null}));
+    await logAudit(reservation.booking_id, mode === 'simulated' ? 'EMAIL_NOT_SENT' : 'EMAIL_CONFIRMATION_DISPATCHED', 'EMAIL_SERVICE', JSON.stringify({mode,provider,externalId:externalId||null,notificationEmail}));
   } catch (e) {
     console.error('Failed to log email dispatch audit:', e);
   }
@@ -359,14 +357,12 @@ export function checkEmailServiceStatus() {
   const fromEmail = process.env.FROM_EMAIL || 'AMICA SOHO <reservations@amicasoho.com>';
 
   if (resendApiKey) {
-    const masked = resendApiKey.length > 8 ? `${resendApiKey.substring(0, 5)}...${resendApiKey.substring(resendApiKey.length - 4)}` : '***';
     return {
       ready: true,
       provider: 'Resend',
       fromEmail,
       apiKeyConfigured: true,
-      apiKeyMasked: masked,
-      status: 'Resend API Key is active and ready to dispatch live emails to guests!'
+      status: 'Resend API key configured. Delivery requires a verified sender domain.'
     };
   }
 
@@ -380,7 +376,7 @@ export function checkEmailServiceStatus() {
     };
   }
 
-  if (smtpHost) {
+  if (smtpHost && process.env.SMTP_USER && process.env.SMTP_PASS) {
     return {
       ready: true,
       provider: 'SMTP',

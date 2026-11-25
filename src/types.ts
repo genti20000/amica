@@ -36,6 +36,8 @@ export interface BookingFormData {
   phone: string;
   dietaryNotes: string;
   specialOccasion: string;
+  durationHours?: number;
+  totalPricePence?: number;
 }
 
 export interface MockEmailNotification {
@@ -51,6 +53,7 @@ export interface MockEmailNotification {
 }
 
 export interface BookingConfirmation {
+  emailSent?: boolean;
   bookingId: string;
   formData: BookingFormData;
   createdAt: string;

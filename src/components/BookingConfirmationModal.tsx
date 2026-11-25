@@ -24,6 +24,9 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
   if (!confirmation) return null;
 
   const { bookingId, formData } = confirmation;
+  const isKaraokeBooking = formData.seatingArea === 'Karaoke Room';
+  const durationHours = formData.durationHours ?? 2;
+  const totalPricePence = formData.totalPricePence ?? formData.guests * 1500 + Math.max(0, durationHours - 2) * 9000;
   const isConfirmed = confirmation.status !== 'Pending';
 
   // Generate standard ICS content for Add to Calendar
@@ -35,8 +38,9 @@ export const BookingConfirmationModal: React.FC<BookingConfirmationModalProps> =
     if (Number(startHour)<5) serviceDay.setUTCDate(serviceDay.getUTCDate()+1);
     const cleanDate=serviceDay.toISOString().slice(0,10).replace(/-/g,'');
     const dtStart=`${cleanDate}T${startHour}${startMin}00`;
-    const end=new Date(serviceDay); if(Number(startHour)+2>=24)end.setUTCDate(end.getUTCDate()+1);
-    const dtEnd=`${end.toISOString().slice(0,10).replace(/-/g,'')}T${String((Number(startHour)+2)%24).padStart(2,'0')}${startMin}00`;
+    const totalEndMinutes=Number(startHour)*60+Number(startMin)+(isKaraokeBooking?durationHours:2)*60;
+    const endDate=new Date(Date.UTC(serviceDay.getUTCFullYear(),serviceDay.getUTCMonth(),serviceDay.getUTCDate())+Math.floor(totalEndMinutes/1440)*86400000);
+    const dtEnd=`${endDate.toISOString().slice(0,10).replace(/-/g,'')}T${String(Math.floor((totalEndMinutes%1440)/60)).padStart(2,'0')}${String(totalEndMinutes%60).padStart(2,'0')}00`;
 
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -44,8 +48,8 @@ PRODID:-//AMICA SOHO//RESTAURANT RESERVATION//EN
 BEGIN:VEVENT
 UID:${bookingId}@amicasoho.com
 DTSTAMP:${new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}
-SUMMARY:Table Reservation at AMICA SOHO (${formData.guests} Pax)
-DESCRIPTION:Table Reservation for ${formData.guests} guests. Ref: ${bookingId}. Opening hours: Wednesday to Saturday from 5:00 PM to 3:00 AM.
+SUMMARY:${isKaraokeBooking?'Private Karaoke Room':'Table Reservation'} at AMICA SOHO (${formData.guests} Pax)
+DESCRIPTION:${isKaraokeBooking?`Private karaoke room for ${formData.guests} guests, ${durationHours} hours. Ref: ${bookingId}.`:`Table reservation for ${formData.guests} guests. Ref: ${bookingId}.`} Opening hours: Wednesday to Saturday from 5:00 PM to 3:00 AM.
 LOCATION:AMICA SOHO, 23 Frith Street, Soho, London W1D 4RR
 DTSTART;TZID=Europe/London:${dtStart}
 DTEND;TZID=Europe/London:${dtEnd}
@@ -66,12 +70,13 @@ END:VCALENDAR`;
 
   const handleCopyDetails = () => {
     const text =
-      `AMICA SOHO · ${isConfirmed ? 'Table Reservation Confirmed' : 'Reservation Request Saved'}\n` +
+      `AMICA SOHO · ${isConfirmed ? (isKaraokeBooking ? 'Karaoke Room Confirmed' : 'Table Reservation Confirmed') : 'Reservation Request Saved'}\n` +
       `Reference: ${bookingId}\n` +
       `Name: ${formData.name}\n` +
       `Date: ${formData.date}\n` +
       `Time: ${formData.timeSlot}\n` +
       `Party Size: ${formData.guests} Guests\n` +
+      (isKaraokeBooking ? `Session: ${durationHours} hours\nTotal: £${(totalPricePence / 100).toFixed(2)}\n` : '') +
       `Occasion: ${formData.specialOccasion || 'Casual Dining & Drinks'}\n` +
       `Venue: 23 Frith Street, Soho, London W1D 4RR\n` +
       `Hours: Wed–Sat, 5:00 PM – 3:00 AM`;
@@ -81,8 +86,8 @@ END:VCALENDAR`;
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-lg bg-gradient-to-b from-[#180307] via-[#120205] to-[#0A0103] border-2 border-[#DFBE7B] rounded-xl p-5 sm:p-7 text-[#FDFBF7] shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto">
+    <div className="booking-confirmation-overlay fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+      <div role="dialog" aria-modal="true" aria-label="Reservation details" className="booking-confirmation relative w-full max-w-lg bg-gradient-to-b from-[#180307] via-[#120205] to-[#0A0103] border-2 border-[#DFBE7B] rounded-xl p-5 sm:p-7 text-[#FDFBF7] shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto">
         
         {/* Top Metallic Border Decor */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#DFBE7B] via-[#C5A059] to-[#DFBE7B]" />
@@ -104,14 +109,14 @@ END:VCALENDAR`;
 
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-[10px] uppercase font-sans font-bold tracking-widest">
             <Zap className="w-3 h-3 text-emerald-400" />
-            <span>{isConfirmed ? 'RESERVATION CONFIRMED' : 'RESERVATION REQUEST SAVED'} · REF #{bookingId}</span>
+            <span>{isConfirmed ? (isKaraokeBooking ? 'KARAOKE ROOM CONFIRMED' : 'RESERVATION CONFIRMED') : 'RESERVATION REQUEST SAVED'} · REF #{bookingId}</span>
           </div>
 
           <h2 className="font-['Cinzel',serif] text-2xl sm:text-3xl text-[#FDFBF7] tracking-wider font-light">
-            {isConfirmed ? 'Table Reserved at' : 'Reservation Requested at'} <span className="text-[#E8CCA0]">AMICA SOHO</span>
+            {isConfirmed ? (isKaraokeBooking ? 'Karaoke Room Reserved' : 'Table Reserved') : 'Reservation Requested'} <span className="text-[#E8CCA0]">AMICA SOHO</span>
           </h2>
           <p className="text-xs text-[#DFBE7B]/80 font-sans">
-            Thank you, {formData.name}. Your table for <strong>{formData.guests} {formData.guests === 1 ? 'guest' : 'guests'}</strong> {isConfirmed ? 'is confirmed.' : 'is awaiting confirmation by the venue.'}
+            Thank you, {formData.name}. Your {isKaraokeBooking ? 'private room for' : 'table for'} <strong>{formData.guests} {formData.guests === 1 ? 'guest' : 'guests'}</strong>{isKaraokeBooking ? ` for ${durationHours} hours` : ''} {isConfirmed ? 'is confirmed.' : 'is awaiting confirmation by the venue.'}
           </p>
         </div>
 
@@ -146,6 +151,8 @@ END:VCALENDAR`;
               </span>
             </div>
           </div>
+
+          {isKaraokeBooking && <div className="flex items-center justify-between border-b border-[#DFBE7B]/20 pb-3 text-xs font-sans"><span className="text-[#DFBE7B]">Session · {durationHours} hours</span><strong className="text-[#FFEAA7]">Paid · £{(totalPricePence / 100).toFixed(2)}</strong></div>}
 
           <div className="space-y-1.5 text-xs text-[#FDFBF7]/80 font-sans">
             <div className="flex items-start gap-2">
@@ -192,6 +199,12 @@ END:VCALENDAR`;
             </button>
           </div>
         </div>
+
+        {isConfirmed && confirmation.emailSent === false && (
+          <p role="status" className="mb-4 rounded-lg border border-[#DFBE7B]/30 p-3 text-sm text-[#FDFBF7]/80">
+            Your reservation is saved, but the confirmation email could not be sent. Please keep your booking reference. For help, contact reservations@amicasoho.com.
+          </p>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-2.5">
