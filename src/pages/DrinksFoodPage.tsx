@@ -70,7 +70,7 @@ export const DrinksFoodPage: React.FC<DrinksFoodPageProps> = ({
         </p>
 
         <div className="flex flex-wrap justify-center gap-3 pt-2">
-          {[['Cocktail Menu (PDF)', '/menus/amica-drinks-menu.pdf'], ['Wine List (PDF)', '/menus/amica-wine-list.pdf'], ['Food Menu (PDF)', '/menus/amica-food-menu.pdf']].map(([label, href]) => (
+          {[['Cocktail Menu (PDF)', '/menus/amica-drinks-menu.pdf'], ['Wine List (PDF)', '/menus/amica-wine-list.pdf'], ['Food Menu (PDF)', '/menus/amica-food-menu.pdf'], ['Christmas Set Menu (PDF)', '/menus/amica-christmas-set-menu.pdf']].map(([label, href]) => (
             <a key={href} href={href} target="_blank" rel="noopener noreferrer" className="btn-brass-outline px-4 py-2 rounded text-xs uppercase tracking-wider">{label}</a>
           ))}
         </div>
