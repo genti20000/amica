@@ -25,12 +25,13 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ onNavigate }) =>
           fetchPriority="high"
         />
         <nav aria-label="Social links and menu" className="absolute inset-x-0 bottom-[3%] z-10 px-4 sm:px-8">
-          <div className="mb-3 flex justify-center pt-2">
+          <div className="mb-3 flex flex-col items-center gap-1 pt-2">
             <a
               href="/menus/amica-christmas-set-menu.pdf"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Christmas Set Menu (PDF, opens in a new tab)"
+              aria-describedby="christmas-preorder-note"
               className="relative inline-flex min-h-11 items-center justify-center rounded-full border border-[#D4B887]/75 bg-[#320F17] px-4 text-xs font-semibold text-[#F7EFE1] shadow-lg hover:bg-[#501825] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F0D7A7]"
             >
               <svg className="pointer-events-none absolute -left-2 -top-3 h-6 w-6 -rotate-12" viewBox="0 0 24 24" aria-hidden="true">
@@ -40,6 +41,7 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ onNavigate }) =>
               </svg>
               Christmas Menu
             </a>
+            <p id="christmas-preorder-note" className="rounded-full bg-[#080505] px-2.5 py-0.5 text-[11px] font-medium text-[#F0D7A7]">Pre-order only</p>
           </div>
           <div className="mx-auto grid max-w-[760px] grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-3 sm:gap-6">
             <a href="https://instagram.com/amicasoho" target="_blank" rel="noopener noreferrer" aria-label="AMICA Soho on Instagram" className="grid h-11 w-11 place-items-center rounded-full border border-[#D4B887]/70 bg-[#080505]/75 shadow-lg backdrop-blur-sm hover:bg-[#240609]">
