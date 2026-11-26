@@ -15,7 +15,15 @@
       "destination": "/pre-theatre/index.html"
     },
     {
-      "source": "/((?!assets/|pre-theatre/).*)",
+      "source": "/karaoke-food-drinks",
+      "destination": "/karaoke-food-drinks/index.html"
+    },
+    {
+      "source": "/karaoke-food-drinks/",
+      "destination": "/karaoke-food-drinks/index.html"
+    },
+    {
+      "source": "/((?!assets/|pre-theatre/|karaoke-food-drinks/).*)",
       "destination": "/index.html"
     }
   ],
