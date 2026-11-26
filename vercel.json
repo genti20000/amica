@@ -147,7 +147,15 @@
       "destination": "/api"
     },
     {
-      "source": "/((?!assets/).*)",
+      "source": "/pre-theatre",
+      "destination": "/pre-theatre/index.html"
+    },
+    {
+      "source": "/pre-theatre/",
+      "destination": "/pre-theatre/index.html"
+    },
+    {
+      "source": "/((?!assets/|pre-theatre/).*)",
       "destination": "/index.html"
     }
   ],
