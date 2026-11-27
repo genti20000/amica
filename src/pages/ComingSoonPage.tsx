@@ -16,11 +16,11 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ onNavigate }) =>
   return <div className="bg-[#080505] text-[#F7EFE1] pb-28">
     <div className="w-full">
       <h1 className="sr-only">AMICA Soho — 23 Frith Street</h1>
-      <div className="relative w-full overflow-hidden bg-[#080505] sm:mx-auto sm:max-w-[1200px] sm:h-[min(76svh,900px)] sm:min-h-[560px]">
+      <div className="relative w-full overflow-hidden bg-[#080505] sm:mx-auto sm:w-fit sm:max-w-[1200px]">
         <img
           src="/images/amica-entrance-retouched.jpg"
           alt="AMICA Soho’s burgundy canopy and entrance at 23 Frith Street, framed by plants and warm lights"
-          className="block h-auto w-full sm:absolute sm:inset-0 sm:h-full sm:object-cover sm:object-[50%_30%]"
+          className="block h-auto w-full sm:mx-auto sm:w-auto sm:max-w-full sm:max-h-[min(76svh,900px)] sm:object-contain"
           sizes="100vw"
           fetchPriority="high"
         />
