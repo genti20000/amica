@@ -87,7 +87,7 @@ export async function karaokeSlots(date:string,hours:number,staff=false):Promise
   await ensureReservationPricingColumns();
   const [booked,blocks,settings]=await Promise.all([
     db.query('SELECT guests,reservation_date,time_slot,duration_minutes FROM reservations WHERE seating_area=$1 AND reservation_date=$2 AND status=ANY($3::text[])',['Karaoke Room',date,occupyingStatuses]),
-    db.query('SELECT is_full_day,start_time,end_time,to_jsonb(blocked_dates)->>'scope' AS scope FROM blocked_dates WHERE blocked_date=$1',[date]),getVenueSettings()
+    db.query("SELECT is_full_day,start_time,end_time,to_jsonb(blocked_dates)->>'scope' AS scope FROM blocked_dates WHERE blocked_date=$1",[date]),getVenueSettings()
   ]);
   const cutoff=staff?0:Number(settings.cutoff_hours??1);
   const close=serviceInstant(date,'03:00');
@@ -103,7 +103,7 @@ async function assertCapacity(client: pg.PoolClient, candidate: Pick<Reservation
     AND status = ANY($2::text[]) AND booking_id <> $3`, [candidate.reservation_date, occupyingStatuses, excludeId]);
   const isKaraoke = candidate.seating_area === 'Karaoke Room';
   const relevant = rows.rows.filter((row) => (row.seating_area === 'Karaoke Room') === isKaraoke);
-  if(isKaraoke && karaokeBlockClashes((await client.query('SELECT is_full_day,start_time,end_time,to_jsonb(blocked_dates)->>'scope' AS scope FROM blocked_dates WHERE blocked_date=$1',[candidate.reservation_date])).rows,candidate.time_slot,(candidate.duration_minutes??120)/60)) throw new BookingValidationError('The room is blocked during this session.');
+  if(isKaraoke && karaokeBlockClashes((await client.query("SELECT is_full_day,start_time,end_time,to_jsonb(blocked_dates)->>'scope' AS scope FROM blocked_dates WHERE blocked_date=$1",[candidate.reservation_date])).rows,candidate.time_slot,(candidate.duration_minutes??120)/60)) throw new BookingValidationError('The room is blocked during this session.');
   if (isKaraoke && !fitsKaraokeCapacity(candidate, relevant)) throw new BookingValidationError('The karaoke room is already reserved during this session. Please choose another time.');
   if (!isKaraoke && !fitsBookingCapacity(candidate, relevant)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
 }
