@@ -117,6 +117,7 @@ export const resetBookings = async (): Promise<BookingConfirmation[]> => {
 // =========================================================================
 
 export interface BlockedDateItem {
+  scope?: 'all' | 'main';
   id: number;
   blocked_date: string;
   is_full_day: number | boolean;
