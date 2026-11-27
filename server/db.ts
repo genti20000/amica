@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { supabaseCa } from './supabaseCa.js';
 import { serviceInstant } from '../src/lib/serviceTime.js';
+import { appliesToKaraoke, isFullDay, tableBlockClashes, validWindow } from '../src/lib/tableBlocks.js';
 import { fitsBookingCapacity, fitsKaraokeCapacity, occupyingStatuses } from '../src/lib/bookingCapacity.js';
 export class BookingValidationError extends Error { name = 'BookingValidationError'; }
 
@@ -54,6 +55,7 @@ export interface BookingAuditRow {
 }
 
 export interface BlockedDateRow {
+  scope?: 'all' | 'main';
   id: number;
   blocked_date: string;
   is_full_day: number;
@@ -79,13 +81,13 @@ export async function getReservationById(bookingId: string): Promise<{ reservati
   return {reservation: booking.rows[0] || null, auditLogs: audit.rows};
 }
 
-const karaokeBlockClashes=(rows:any[],slot:string,hours:number)=>rows.some(r=>Number(r.is_full_day)===1 || (r.start_time && r.end_time && serviceMinutes(slot)<=serviceMinutes(r.end_time) && serviceMinutes(slot)+hours*60>serviceMinutes(r.start_time)));
+const karaokeBlockClashes=(rows:any[],slot:string,hours:number)=>rows.some(r=>appliesToKaraoke(r) && (Number(r.is_full_day)===1 || (r.start_time && r.end_time && serviceMinutes(slot)<=serviceMinutes(r.end_time) && serviceMinutes(slot)+hours*60>serviceMinutes(r.start_time))));
 export async function karaokeSlots(date:string,hours:number,staff=false):Promise<string[]> {
   if (![3,4,5,6].includes(new Date(date+'T12:00:00Z').getUTCDay())) return [];
   await ensureReservationPricingColumns();
   const [booked,blocks,settings]=await Promise.all([
     db.query('SELECT guests,reservation_date,time_slot,duration_minutes FROM reservations WHERE seating_area=$1 AND reservation_date=$2 AND status=ANY($3::text[])',['Karaoke Room',date,occupyingStatuses]),
-    db.query('SELECT is_full_day,start_time,end_time FROM blocked_dates WHERE blocked_date=$1',[date]),getVenueSettings()
+    db.query('SELECT is_full_day,start_time,end_time,to_jsonb(blocked_dates)->>'scope' AS scope FROM blocked_dates WHERE blocked_date=$1',[date]),getVenueSettings()
   ]);
   const cutoff=staff?0:Number(settings.cutoff_hours??1);
   const close=serviceInstant(date,'03:00');
@@ -101,7 +103,7 @@ async function assertCapacity(client: pg.PoolClient, candidate: Pick<Reservation
     AND status = ANY($2::text[]) AND booking_id <> $3`, [candidate.reservation_date, occupyingStatuses, excludeId]);
   const isKaraoke = candidate.seating_area === 'Karaoke Room';
   const relevant = rows.rows.filter((row) => (row.seating_area === 'Karaoke Room') === isKaraoke);
-  if(isKaraoke && karaokeBlockClashes((await client.query('SELECT is_full_day,start_time,end_time FROM blocked_dates WHERE blocked_date=$1',[candidate.reservation_date])).rows,candidate.time_slot,(candidate.duration_minutes??120)/60)) throw new BookingValidationError('The room is blocked during this session.');
+  if(isKaraoke && karaokeBlockClashes((await client.query('SELECT is_full_day,start_time,end_time,to_jsonb(blocked_dates)->>'scope' AS scope FROM blocked_dates WHERE blocked_date=$1',[candidate.reservation_date])).rows,candidate.time_slot,(candidate.duration_minutes??120)/60)) throw new BookingValidationError('The room is blocked during this session.');
   if (isKaraoke && !fitsKaraokeCapacity(candidate, relevant)) throw new BookingValidationError('The karaoke room is already reserved during this session. Please choose another time.');
   if (!isKaraoke && !fitsBookingCapacity(candidate, relevant)) throw new BookingValidationError('There are not enough tables available for this two-hour reservation. Please choose another time or contact the venue.');
 }
@@ -122,7 +124,7 @@ export async function createReservation(data: { booking_id?: string; guest_name:
   return transaction(async client => {
     // Serialize booking creation with blackout changes to avoid a check/write race.
     await client.query('SELECT pg_advisory_xact_lock(230017)');
-    const blocked = await isDateBlocked(data.reservation_date,data.time_slot,client);
+    const blocked = await isDateBlocked(data.reservation_date,data.time_slot,client,data.seating_area==='Karaoke Room',data.duration_minutes??120);
     if (blocked.blocked) throw new BookingValidationError('This service date or time is unavailable.');
     const settings=Object.fromEntries((await client.query('SELECT key,value FROM venue_settings')).rows.map(r=>[r.key,r.value]));
     const cutoff=Number(settings.cutoff_hours ?? 1);
@@ -203,13 +205,27 @@ export async function getDatabaseMetadata() {
 }
 export async function getBlockedDates(): Promise<BlockedDateRow[]> { return (await db.query('SELECT * FROM blocked_dates ORDER BY blocked_date, id DESC')).rows; }
 const serviceMinutes=(v:string)=>{const [h,m]=v.split(':').map(Number);return (h<5?h+24:h)*60+m;};
-export async function isDateBlocked(date: string, slot?: string, client: pg.Pool | pg.PoolClient = db): Promise<{blocked:boolean; reason?:string}> {
+export async function isDateBlocked(date: string, slot?: string, client: pg.Pool | pg.PoolClient = db, karaoke=false, durationMinutes=120): Promise<{blocked:boolean; reason?:string}> {
   const rows=(await client.query('SELECT * FROM blocked_dates WHERE blocked_date=$1',[date])).rows;
-  for(const r of rows) if(r.is_full_day===1 || (slot && r.start_time && r.end_time && serviceMinutes(slot)>=serviceMinutes(r.start_time) && serviceMinutes(slot)<=serviceMinutes(r.end_time)))return {blocked:true,reason:r.reason};
+  for(const r of rows) {
+    const blocked=karaoke ? appliesToKaraoke(r) && (isFullDay(r) || (slot && r.start_time && r.end_time && serviceMinutes(slot)>=serviceMinutes(r.start_time) && serviceMinutes(slot)<=serviceMinutes(r.end_time))) : (isFullDay(r) || (slot && tableBlockClashes(r,slot,durationMinutes)));
+    if(blocked)return {blocked:true,reason:r.reason};
+  }
   return {blocked:false};
 }
 export async function addBlockedDate(data:{blocked_date:string;is_full_day:boolean;start_time?:string;end_time?:string;reason:string;notes?:string;actor?:string}): Promise<BlockedDateRow> {
-  return transaction(async client=>{await client.query('SELECT pg_advisory_xact_lock(230017)');const r=await client.query('INSERT INTO blocked_dates (blocked_date,is_full_day,start_time,end_time,reason,notes,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',[data.blocked_date,data.is_full_day?1:0,data.start_time||null,data.end_time||null,data.reason,data.notes||null,new Date().toISOString()]);await logAudit('SYSTEM_SETTINGS','BLOCKED_DATE_ADDED',data.actor||'ADMIN_PORTAL',data.blocked_date,client);return r.rows[0];});
+  if(!data.is_full_day && !validWindow(data.start_time,data.end_time)) throw new BookingValidationError('Choose a start and end within the 17:00–03:00 evening service.');
+  return transaction(async client=>{
+    await client.query('SELECT pg_advisory_xact_lock(230017)');
+    const values=[data.blocked_date,data.is_full_day?1:0,data.is_full_day?null:data.start_time,data.is_full_day?null:data.end_time,data.reason,data.notes||null,new Date().toISOString()];
+    // Legacy full-day closures keep their existing venue-wide behaviour; new timed closures are main dining only.
+    const sql=data.is_full_day
+      ? 'INSERT INTO blocked_dates (blocked_date,is_full_day,start_time,end_time,reason,notes,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *'
+      : "INSERT INTO blocked_dates (blocked_date,is_full_day,start_time,end_time,reason,notes,created_at,scope) VALUES ($1,$2,$3,$4,$5,$6,$7,'main') RETURNING *";
+    const r=await client.query(sql,values);
+    await logAudit('SYSTEM_SETTINGS','BLOCKED_DATE_ADDED',data.actor||'ADMIN_PORTAL',data.blocked_date+(data.is_full_day?' full day':` ${data.start_time}–${data.end_time} main dining`),client);
+    return r.rows[0];
+  });
 }
 export async function removeBlockedDate(value:number|string, actor='ADMIN_PORTAL') {
   return transaction(async client=>{await client.query('SELECT pg_advisory_xact_lock(230017)');const key=/^\d+$/.test(String(value))?'id':'blocked_date';const r=await client.query(`DELETE FROM blocked_dates WHERE ${key}=$1 RETURNING id`,[value]);if(!r.rows.length)return false;await logAudit('SYSTEM_SETTINGS','BLOCKED_DATE_REMOVED',actor,String(value),client);return true;});
