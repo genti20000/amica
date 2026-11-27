@@ -1,3 +1,4 @@
+import { validWindow } from '../lib/tableBlocks.js';
 import { KaraokeRoomCalendar } from '../components/KaraokeRoomCalendar';
 import React, { useState, useMemo, useEffect } from 'react';
 import { PageId, BookingConfirmation, BookingFormData } from '../types';
@@ -118,9 +119,9 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   // New block date form state
   const [newBlock, setNewBlock] = useState({
     date: todayStr,
-    isFullDay: true,
-    startTime: '17:00',
-    endTime: '03:00',
+    isFullDay: false,
+    startTime: '18:00',
+    endTime: '21:00',
     reason: 'Full Venue Private Buyout',
     notes: ''
   });
@@ -295,6 +296,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
     try {
     e.preventDefault();
     if (!newBlock.date || !newBlock.reason) return;
+    if (!newBlock.isFullDay && !validWindow(newBlock.startTime,newBlock.endTime)) { showToast('Choose a valid period between 17:00 and 03:00. End must be after start.'); return; }
 
     try {
       const updated = await addBlockedDate({
@@ -307,9 +309,9 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
       });
       setBlockedDates(updated);
       setIsBlockModalOpen(false);
-      showToast(`Date ${newBlock.date} blocked and recorded in database!`);
-    } catch {
-      showToast('Failed to block date');
+      showToast(newBlock.isFullDay ? `Date ${newBlock.date} blocked.` : `Main AMICA blocked ${newBlock.startTime}–${newBlock.endTime} on ${newBlock.date}.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to block date');
     }
 
     } catch (error) { showToast(error instanceof Error ? error.message : 'The change could not be saved.'); }
@@ -318,11 +320,11 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   // Remove Blocked Date
   const handleRemoveBlock = async (id: number, dateStr: string) => {
     try {
-    if (window.confirm(`Unblock date ${dateStr} and reopen for general online reservations?`)) {
+    if (window.confirm(`Remove this closure on ${dateStr}? Other closures and reservations will remain.`)) {
       try {
         const updated = await removeBlockedDate(id);
         setBlockedDates(updated);
-        showToast(`Date ${dateStr} unblocked successfully`);
+        showToast(`Closure on ${dateStr} removed successfully`);
       } catch {
         showToast('Failed to unblock date');
       }
@@ -457,7 +459,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded bg-[#2D0911] hover:bg-[#3E0E18] border border-red-500/50 hover:border-red-400 text-red-300 text-xs font-sans tracking-wider uppercase transition-all cursor-pointer shadow-sm"
           >
             <Ban className="w-3.5 h-3.5 text-red-400" />
-            <span>+ Block Date</span>
+            <span>+ Block Time / Day</span>
           </button>
 
           <button
@@ -949,7 +951,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                 </h3>
               </div>
               <p className="text-xs text-[#DFBE7B]/80 font-sans mt-1">
-                Block specific evenings for full venue buyouts, private corporate events, or holiday closures. Blocked dates cannot be booked online.
+                Block the main dining room for specific hours, or close the whole venue for an entire evening. Other times remain bookable.
               </p>
             </div>
 
@@ -1014,7 +1016,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                           {block.blocked_date}
                         </span>
                         <span className="px-2 py-0.5 rounded bg-red-950 border border-red-500/50 text-red-300 text-[10px] font-sans font-bold uppercase tracking-wider">
-                          {block.is_full_day ? 'Full Day Closed' : `${block.start_time} – ${block.end_time}`}
+                          {block.is_full_day ? 'Full Day Closed' : `${block.start_time} – ${block.end_time}${block.scope === 'main' ? ' · Main AMICA only' : ''}`}
                         </span>
                         <span className="text-xs font-semibold text-[#FDFBF7]">
                           {block.reason}
@@ -1037,7 +1039,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                         title="Remove blackout and reopen date for reservations"
                       >
                         <Unlock className="w-3.5 h-3.5" />
-                        <span>Unblock Date</span>
+                        <span>Remove Block</span>
                       </button>
                     </div>
                   </div>
@@ -1238,7 +1240,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                 <Ban className="w-5 h-5" />
               </div>
               <h2 className="font-['Cinzel',serif] text-2xl text-[#E8CCA0]">
-                Block Date / Add Blackout
+                Block Booking Time
               </h2>
               <p className="text-xs text-[#DFBE7B]/80 font-sans mt-0.5">
                 Prevent online reservations for private buyouts or closed events
@@ -1285,17 +1287,18 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                         : 'bg-[#140306] border border-[#DFBE7B]/20 text-[#DFBE7B]/70'
                     }`}
                   >
-                    Specific Hours
+                    Specific Hours (Main AMICA)
                   </button>
                 </div>
               </div>
 
               {!newBlock.isFullDay && (
                 <div className="grid grid-cols-2 gap-3">
+                  <p className="col-span-2 text-[#DFBE7B]/90">Only main AMICA table bookings are blocked. Times are evening service times; 00:00–03:00 is the following morning. Existing reservations are not cancelled.</p>
                   <div>
                     <label className="block text-[10px] uppercase text-[#DFBE7B] mb-1 font-semibold">Start Time</label>
                     <input
-                      type="time"
+                      type="time" required
                       value={newBlock.startTime}
                       onChange={(e) => setNewBlock({ ...newBlock, startTime: e.target.value })}
                       className="w-full py-2 px-3 bg-[#0A0103] border border-[#DFBE7B]/40 rounded text-xs text-[#FDFBF7]"
@@ -1304,7 +1307,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                   <div>
                     <label className="block text-[10px] uppercase text-[#DFBE7B] mb-1 font-semibold">End Time</label>
                     <input
-                      type="time"
+                      type="time" required
                       value={newBlock.endTime}
                       onChange={(e) => setNewBlock({ ...newBlock, endTime: e.target.value })}
                       className="w-full py-2 px-3 bg-[#0A0103] border border-[#DFBE7B]/40 rounded text-xs text-[#FDFBF7]"
@@ -1350,7 +1353,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                   type="submit"
                   className="flex-1 py-3 px-4 rounded bg-gradient-to-r from-red-600 to-rose-700 text-white font-sans font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md"
                 >
-                  Confirm & Block Date in Database
+                  {newBlock.isFullDay ? 'Block full evening' : 'Block selected hours'}
                 </button>
                 <button
                   type="button"

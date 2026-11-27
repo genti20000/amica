@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { BookingConfirmation } from '../types';
 import { BlockedDateItem } from '../data/bookingStorage';
+import { isFullDay } from '../lib/tableBlocks.js';
 
 interface MonthlyCalendarWidgetProps {
   blockedDates: BlockedDateItem[];
@@ -121,7 +122,8 @@ export const MonthlyCalendarWidget: React.FC<MonthlyCalendarWidgetProps> = ({
     const dayOfWeek = dateObj.getDay(); // 0 = Sun, 1 = Mon, 2 = Tue, 3 = Wed, 4 = Thu, 5 = Fri, 6 = Sat
     const isClosedSchedule = dayOfWeek === 0 || dayOfWeek === 1 || dayOfWeek === 2;
 
-    const block = blockedDates.find((b) => b.blocked_date === selectedDayDetail);
+    const blocks = blockedDates.filter((b) => b.blocked_date === selectedDayDetail);
+    const block = blocks.find(isFullDay) || blocks[0];
     const dayBookings = bookings.filter((b) => b.formData.date === selectedDayDetail);
     const totalCovers = dayBookings.reduce((acc, b) => acc + (b.formData.guests || 0), 0);
 
@@ -130,6 +132,7 @@ export const MonthlyCalendarWidget: React.FC<MonthlyCalendarWidgetProps> = ({
       formattedDate: dateObj.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }),
       isClosedSchedule,
       block,
+      blocks,
       dayBookings,
       totalCovers
     };
@@ -272,9 +275,10 @@ export const MonthlyCalendarWidget: React.FC<MonthlyCalendarWidgetProps> = ({
                   {block ? (
                     <div className="bg-red-950/80 border border-red-500/60 rounded px-1.5 py-1 text-[9px] text-red-200 font-sans font-semibold flex items-center gap-1">
                       <Ban className="w-3 h-3 text-red-400 shrink-0" />
-                      <span className="truncate">{block.reason}</span>
+                      <span className="truncate">{isFullDay(block) ? 'Full evening closed' : 'Timed closures'}</span>
                     </div>
-                  ) : dayBookings.length > 0 ? (
+                  ) : null}
+                  {dayBookings.length > 0 ? (
                     <div className="bg-emerald-950/90 border border-emerald-500/50 rounded px-1.5 py-1 text-[9px] text-emerald-300 font-sans font-bold flex items-center justify-between">
                       <span>{dayBookings.length} {dayBookings.length === 1 ? 'Res' : 'Res'}</span>
                       <span className="text-[#FFEAA7]">{totalCovers} Pax</span>
@@ -342,28 +346,29 @@ export const MonthlyCalendarWidget: React.FC<MonthlyCalendarWidgetProps> = ({
                 <div className="bg-[#140306] border border-[#DFBE7B]/30 rounded-lg p-3">
                   <span className="text-[10px] uppercase text-[#DFBE7B]/70 block font-semibold">Database Status</span>
                   <p className={`font-bold text-sm mt-0.5 ${selectedDayInfo.block ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {selectedDayInfo.block ? '🔴 Date Blocked' : '🟢 Open for Booking'}
+                    {selectedDayInfo.block ? (isFullDay(selectedDayInfo.block) ? 'Full evening closed' : 'Partially closed') : 'Open for booking'}
                   </p>
                 </div>
               </div>
 
               {/* Block Details if exists */}
-              {selectedDayInfo.block && (
-                <div className="bg-[#2D0911] border border-red-500/50 rounded-lg p-3.5 space-y-1 text-xs">
+              {selectedDayInfo.blocks.map(block => (
+                <div key={block.id} className="bg-[#2D0911] border border-red-500/50 rounded-lg p-3.5 space-y-1 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-red-300 uppercase tracking-wider text-[11px] flex items-center gap-1">
                       <Ban className="w-3.5 h-3.5 text-red-400" />
-                      <span>{selectedDayInfo.block.reason}</span>
+                      <span>{block.reason}</span>
                     </span>
                     <span className="text-[10px] font-mono text-red-200 bg-red-950 px-1.5 py-0.5 rounded border border-red-500/40">
-                      {selectedDayInfo.block.is_full_day ? 'Full Day Closed' : `${selectedDayInfo.block.start_time} - ${selectedDayInfo.block.end_time}`}
+                      {block.is_full_day ? 'Full Day Closed' : `${block.start_time} - ${block.end_time}`}
                     </span>
                   </div>
-                  {selectedDayInfo.block.notes && (
-                    <p className="text-[#DFBE7B]/90 text-[11px] pt-1">{selectedDayInfo.block.notes}</p>
+                  {block.notes && (
+                    <p className="text-[#DFBE7B]/90 text-[11px] pt-1">{block.notes}</p>
                   )}
+                  <button type="button" onClick={() => onUnblockDate(block.id,selectedDayInfo.dateStr)} className="text-emerald-300 underline">Remove this block</button>
                 </div>
-              )}
+              ))}
 
               {/* Bookings Summary */}
               <div className="bg-[#140306] border border-[#DFBE7B]/30 rounded-lg p-3.5 space-y-2 text-xs">
@@ -400,29 +405,13 @@ export const MonthlyCalendarWidget: React.FC<MonthlyCalendarWidgetProps> = ({
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {selectedDayInfo.block ? (
-                  <button
-                    onClick={() => {
-                      onUnblockDate(selectedDayInfo.block!.id, selectedDayInfo.dateStr);
-                      setSelectedDayDetail(null);
-                    }}
-                    className="py-2.5 px-3 rounded bg-[#200A0E] hover:bg-emerald-950 border border-emerald-500/50 text-emerald-300 font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                <button
+                    onClick={() => { onBlockDate(selectedDayInfo.dateStr); setSelectedDayDetail(null); }}
+                    className="py-2.5 px-3 rounded bg-red-950/80 hover:bg-red-900 border border-red-500/60 text-red-200 font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <Unlock className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Unblock This Date</span>
+                    <Ban className="w-3.5 h-3.5" />
+                    <span>Add time / day block</span>
                   </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      onBlockDate(selectedDayInfo.dateStr);
-                      setSelectedDayDetail(null);
-                    }}
-                    className="py-2.5 px-3 rounded bg-red-950/80 hover:bg-red-900 border border-red-500/60 text-red-200 font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-                  >
-                    <Ban className="w-3.5 h-3.5 text-red-400" />
-                    <span>Block Out This Date</span>
-                  </button>
-                )}
 
                 <button
                   onClick={() => {
