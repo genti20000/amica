@@ -23,9 +23,7 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
       {/* Centered Column for both Mobile & Desktop surrounded by dark black */}
       <div className="w-full max-w-[560px] mx-auto bg-[#000000] flex flex-col shadow-2xl relative">
         
-        {/* Semantic accessibility information */}
-        <h1 className="sr-only">AMICA SOHO — Coming Soon — 23 Frith Street, London</h1>
-        <p className="sr-only">Opening Soon · 23 Frith Street, Soho London · info@amicasoho.com</p>
+        {/* Visible heading is included below the facade. */}
 
         {/* =========================================================================
             HERO FACADE - DISPLAYED IN FULL (NO CROPPING)
@@ -63,12 +61,13 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
             {/* OPENING SOON with Radiant Golden Shine Animation */}
             <div className="flex flex-col items-center select-none">
               <div className="golden-shine-badge px-4 sm:px-7 py-2 sm:py-2.5 rounded-[3px] bg-gradient-to-r from-[#200A0E] via-[#321118] to-[#200A0E] border border-[#DFBE7B]/60 shadow-[0_4px_24px_rgba(0,0,0,0.85),inset_0_1px_1px_rgba(255,234,167,0.35)]">
-                <span className="golden-shine-text font-['Cinzel',serif] text-xs sm:text-sm md:text-base tracking-[0.32em] sm:tracking-[0.4em] uppercase font-bold leading-none block">
-                  OPENING SOON
-                </span>
+                <h1 className="golden-shine-text font-['Cinzel',serif] text-xs sm:text-sm md:text-base tracking-[0.12em] sm:tracking-[0.16em] uppercase font-bold leading-snug block">
+                  Cocktail Lounge & Dining in Soho
+                </h1>
               </div>
             </div>
 
+            <p className="mt-3 text-xs sm:text-sm leading-relaxed text-[#E8CCA0]">Aperitivo, music and late-night cocktails at 23 Frith Street. Discover our food and drinks menus, pre-theatre dining and private events in the heart of London's West End.</p>
             {/* Direct Table Reservation CTA */}
             {onNavigate && (
               <div className="mt-3.5">
@@ -84,6 +83,10 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({
             )}
 
             {onNavigate && <button onClick={() => onNavigate('drinks-food')} className="mt-4 px-4 py-2 border border-[#DFBE7B]/60 rounded text-[#DFBE7B] text-xs uppercase tracking-widest">View Food & Drinks Menus</button>}
+            <nav aria-label="Explore AMICA Soho" className="mt-4 flex flex-wrap justify-center gap-3 text-[11px] text-[#DFBE7B]">
+              <a href="/pre-theatre" className="underline underline-offset-4">Pre-theatre dining</a>
+              <a href="/private-hire" className="underline underline-offset-4">Private hire</a>
+            </nav>
             {/* CONTACT US: info@amicasoho.com */}
             <div className="mt-3.5 sm:mt-5 pt-3 sm:pt-4 border-t border-[#DFBE7B]/20 w-full flex flex-col items-center">
               <span className="font-sans text-[7.5px] sm:text-[9px] tracking-[0.3em] text-[#DFBE7B]/80 uppercase font-semibold">

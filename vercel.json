@@ -23,7 +23,15 @@
       "destination": "/karaoke-food-drinks/index.html"
     },
     {
-      "source": "/((?!assets/|pre-theatre/|karaoke-food-drinks/).*)",
+      "source": "/private-hire",
+      "destination": "/private-hire/index.html"
+    },
+    {
+      "source": "/private-hire/",
+      "destination": "/private-hire/index.html"
+    },
+    {
+      "source": "/((?!assets/|pre-theatre/|karaoke-food-drinks/|private-hire/|menus/|robots\\.txt$|sitemap\\.xml$).*)",
       "destination": "/index.html"
     }
   ],
