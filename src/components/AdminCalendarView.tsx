@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { BookingConfirmation } from '../types';
 import { BlockedDateItem } from '../data/bookingStorage';
+import { isFullDay, findTableBlock } from '../lib/tableBlocks.js';
 
 interface AdminCalendarViewProps {
   bookings: BookingConfirmation[];
@@ -162,8 +163,8 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
     return bookings.filter((b) => b.formData.date === currentDateStr);
   }, [bookings, currentDateStr]);
 
-  const dayBlock = useMemo(() => {
-    return blockedDates.find((b) => b.blocked_date === currentDateStr);
+  const dayBlocks = useMemo(() => {
+    return blockedDates.filter((b) => b.blocked_date === currentDateStr);
   }, [blockedDates, currentDateStr]);
 
   const dayTotalCovers = useMemo(() => {
@@ -280,7 +281,7 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
                 )}
               </div>
               <p className="text-[#DFBE7B]/80 text-[11px]">
-                Schedule: {dayBlock ? `🔴 Blocked (${dayBlock.reason})` : 'Wed–Sat Open Hours (17:00 – 03:00)'}
+                Schedule: {dayBlocks.length ? dayBlocks.map(b => isFullDay(b) ? 'Full evening closed' : `${b.start_time}–${b.end_time}${b.scope === 'main' ? ' (Main AMICA)' : ''}`).join(' · ') : 'Wed–Sat Open Hours (17:00 – 03:00)'}
               </p>
             </div>
 
@@ -308,6 +309,7 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
           <div className="space-y-2">
             {timeSlots.map((time) => {
               const slotBookings = dayBookings.filter((b) => b.formData.timeSlot.includes(time));
+              const slotBlock = findTableBlock(dayBlocks,currentDateStr,time,120);
 
               return (
                 <div
@@ -317,6 +319,7 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
                   {/* Time Badge */}
                   <div className="w-20 shrink-0 font-['Cinzel',serif] text-sm font-bold text-[#E8CCA0] bg-[#1F070C] p-2 rounded border border-[#DFBE7B]/30 text-center">
                     {time}
+                    {slotBlock && <span className="block text-[9px] text-red-300 font-sans">No new table bookings</span>}
                   </div>
 
                   {/* Bookings in slot */}
@@ -400,7 +403,7 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
 
                   <div className="flex items-center justify-between text-[10px] font-sans">
                     <span className={block ? 'text-red-400 font-bold' : day.isClosedSchedule ? 'text-zinc-500' : 'text-emerald-400 font-semibold'}>
-                      {block ? '🔴 Blocked' : day.isClosedSchedule ? 'Closed' : 'Open'}
+                      {block ? (isFullDay(block) ? 'Full evening closed' : 'Timed closures') : day.isClosedSchedule ? 'Closed' : 'Open'}
                     </span>
                     <span className="text-[#FFEAA7] font-mono">
                       {dayBookings.length} Res ({totalCovers} Pax)
@@ -410,15 +413,16 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
 
                 {/* Reservation Cards List */}
                 <div className="my-2 space-y-2 flex-1 overflow-y-auto max-h-[300px] pr-0.5">
-                  {block ? (
-                    <div className="bg-red-950/80 border border-red-500/50 rounded-lg p-2.5 text-[10px] text-red-200 font-sans space-y-1">
+                  {blockedDates.filter(b=>b.blocked_date===day.dateStr).map(block => (
+                    <div key={block.id} className="bg-red-950/80 border border-red-500/50 rounded-lg p-2.5 text-[10px] text-red-200 font-sans space-y-1">
                       <div className="flex items-center gap-1 font-bold text-red-300 uppercase">
                         <Ban className="w-3 h-3 text-red-400 shrink-0" />
-                        <span>{block.reason}</span>
+                        <span>{isFullDay(block) ? 'Full evening' : `${block.start_time}–${block.end_time}`} · {block.reason}</span>
                       </div>
                       {block.notes && <p className="text-[#DFBE7B]/80 text-[9px]">{block.notes}</p>}
                     </div>
-                  ) : dayBookings.length === 0 ? (
+                  ))}
+                  {dayBookings.length === 0 ? (
                     <div className="py-8 text-center text-[10px] text-[#DFBE7B]/40 font-sans italic">
                       No reservations
                     </div>
@@ -535,9 +539,10 @@ export const AdminCalendarView: React.FC<AdminCalendarViewProps> = ({
                   <div className="space-y-1 my-1">
                     {block ? (
                       <div className="bg-red-950/80 border border-red-500/50 rounded px-1 py-0.5 text-[9px] text-red-200 truncate font-semibold">
-                        🔴 {block.reason}
+                        {isFullDay(block) ? 'Full evening closed' : 'Timed closures'}
                       </div>
-                    ) : cellBookings.length > 0 ? (
+                    ) : null}
+                    {cellBookings.length > 0 ? (
                       <div className="bg-emerald-950/90 border border-emerald-500/50 rounded px-1 py-0.5 text-[9px] text-emerald-300 font-bold flex items-center justify-between">
                         <span>{cellBookings.length} Res</span>
                         <span className="text-[#FFEAA7]">{cellCovers} Pax</span>
