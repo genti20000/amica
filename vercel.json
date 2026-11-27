@@ -163,6 +163,14 @@
       "destination": "/pre-theatre/index.html"
     },
     {
+      "source": "/menus",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/menus/",
+      "destination": "/index.html"
+    },
+    {
       "source": "/((?!assets/|pre-theatre/).*)",
       "destination": "/index.html"
     }
