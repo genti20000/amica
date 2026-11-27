@@ -33,7 +33,7 @@ export default function App() {
     }
   });
 
-  // Default page: check for direct booking link (?book=true or #book), otherwise coming-soon
+  // Resolve public links before checking whether the session can access the rest of the site.
   const [currentPage, setCurrentPage] = useState<PageId>(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -42,7 +42,9 @@ export default function App() {
       if (params.get('book') === 'true' || params.get('page') === 'book' || hash === '#book' || hash === '#reserve') {
         return 'book';
       }
-      if (params.get('page') === 'drinks-food') return 'drinks-food';
+      if (window.location.pathname.replace(/\/$/, '') === '/menus' || params.get('page') === 'drinks-food') {
+        return 'drinks-food';
+      }
       const isSessionUnlocked = sessionStorage.getItem('amica_unlocked') === 'true';
       if (!isSessionUnlocked) {
         return 'coming-soon';
@@ -89,8 +91,25 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (currentPage !== 'drinks-food') return;
+    const previousTitle = document.title;
+    document.title = 'Food & Drinks Menus | AMICA Soho';
+    return () => { document.title = previousTitle; };
+  }, [currentPage]);
+
   const handleNavigate = (page: PageId) => {
-    if (page === 'coming-soon' || page === 'book' || page === 'drinks-food') {
+    if (page === 'drinks-food') {
+      window.location.assign('/menus');
+      return;
+    }
+
+    if (currentPage === 'drinks-food' && (page === 'coming-soon' || page === 'book')) {
+      window.location.assign(page === 'book' ? '/?book=true' : '/');
+      return;
+    }
+
+    if (page === 'coming-soon' || page === 'book') {
       setCurrentPage(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;

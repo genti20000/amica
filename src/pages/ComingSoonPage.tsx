@@ -52,9 +52,9 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ onNavigate }) =>
                 <circle cx="17.7" cy="6.5" r="1.15" fill="#E1306C"/>
               </svg>
             </a>
-            <button onClick={() => onNavigate?.('drinks-food')} className="min-h-12 w-full border border-[#D4B887]/80 bg-[#080505]/80 px-2 sm:px-5 text-center text-[10px] sm:text-xs tracking-[.12em] sm:tracking-[.18em] text-[#F0D7A7] shadow-lg backdrop-blur-sm hover:bg-[#240609]">
+            <a href="/menus" className="flex min-h-12 w-full items-center justify-center border border-[#D4B887]/80 bg-[#080505]/80 px-2 sm:px-5 text-center text-[10px] sm:text-xs tracking-[.12em] sm:tracking-[.18em] text-[#F0D7A7] shadow-lg backdrop-blur-sm hover:bg-[#240609]">
               View Food and Drinks Menu
-            </button>
+            </a>
             <a href="https://www.tiktok.com/@amicasoho" target="_blank" rel="noopener noreferrer" aria-label="AMICA Soho on TikTok" className="grid h-11 w-11 place-items-center rounded-full border border-[#D4B887]/70 bg-[#080505]/75 shadow-lg backdrop-blur-sm hover:bg-[#240609]">
               <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#25F4EE" d="M14.2 3h3.1c.3 1.8 1.3 3.2 3 4.1v3.2a10 10 0 0 1-6.1-2v7.2a6.2 6.2 0 1 1-6.2-6.2c.4 0 .9 0 1.3.1v3.4a2.8 2.8 0 1 0 1.9 2.7V3h3z" transform="translate(-1.1 .35)"/>

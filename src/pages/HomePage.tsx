@@ -132,12 +132,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
                 EXPLORE THE VENUE
               </button>
 
-              <button
-                onClick={() => onNavigate('drinks-food')}
+              <a
+                href="/menus"
                 className="bg-[#180307]/85 hover:bg-[#28060D] text-[#FFEAA7] border border-[#DFBE7B] font-sans font-semibold text-xs tracking-[0.22em] uppercase min-h-[44px] py-3.5 px-8 transition-all duration-200 cursor-pointer shadow-lg backdrop-blur-md active:scale-95 rounded-sm text-center flex items-center justify-center"
               >
                 VIEW MENU
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -226,12 +226,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenQuiz }) =>
                 </p>
               </div>
               <div className="pt-5">
-                <button
-                  onClick={() => onNavigate('drinks-food')}
+                <a
+                  href="/menus"
                   className="btn-maroon-gold min-h-[44px] text-[10.5px] font-sans font-semibold tracking-[0.2em] uppercase py-2.5 px-5 transition-all cursor-pointer shadow-sm active:scale-95 w-full sm:w-auto inline-flex items-center justify-center rounded-sm"
                 >
                   VIEW MENU
-                </button>
+                </a>
               </div>
             </div>
             <div className="w-full sm:w-1/2 min-h-[160px] sm:min-h-[190px] relative overflow-hidden border-t sm:border-t-0 sm:border-l border-maroon">
