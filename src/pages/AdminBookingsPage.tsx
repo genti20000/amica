@@ -320,11 +320,11 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
   // Remove Blocked Date
   const handleRemoveBlock = async (id: number, dateStr: string) => {
     try {
-    if (window.confirm(`Unblock date ${dateStr} and reopen for general online reservations?`)) {
+    if (window.confirm(`Remove this closure on ${dateStr}? Other closures and reservations will remain.`)) {
       try {
         const updated = await removeBlockedDate(id);
         setBlockedDates(updated);
-        showToast(`Date ${dateStr} unblocked successfully`);
+        showToast(`Closure on ${dateStr} removed successfully`);
       } catch {
         showToast('Failed to unblock date');
       }
@@ -1039,7 +1039,7 @@ export const AdminBookingsPage: React.FC<AdminBookingsPageProps> = ({ onNavigate
                         title="Remove blackout and reopen date for reservations"
                       >
                         <Unlock className="w-3.5 h-3.5" />
-                        <span>Unblock Date</span>
+                        <span>Remove Block</span>
                       </button>
                     </div>
                   </div>
