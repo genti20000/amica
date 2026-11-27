@@ -513,7 +513,7 @@ async function configureServer() {
       if (blockCheck.blocked) {
         return res.status(400).json({
           success: false,
-          error: `Selected date is unavailable: ${blockCheck.reason || 'Private Buyout / Closed'}. Please select another date.`
+          error: `Selected time is unavailable: ${blockCheck.reason || 'Private Buyout / Closed'}. Please select another available time or date.`
         });
       }
 
@@ -691,8 +691,9 @@ async function configureServer() {
   app.post('/api/system/blocked-dates', async (req, res) => {
     try {
       const { blocked_date, is_full_day, start_time, end_time, reason, notes, actor } = req.body;
-      if (!blocked_date || !reason) {
-        return res.status(400).json({ success: false, error: 'Date and reason are required' });
+      const date = typeof blocked_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(blocked_date) ? new Date(blocked_date+'T12:00:00Z') : null;
+      if (!date || Number.isNaN(date.getTime()) || date.toISOString().slice(0,10)!==blocked_date || typeof reason!=='string' || !reason.trim() || typeof is_full_day!=='boolean') {
+        return res.status(400).json({ success: false, error: 'Valid date, coverage and reason are required.' });
       }
 
       const created = await addBlockedDate({
@@ -707,7 +708,7 @@ async function configureServer() {
 
       res.status(201).json({ success: true, data: created });
     } catch (e: any) {
-      res.status(500).json({ success: false, error: 'The request could not be saved. Please try again or contact the venue.' });
+      res.status(e instanceof BookingValidationError ? 400 : 500).json({ success: false, error: e instanceof BookingValidationError ? e.message : 'The request could not be saved. Please try again or contact the venue.' });
     }
   });
 
