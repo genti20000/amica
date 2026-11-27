@@ -1,4 +1,5 @@
 import { londonDate, nextDefaultServiceDate, serviceInstant } from '../lib/serviceTime';
+import { appliesToKaraoke, isFullDay, findTableBlock } from '../lib/tableBlocks.js';
 import React, { useState, useMemo, useEffect } from 'react';
 import { PageId, BookingFormData, BookingConfirmation } from '../types';
 import {
@@ -149,25 +150,16 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
     return selectedDayOfWeek === 0 || selectedDayOfWeek === 1 || selectedDayOfWeek === 2;
   }, [selectedDayOfWeek]);
 
-  // Check if selected date is blocked in database
+  // A partial dining closure does not disable the service date.
+  const mainSlotBlock = (date: string, slot: string) => findTableBlock(blockedDates,date,slot,120);
+  const relevantBlocks = useMemo(() => isKaraokeBooking ? blockedDates.filter(appliesToKaraoke) : blockedDates, [blockedDates,isKaraokeBooking]);
   const selectedDateBlock = useMemo(() => {
-    return blockedDates.find((b) => b.blocked_date === formData.date);
-  }, [blockedDates, formData.date]);
-
-  const isSelectedDateBlocked = useMemo(() => {
-    if (!selectedDateBlock) return false;
-    if (selectedDateBlock.is_full_day === 1 || selectedDateBlock.is_full_day === true) return true;
-    if (selectedDateBlock.start_time && selectedDateBlock.end_time) {
-      const match = formData.timeSlot.match(/(\d{2}):(\d{2})/);
-      if (match) {
-        const slotTime = `${match[1]}:${match[2]}`;
-        if (slotTime >= selectedDateBlock.start_time && slotTime <= selectedDateBlock.end_time) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }, [selectedDateBlock, formData.timeSlot]);
+    if (!isKaraokeBooking) return findTableBlock(relevantBlocks,formData.date,formData.timeSlot,120);
+    // Preserve the existing legacy karaoke closure behaviour; ignore dining-only windows.
+    const block = relevantBlocks.find(b => b.blocked_date === formData.date);
+    return block && (isFullDay(block) || (block.start_time && block.end_time && formData.timeSlot >= block.start_time && formData.timeSlot <= block.end_time)) ? block : undefined;
+  }, [relevantBlocks,formData.date,formData.timeSlot,isKaraokeBooking]);
+  const isSelectedDateBlocked = Boolean(selectedDateBlock);
 
   // Clean time slots - opening hours Wednesday to Saturday from 17:00 to 03:00
   const allTimeSlots = [
@@ -253,7 +245,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
     }
 
     if (isSelectedDateBlocked) {
-      setErrorMessage(`This date/time is unavailable due to: ${selectedDateBlock?.reason || 'Private Event'}. Please choose another date.`);
+      setErrorMessage(`This date/time is unavailable due to: ${selectedDateBlock?.reason || 'Private Event'}. Please choose another available time or date.`);
       return;
     }
 
@@ -382,11 +374,11 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-red-400 font-bold uppercase tracking-wider text-[11px]">
                   <Ban className="w-4 h-4 shrink-0 text-red-400" />
-                  <span>Date Blocked: {selectedDateBlock.reason}</span>
+                  <span>{isFullDay(selectedDateBlock) ? 'Date blocked' : 'Time unavailable'}: {selectedDateBlock.reason}</span>
                 </div>
               </div>
               <p className="text-[#FDFBF7] text-xs leading-relaxed">
-                {selectedDateBlock.notes || 'This evening is unavailable for reservations.'}
+                {selectedDateBlock.notes || (isFullDay(selectedDateBlock) ? 'This evening is unavailable for reservations.' : 'Choose another available time on this date.')}
               </p>
             </div>
           )}
@@ -473,7 +465,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                   const isSelected = cell.dateStr === formData.date;
                   const isPast = cell.dateStr < todayStr;
                   const isClosedSchedule = cell.dayOfWeek === 0 || cell.dayOfWeek === 1 || cell.dayOfWeek === 2; // Closed Sun, Mon, Tue
-                  const isBlocked = blockedDates.some((b) => b.blocked_date === cell.dateStr);
+                  const isBlocked = relevantBlocks.some((b) => b.blocked_date === cell.dateStr && (isKaraokeBooking || isFullDay(b)));
 
                   return (
                     <button
@@ -555,8 +547,8 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                 className="w-full px-4 py-3 bg-[#0D0204] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] rounded-lg text-sm sm:text-base text-[#FFEAA7] focus:outline-none focus:border-[#DFBE7B] font-['Cinzel',serif] font-semibold appearance-none cursor-pointer shadow-inner transition-all pr-10"
               >
                 {allTimeSlots.map((slot) => (
-                  <option disabled={(isKaraokeBooking && !available?.includes(slot)) || serviceInstant(formData.date,slot)<Date.now()+Number(settings.cutoff_hours||1)*3600000} key={slot} value={slot} className="bg-[#120205] text-[#FFEAA7]">
-                    {slot}{isKaraokeBooking && available && !available.includes(slot) ? ' — unavailable' : ''}
+                  <option disabled={(isKaraokeBooking ? !available?.includes(slot) : Boolean(mainSlotBlock(formData.date,slot))) || serviceInstant(formData.date,slot)<Date.now()+Number(settings.cutoff_hours||1)*3600000} key={slot} value={slot} className="bg-[#120205] text-[#FFEAA7]">
+                    {slot}{(isKaraokeBooking ? available && !available.includes(slot) : mainSlotBlock(formData.date,slot)) ? ' — unavailable' : ''}
                   </option>
                 ))}
               </select>
@@ -736,10 +728,10 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                 <>
                   <span className="text-red-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <Ban className="w-4 h-4 text-red-400" />
-                    Date Unavailable: {selectedDateBlock?.reason || 'Private Event'}
+                    Time Unavailable: {selectedDateBlock?.reason || 'Private Event'}
                   </span>
                   <p className="text-[#FDFBF7]/90 text-[11px]">
-                    Online table bookings closed for {formData.date}. Please select another date.
+                    This reservation overlaps a closure. Please select another available time or date.
                   </p>
                 </>
               ) : (
@@ -778,7 +770,7 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
             ) : isSelectedDateBlocked ? (
               <>
                 <Ban className="w-4 h-4" />
-                <span>Date Blocked ({selectedDateBlock?.reason || 'Unavailable'})</span>
+                <span>Time Unavailable ({selectedDateBlock?.reason || 'Unavailable'})</span>
               </>
             ) : (
               <>
