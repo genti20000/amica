@@ -15,6 +15,7 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ onNavigate }) =>
   }, []);
   return <div className="bg-[#080505] text-[#F7EFE1] pb-28">
     <div className="w-full">
+      <h1 className="sr-only">AMICA Soho — 23 Frith Street</h1>
       <div className="relative w-full overflow-hidden bg-[#080505] sm:mx-auto sm:max-w-[1200px] sm:h-[min(76svh,900px)] sm:min-h-[560px]">
         <img
           src="/images/amica-entrance-retouched.jpg"
@@ -64,18 +65,6 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ onNavigate }) =>
           </div>
         </nav>
       </div>
-      <section aria-labelledby="amica-intro" className="mx-auto max-w-[760px] px-6 py-9 sm:py-12 text-center">
-        <p className="text-[10px] tracking-[.2em] uppercase text-[#D4B887]">Aperitivo · Music · Late</p>
-        <h1 id="amica-intro" className="mt-3 text-2xl sm:text-4xl font-serif font-normal text-[#F7EFE1]">Cocktail lounge &amp; dining in Soho</h1>
-        <p className="mt-3 text-sm leading-relaxed text-[#E9D6B6]">Find AMICA at 23 Frith Street, London W1D 4RR. Enjoy signature cocktails, Italian small plates and wine in an intimate Soho setting, before the theatre or late into the evening.</p>
-        <nav aria-label="Explore AMICA" className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm text-[#D4B887]">
-          <a className="underline underline-offset-4" href="/pre-theatre">Pre-theatre dining</a>
-          <a className="underline underline-offset-4" href="/pre-theatre#menus">Food &amp; cocktail menus</a>
-          <a className="underline underline-offset-4" href="/private-hire">Private hire</a>
-          <a className="underline underline-offset-4" href="/karaoke-booking">Private karaoke</a>
-          <a className="underline underline-offset-4" href="/?book=true">Book a table</a>
-        </nav>
-      </section>
       <footer className="bg-[#080505] px-4 py-5 text-center">
         <a href="mailto:info@amicasoho.com" className="text-xs text-[#E9D6B6] hover:underline">info@amicasoho.com</a>
         <span className="mx-3 text-[#D4B887]/50">·</span><a href="/membership" className="text-xs text-[#E9D6B6] hover:underline">Apply for Membership</a>
