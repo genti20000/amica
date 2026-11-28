@@ -51,6 +51,8 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
 
   const [blockedDates, setBlockedDates] = useState<BlockedDateItem[]>([]);
   const [settings, setSettings] = useState<SystemSettings>(DEFAULT_SETTINGS);
+  const [availabilityReady, setAvailabilityReady] = useState(false);
+  const [availabilityNow, setAvailabilityNow] = useState(() => Date.now());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
@@ -85,13 +87,22 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
   const [pickerMonth, setPickerMonth] = useState<Date>(() => new Date(formData.date + 'T00:00:00'));
 
   useEffect(() => {
-    fetchBlockedDates().then((dates) => {
-      if (dates) setBlockedDates(dates);
-    }).catch(() => setErrorMessage('Availability could not be loaded. Please retry before booking.'));
-    fetchSystemSettings().then((s) => {
-      if (s) setSettings(s);
-    }).catch(() => setErrorMessage('Booking settings could not be loaded. Please retry before booking.'));
+    let active = true;
+    Promise.all([fetchBlockedDates(), fetchSystemSettings()]).then(([dates, s]) => {
+      if (!active) return;
+      setBlockedDates(dates);
+      setSettings(s);
+      setAvailabilityReady(true);
+    }).catch(() => { if (active) setErrorMessage('Availability could not be loaded. Please refresh before booking.'); });
+    return () => { active = false; };
   }, []);
+  useEffect(() => {
+    if (isKaraokeBooking) return;
+    const refreshClock = () => setAvailabilityNow(Date.now());
+    const timer = window.setInterval(refreshClock, 30000);
+    window.addEventListener('focus', refreshClock);
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refreshClock); };
+  }, [isKaraokeBooking]);
 
   useEffect(() => {
     if (!isKaraokeBooking) return;
@@ -167,6 +178,16 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
     '21:00', '21:30', '22:00', '22:30', '23:00', '23:30', '00:00', '00:30',
     '01:00'
   ];
+  // Keep the current time only if it remains bookable. Never silently choose a different time.
+  const cutoffHours = Number(settings.cutoff_hours ?? 1);
+  const cutoffMs = (Number.isFinite(cutoffHours) && cutoffHours >= 0 ? cutoffHours : 1) * 3600000;
+  const mainAvailableSlots = !isKaraokeBooking && availabilityReady && !isClosedDay
+    ? allTimeSlots.filter(slot => !mainSlotBlock(formData.date, slot) &&
+        serviceInstant(formData.date, slot) >= availabilityNow + cutoffMs)
+    : [];
+  const mainTimeUnavailable = !isKaraokeBooking && !mainAvailableSlots.includes(formData.timeSlot);
+  const bookingSelectionUnavailable = isClosedDay || (isKaraokeBooking ? isSelectedDateBlocked : mainTimeUnavailable);
+  const fullDayClosure = !isKaraokeBooking && relevantBlocks.some(b => b.blocked_date === formData.date && isFullDay(b));
 
   // Calendar Grid Calculation for Pop-up Picker
   const pickerDays = useMemo(() => {
@@ -244,8 +265,8 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
       return;
     }
 
-    if (isSelectedDateBlocked) {
-      setErrorMessage(`This date/time is unavailable due to: ${selectedDateBlock?.reason || 'Private Event'}. Please choose another available time or date.`);
+    if (isSelectedDateBlocked || (!isKaraokeBooking && (!availabilityReady || mainTimeUnavailable || serviceInstant(formData.date, formData.timeSlot) < Date.now() + cutoffMs))) {
+      setErrorMessage('Please choose an available time or another date.');
       return;
     }
 
@@ -368,19 +389,9 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
             </div>
           )}
 
-          {/* Blocked Date Warning */}
-          {selectedDateBlock && (
-            <div className="bg-[#2D0911] border border-red-500/60 rounded-xl p-3 text-xs font-sans space-y-0.5 shadow-lg animate-fadeIn">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-red-400 font-bold uppercase tracking-wider text-[11px]">
-                  <Ban className="w-4 h-4 shrink-0 text-red-400" />
-                  <span>{isFullDay(selectedDateBlock) ? 'Date blocked' : 'Time unavailable'}: {selectedDateBlock.reason}</span>
-                </div>
-              </div>
-              <p className="text-[#FDFBF7] text-xs leading-relaxed">
-                {selectedDateBlock.notes || (isFullDay(selectedDateBlock) ? 'This evening is unavailable for reservations.' : 'Choose another available time on this date.')}
-              </p>
-            </div>
+          {/* Only a full-day closure belongs beside the date. */}
+          {!isClosedDay && (fullDayClosure || (isKaraokeBooking && selectedDateBlock && isFullDay(selectedDateBlock))) && (
+            <p role="status" className="text-[#DFBE7B] text-xs font-sans">No reservations available on this date. Please choose another date.</p>
           )}
         </div>
 
@@ -542,13 +553,16 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
             </label>
             <div className="relative">
               <select
-                value={formData.timeSlot}
-                onChange={(e) => setFormData({ ...formData, timeSlot: e.target.value, durationHours: Math.min(formData.durationHours ?? 2, maxKaraokeDurationHours(formData.date, e.target.value)) })}
+                value={isKaraokeBooking ? formData.timeSlot : mainTimeUnavailable ? '' : formData.timeSlot}
+                disabled={!isKaraokeBooking && (!availabilityReady || mainAvailableSlots.length === 0)}
+                required
+                onChange={(e) => { const slot = e.target.value; if (!slot) return; setErrorMessage(null); setFormData({ ...formData, timeSlot: slot, durationHours: isKaraokeBooking ? Math.min(formData.durationHours ?? 2, maxKaraokeDurationHours(formData.date, slot)) : 2 }); }}
                 className="w-full px-4 py-3 bg-[#0D0204] border border-[#DFBE7B]/40 hover:border-[#DFBE7B] rounded-lg text-sm sm:text-base text-[#FFEAA7] focus:outline-none focus:border-[#DFBE7B] font-['Cinzel',serif] font-semibold appearance-none cursor-pointer shadow-inner transition-all pr-10"
               >
-                {allTimeSlots.map((slot) => (
-                  <option disabled={(isKaraokeBooking ? !available?.includes(slot) : Boolean(mainSlotBlock(formData.date,slot))) || serviceInstant(formData.date,slot)<Date.now()+Number(settings.cutoff_hours||1)*3600000} key={slot} value={slot} className="bg-[#120205] text-[#FFEAA7]">
-                    {slot}{(isKaraokeBooking ? available && !available.includes(slot) : mainSlotBlock(formData.date,slot)) ? ' — unavailable' : ''}
+                {!isKaraokeBooking && <option value="" disabled>{!availabilityReady ? 'Checking availability…' : mainAvailableSlots.length ? 'Select an available time' : 'No times available'}</option>}
+                {(isKaraokeBooking ? allTimeSlots : mainAvailableSlots).map((slot) => (
+                  <option disabled={isKaraokeBooking && (!available?.includes(slot) || serviceInstant(formData.date,slot)<Date.now()+Number(settings.cutoff_hours||1)*3600000)} key={slot} value={slot} className="bg-[#120205] text-[#FFEAA7]">
+                    {slot}{isKaraokeBooking && available && !available.includes(slot) ? ' — unavailable' : ''}
                   </option>
                 ))}
               </select>
@@ -556,6 +570,10 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                 <Clock className="w-4 h-4" />
               </div>
             </div>
+            {!isKaraokeBooking && availabilityReady && !isClosedDay && !fullDayClosure && mainTimeUnavailable && (
+              <p role="status" className="mt-2 text-[#DFBE7B] text-xs font-sans">{mainAvailableSlots.length ? 'Please choose one of the available times.' : 'No online reservations remain for this date. Please choose another date.'}</p>
+            )}
+            {isKaraokeBooking && selectedDateBlock && !isFullDay(selectedDateBlock) && <p role="status" className="mt-2 text-[#DFBE7B] text-xs font-sans">Please choose another available time or date.</p>}
           </div>
         </div>
 
@@ -708,33 +726,9 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
             SUBMIT CTA
            ========================================================================= */}
         <div className="pt-2 border-t border-[#DFBE7B]/25 space-y-3">
-          <div className={`border rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
-            isClosedDay || isSelectedDateBlocked
-              ? 'bg-[#2D0911] border-red-500/50'
-              : 'bg-[#1A0509] border-[#DFBE7B]/40'
-          }`}>
+          {!bookingSelectionUnavailable && (
+          <div className="border rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-[#1A0509] border-[#DFBE7B]/40">
             <div className="space-y-0.5 font-sans">
-              {isClosedDay ? (
-                <>
-                  <span className="text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                    <Ban className="w-4 h-4 text-amber-400" />
-                    Venue Closed on Selected Date
-                  </span>
-                  <p className="text-[#FDFBF7]/90 text-[11px]">
-                    Open Wednesday to Saturday from 5:00 PM to 3:00 AM.
-                  </p>
-                </>
-              ) : isSelectedDateBlocked ? (
-                <>
-                  <span className="text-red-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                    <Ban className="w-4 h-4 text-red-400" />
-                    Time Unavailable: {selectedDateBlock?.reason || 'Private Event'}
-                  </span>
-                  <p className="text-[#FDFBF7]/90 text-[11px]">
-                    This reservation overlaps a closure. Please select another available time or date.
-                  </p>
-                </>
-              ) : (
                 <>
                   <span className="text-[#DFBE7B] font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <CalendarIcon className="w-4 h-4 text-[#DFBE7B]" />
@@ -749,15 +743,15 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                     <p className="mt-1 text-sm font-semibold text-[#FFEAA7]">Total to pay: {formatPounds(karaokeTotalPence)}</p>
                   </>}
                 </>
-              )}
             </div>
           </div>
+          )}
 
           <button
             type="submit"
-            disabled={roomUnavailable || isSubmitting || isVerifyingPayment || isClosedDay || isSelectedDateBlocked}
+            disabled={roomUnavailable || isSubmitting || isVerifyingPayment || bookingSelectionUnavailable}
             className={`w-full py-3.5 px-6 rounded-lg font-sans font-bold text-xs sm:text-sm tracking-[0.24em] uppercase transition-all duration-200 flex items-center justify-center gap-2.5 ${
-              isClosedDay || isSelectedDateBlocked
+              bookingSelectionUnavailable
                 ? 'bg-zinc-800 text-zinc-500 border border-zinc-700 cursor-not-allowed'
                 : 'bg-gradient-to-r from-[#C5A059] via-[#DFBE7B] to-[#C5A059] hover:from-[#DFBE7B] hover:via-[#FFEAA7] hover:to-[#DFBE7B] text-[#120205] cursor-pointer shadow-[0_6px_24px_rgba(197,160,89,0.35)] active:scale-[0.99]'
             }`}
@@ -767,10 +761,10 @@ export const BookPage: React.FC<BookPageProps> = ({ onBookingComplete, savedPair
                 <Ban className="w-4 h-4" />
                 <span>Closed on Selected Date</span>
               </>
-            ) : isSelectedDateBlocked ? (
+            ) : bookingSelectionUnavailable ? (
               <>
                 <Ban className="w-4 h-4" />
-                <span>Time Unavailable ({selectedDateBlock?.reason || 'Unavailable'})</span>
+                <span>{!isKaraokeBooking && !availabilityReady ? 'Checking availability' : !isKaraokeBooking && mainAvailableSlots.length ? 'Select a time' : 'Unavailable'}</span>
               </>
             ) : (
               <>
