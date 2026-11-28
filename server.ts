@@ -513,7 +513,7 @@ async function configureServer() {
       if (blockCheck.blocked) {
         return res.status(400).json({
           success: false,
-          error: `Selected time is unavailable: ${blockCheck.reason || 'Private Buyout / Closed'}. Please select another available time or date.`
+          error: 'This time is unavailable. Please choose another available time or date.'
         });
       }
 
@@ -681,7 +681,12 @@ async function configureServer() {
   app.get('/api/system/blocked-dates', async (req, res) => {
     try {
       const dates = await getBlockedDates();
-      res.json({ success: true, count: dates.length, data: dates });
+      const cookie = (req.headers.cookie || '').split(';').map(v => v.trim()).find(v => v.startsWith('amica_admin='))?.slice(12) || '';
+      const [expires, signature] = cookie.split('.');
+      const isStaff = adminPasswords.length > 0 && Number.isFinite(Number(expires)) && Number(expires) > Date.now() && Boolean(signature) && equal(signature, sign(expires));
+      // Guests only need availability windows; keep internal reasons and notes in the authenticated staff view.
+      const data = isStaff ? dates : dates.map(({ reason, notes, ...window }) => ({ ...window, reason: 'Unavailable', notes: null }));
+      res.json({ success: true, count: data.length, data });
     } catch (e: any) {
       res.status(500).json({ success: false, error: 'The request could not be saved. Please try again or contact the venue.' });
     }

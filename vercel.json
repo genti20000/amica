@@ -171,6 +171,54 @@
       "destination": "/karaoke-food-drinks/index.html"
     },
     {
+      "source": "/pre-theatre/shows",
+      "destination": "/pre-theatre/shows/index.html"
+    },
+    {
+      "source": "/pre-theatre/shows/",
+      "destination": "/pre-theatre/shows/index.html"
+    },
+    {
+      "source": "/pre-theatre/hadestown",
+      "destination": "/pre-theatre/hadestown/index.html"
+    },
+    {
+      "source": "/pre-theatre/hadestown/",
+      "destination": "/pre-theatre/hadestown/index.html"
+    },
+    {
+      "source": "/pre-theatre/les-miserables",
+      "destination": "/pre-theatre/les-miserables/index.html"
+    },
+    {
+      "source": "/pre-theatre/les-miserables/",
+      "destination": "/pre-theatre/les-miserables/index.html"
+    },
+    {
+      "source": "/pre-theatre/moulin-rouge",
+      "destination": "/pre-theatre/moulin-rouge/index.html"
+    },
+    {
+      "source": "/pre-theatre/moulin-rouge/",
+      "destination": "/pre-theatre/moulin-rouge/index.html"
+    },
+    {
+      "source": "/pre-theatre/harry-potter-and-the-cursed-child",
+      "destination": "/pre-theatre/harry-potter-and-the-cursed-child/index.html"
+    },
+    {
+      "source": "/pre-theatre/harry-potter-and-the-cursed-child/",
+      "destination": "/pre-theatre/harry-potter-and-the-cursed-child/index.html"
+    },
+    {
+      "source": "/pre-theatre/matilda",
+      "destination": "/pre-theatre/matilda/index.html"
+    },
+    {
+      "source": "/pre-theatre/matilda/",
+      "destination": "/pre-theatre/matilda/index.html"
+    },
+    {
       "source": "/((?!assets/|pre-theatre/|karaoke-food-drinks/).*)",
       "destination": "/index.html"
     }
